@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import axios from 'axios'
 
 const equipos = ref([])
@@ -8,6 +8,50 @@ const currentTime = ref(new Date().toLocaleTimeString())
 const newTimeLimit = ref('')
 let intervalId = null
 let clockIntervalId = null
+
+const getEquipoAtSlot = (index) => {
+  return equipos.value.find(e => e.posicionMapa === index)
+}
+
+const unassignedEquipos = computed(() => {
+  return equipos.value.filter(e => e.posicionMapa == null)
+})
+
+const assignModalOpen = ref(false)
+const selectedSlotIndex = ref(-1)
+
+const openAssignModal = (index) => {
+  selectedSlotIndex.value = index
+  assignModalOpen.value = true
+}
+
+const assignEquipoToSlot = async (equipoId) => {
+  try {
+    await axios.post('https://localhost:7215/api/stats/assign-map-slot', {
+      equipoId: equipoId,
+      posicionMapa: selectedSlotIndex.value
+    })
+    assignModalOpen.value = false
+    fetchMap()
+  } catch (error) {
+    console.error("Error assigning slot:", error)
+    alert("Error al asignar el equipo")
+  }
+}
+
+const unassignEquipo = async (equipoId) => {
+  if (!confirm("¿Seguro que deseas desvincular este equipo de esta posición?")) return
+  try {
+    await axios.post('https://localhost:7215/api/stats/assign-map-slot', {
+      equipoId: equipoId,
+      posicionMapa: null
+    })
+    selectedPC.value = null
+    fetchMap()
+  } catch (error) {
+    console.error("Error unassigning slot:", error)
+  }
+}
 
 // Mapeo exacto de posiciones según la imagen (11 columnas x 8 filas)
 const layoutPositions = [
@@ -131,26 +175,26 @@ onUnmounted(() => {
              :style="{ gridRow: pos[0], gridColumn: pos[1] }">
           
           <!-- Si existe un equipo para este índice, lo mostramos -->
-          <div v-if="equipos[index]" 
-               class="pc-card" :class="{ occupied: equipos[index].sesionActiva }"
-               @click="openDetails(equipos[index])">
+          <div v-if="getEquipoAtSlot(index)" 
+               class="pc-card" :class="{ occupied: getEquipoAtSlot(index).sesionActiva }"
+               @click="openDetails(getEquipoAtSlot(index))">
             <div class="monitor">
               <div class="screen">
-                <span v-if="equipos[index].sesionActiva" class="user-icon">👤</span>
+                <span v-if="getEquipoAtSlot(index).sesionActiva" class="user-icon">👤</span>
                 <span v-else class="power-icon">⏻</span>
               </div>
               <div class="stand"></div>
             </div>
-            <span class="pc-name">{{ equipos[index].nombreRed }}</span>
+            <span class="pc-name">{{ getEquipoAtSlot(index).nombreRed }}</span>
           </div>
 
           <!-- Si no hay equipo aún en DB para esta posición, mostramos un placeholder -->
-          <div v-else class="pc-card empty-slot">
-            <div class="monitor gray">
-              <div class="screen gray"></div>
-              <div class="stand gray"></div>
+          <div v-else class="pc-card empty-slot" @click="openAssignModal(index)">
+            <div class="monitor" style="background: #f1f5f9; border: 1px dashed #cbd5e1; box-shadow: none;">
+              <div class="screen" style="background: transparent; border: none; font-size: 1.5rem; color: #94a3b8; font-weight: 200;">+</div>
+              <div class="stand" style="background: #e2e8f0;"></div>
             </div>
-            <span class="pc-name gray">PC-{{ String(index + 1).padStart(2, '0') }}</span>
+            <span class="pc-name" style="color: #94a3b8;">Asignar</span>
           </div>
         </div>
       </div>
@@ -229,7 +273,41 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <button class="btn" style="margin-top: 15px; width: 100%; background: transparent; color: #9ca3af; font-size: 0.85rem; font-weight: 600;" @click="selectedPC = null">Cerrar ventana</button>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <button class="btn" style="flex: 1; background: #fef2f2; color: #ef4444; font-size: 0.85rem; font-weight: 600; padding: 10px; border-radius: 8px; border: 1px solid #fee2e2;" @click="unassignEquipo(selectedPC.equipoID)">Desvincular Equipo</button>
+          <button class="btn" style="flex: 1; background: transparent; color: #9ca3af; font-size: 0.85rem; font-weight: 600; padding: 10px; border-radius: 8px;" @click="selectedPC = null">Cerrar ventana</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Asignación -->
+    <div v-if="assignModalOpen" class="detail-overlay" @click="assignModalOpen = false">
+      <div class="card detail-card" style="max-width: 450px;" @click.stop>
+        <div style="border-bottom: 1px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 20px;">
+          <h3 style="margin: 0; color: rgb(17, 24, 39); font-weight: 700; font-size: 1.25rem;">Asignar Computadora Físicamente</h3>
+          <p style="color: #6b7280; font-size: 0.85rem; margin-top: 5px;">Selecciona qué PC está ubicada en esta posición del mapa.</p>
+        </div>
+
+        <div v-if="unassignedEquipos.length === 0" style="background: #f8fafc; padding: 20px; border-radius: 10px; text-align: center; border: 1px dashed #cbd5e1;">
+          <p style="color: #64748b; margin: 0; font-size: 0.9rem;">No hay equipos nuevos pendientes de asignación.</p>
+          <p style="color: #94a3b8; font-size: 0.8rem; margin-top: 5px;">Asegúrate de haber instalado e iniciado sesión en la computadora para que aparezca aquí.</p>
+        </div>
+        
+        <div v-else style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+          <div v-for="eq in unassignedEquipos" :key="eq.equipoID" 
+               @click="assignEquipoToSlot(eq.equipoID)"
+               style="padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;"
+               onmouseover="this.style.borderColor='#0ea5e9'; this.style.background='#f0f9ff';"
+               onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='transparent';">
+            <div>
+              <span style="font-weight: 700; color: #0f172a; display: block;">{{ eq.nombreRed }}</span>
+              <span style="font-size: 0.75rem; color: #64748b;">{{ eq.ubicacion }}</span>
+            </div>
+            <button style="background: #0ea5e9; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;">Asignar</button>
+          </div>
+        </div>
+
+        <button class="btn" style="margin-top: 20px; width: 100%; background: transparent; color: #9ca3af; font-size: 0.85rem; font-weight: 600;" @click="assignModalOpen = false">Cancelar</button>
       </div>
     </div>
   </div>

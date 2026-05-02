@@ -16,6 +16,8 @@ namespace ControlLaboratorio.API.Models
 
         public bool Estado { get; set; } = true;
 
+        public int? PosicionMapa { get; set; }
+
         public ICollection<Sesion> Sesiones { get; set; } = new List<Sesion>();
     }
 }

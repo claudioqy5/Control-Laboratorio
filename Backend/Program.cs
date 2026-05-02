@@ -49,6 +49,11 @@ using (var scope = app.Services.CreateScope())
             BEGIN
                 ALTER TABLE Alumnos ADD CorreoPersonal NVARCHAR(100) NULL
             END
+            
+            IF COL_LENGTH('Equipos', 'PosicionMapa') IS NULL
+            BEGIN
+                ALTER TABLE Equipos ADD PosicionMapa INT NULL
+            END
         ");
     }
     catch { /* Ignore if it fails or already exists */ }

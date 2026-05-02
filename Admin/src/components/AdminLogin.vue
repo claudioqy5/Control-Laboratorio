@@ -43,23 +43,24 @@ const login = async () => {
       </div>
       
       <div style="margin-bottom: 1.25rem;">
-        <label style="color: #374151; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Usuario</label>
-        <input v-model="username" type="text" class="form-input" placeholder="nombre.apellido" style="width:100%; margin-top: 6px;">
+        <label style="color: #374151; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Usuario</label>
+        <input v-model="username" type="text" class="form-input" placeholder="Ingrese su usuario">
       </div>
 
       <div style="margin-bottom: 2rem;">
-        <label style="color: #374151; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Contraseña</label>
-        <input v-model="password" type="password" class="form-input" placeholder="••••••••" style="width:100%; margin-top: 6px;" @keyup.enter="login">
+        <label style="color: #374151; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Contraseña</label>
+        <input v-model="password" type="password" class="form-input" placeholder="••••••••" @keyup.enter="login">
       </div>
 
-      <button class="btn btn-primary" style="width: 100%; padding: 0.875rem; font-weight: 700; font-size: 1rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(159, 18, 57, 0.2);" @click="login" :disabled="loading">
+      <button class="btn-login" @click="login" :disabled="loading">
         {{ loading ? 'Iniciando sesión...' : 'Ingresar al Panel' }}
       </button>
 
       <p v-if="error" style="color: #e11d48; margin-top: 1.25rem; text-align: center; font-size: 0.875rem; font-weight: 600;">{{ error }}</p>
       
-      <div style="margin-top: 2rem; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 1.5rem;">
-        <p style="color: #9ca3af; font-size: 0.75rem;">© 2024 Facultad de Medicina Humana - URP</p>
+      <div style="margin-top: 2.5rem; text-align: center; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 1.5rem;">
+        <p style="color: #64748b; font-size: 0.75rem; font-weight: 600;">© 2024 Facultad de Medicina Humana - URP</p>
+        <p style="color: #cbd5e1; font-size: 0.6rem; margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase;">Designed & Developed by Claudio Quello</p>
       </div>
     </div>
   </div>
@@ -102,35 +103,63 @@ const login = async () => {
   width: 100%;
   height: 100%;
   background: linear-gradient(289deg, rgb(0 0 0 / 45%) 0%, rgb(0 0 0 / 45%) 100%);
-  z-index: 2;  
   
+  z-index: 2;  
 }
 
 .login-box {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 420px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 3rem 2.5rem;
+  max-width: 380px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);  
+  padding: 2.5rem;
   border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.5);
 }
 
 .form-input {
-  padding: 0.875rem 1rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.875rem 1.25rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
-  color: #111827;
+  color: #1e293b;
   font-family: inherit;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 .form-input:focus {
   outline: none;
   border-color: #9f1239;
+  background: #ffffff;
   box-shadow: 0 0 0 4px rgba(159, 18, 57, 0.1);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 1rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: white;
+  background: linear-gradient(135deg, #be123c 0%, #881337 100%);
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.3), 0 4px 6px -4px rgba(159, 18, 57, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-login:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(159, 18, 57, 0.4), 0 8px 10px -6px rgba(159, 18, 57, 0.4);
+}
+.btn-login:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-login:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 </style>

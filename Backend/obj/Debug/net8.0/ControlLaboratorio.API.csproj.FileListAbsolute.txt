@@ -137,3 +137,4 @@ C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net8.
 C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net8.0\ControlLaboratorio.API.pdb
 C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net8.0\ControlLaboratorio.API.genruntimeconfig.cache
 C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net8.0\ref\ControlLaboratorio.API.dll
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\backend\obj\Debug\net8.0\ControlLaboratorio.API.sourcelink.json

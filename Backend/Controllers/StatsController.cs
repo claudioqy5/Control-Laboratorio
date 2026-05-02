@@ -55,12 +55,14 @@ namespace ControlLaboratorio.API.Controllers
         public async Task<IActionResult> GetLaboratoryMap()
         {
             var equipos = await _context.Equipos
+                .OrderBy(e => e.NombreRed)
                 .Select(e => new
                 {
                     e.EquipoID,
                     e.NombreRed,
                     e.Ubicacion,
                     e.Estado,
+                    e.PosicionMapa,
                     SesionActiva = _context.Sesiones
                         .Where(s => s.EquipoID == e.EquipoID && s.HoraFin == null)
                         .Select(s => new
@@ -134,5 +136,32 @@ namespace ControlLaboratorio.API.Controllers
                 distribucionCarrera
             });
         }
+
+        [HttpPost("assign-map-slot")]
+        public async Task<IActionResult> AssignMapSlot([FromBody] AssignMapSlotRequest request)
+        {
+            var equipo = await _context.Equipos.FindAsync(request.EquipoID);
+            if (equipo == null) return NotFound(new { message = "Equipo no encontrado" });
+
+            // Remove this slot from any other PC to prevent duplicates
+            if (request.PosicionMapa != null)
+            {
+                var existing = await _context.Equipos.FirstOrDefaultAsync(e => e.PosicionMapa == request.PosicionMapa);
+                if (existing != null && existing.EquipoID != equipo.EquipoID)
+                {
+                    existing.PosicionMapa = null;
+                }
+            }
+
+            equipo.PosicionMapa = request.PosicionMapa;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Posición asignada correctamente" });
+        }
+    }
+
+    public class AssignMapSlotRequest
+    {
+        public int EquipoID { get; set; }
+        public int? PosicionMapa { get; set; }
     }
 }

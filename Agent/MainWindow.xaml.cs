@@ -86,8 +86,22 @@ namespace ControlLaboratorio.Agent
                 }
                 else
                 {
-                    var error = await response.Content.ReadAsStringAsync();
-                    lblError.Text = "Error: Credenciales inválidas o equipo bloqueado.";
+                    var errorJson = await response.Content.ReadAsStringAsync();
+                    string errorMessage = "Error: Credenciales inválidas o equipo bloqueado.";
+                    
+                    try 
+                    {
+                        using (var doc = System.Text.Json.JsonDocument.Parse(errorJson))
+                        {
+                            if (doc.RootElement.TryGetProperty("message", out var msgElement))
+                            {
+                                errorMessage = msgElement.GetString();
+                            }
+                        }
+                    }
+                    catch { /* Fallback */ }
+                    
+                    lblError.Text = errorMessage;
                     lblError.Visibility = Visibility.Visible;
                 }
             }

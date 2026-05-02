@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ControlLaboratorio.Agent")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9c1cdd0142f0b91525960ebad423cf8b341610d2")]
 [assembly: System.Reflection.AssemblyProductAttribute("ControlLaboratorio.Agent")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ControlLaboratorio.Agent")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
