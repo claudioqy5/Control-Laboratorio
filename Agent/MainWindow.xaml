@@ -1,0 +1,125 @@
+<Window x:Class="ControlLaboratorio.Agent.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Control de Acceso - Laboratorio" 
+        WindowState="Maximized" 
+        WindowStyle="None" 
+        Topmost="True" 
+        Background="#0F172A"
+        FontFamily="Segoe UI Semibold">
+    
+    <Window.Resources>
+        <!-- Animación de movimiento suave horizontal -->
+        <Storyboard x:Key="AnimateBackground">
+            <DoubleAnimation Storyboard.TargetName="BgImageTransform" 
+                             Storyboard.TargetProperty="X"
+                             From="0" To="-200" 
+                             Duration="0:0:30" 
+                             AutoReverse="True" 
+                             RepeatBehavior="Forever" />
+        </Storyboard>
+    </Window.Resources>
+
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Window.Loaded">
+            <BeginStoryboard Storyboard="{StaticResource AnimateBackground}"/>
+        </EventTrigger>
+    </Window.Triggers>
+
+    <Grid x:Name="MainRoot">
+        <!-- Fondo con Imagen Animada -->
+        <Grid ClipToBounds="True">
+            <Image x:Name="BgImage" Source="assets/FondoEstudiante.jpg" 
+                   Stretch="UniformToFill" 
+                   HorizontalAlignment="Left"
+                   Margin="-100">
+                <Image.RenderTransform>
+                    <TranslateTransform x:Name="BgImageTransform" X="0" />
+                </Image.RenderTransform>
+            </Image>
+            
+            <!-- Gradiente Oscuro Superpuesto para mejor legibilidad -->
+            <Rectangle Opacity="0.85">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#FF020617" Offset="0"/>
+                        <GradientStop Color="#AA0F172A" Offset="0.5"/>
+                        <GradientStop Color="#FF020617" Offset="1"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+        </Grid>
+
+        <!-- Contenido del Login -->
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="400">
+            <!-- Logo o Título -->
+            <TextBlock Text="SISTEMA DE CONTROL" Foreground="White" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10">
+                <TextBlock.Effect>
+                    <DropShadowEffect BlurRadius="10" Opacity="0.5" ShadowDepth="2"/>
+                </TextBlock.Effect>
+            </TextBlock>
+            <TextBlock Text="LABORATORIO DE COMPUTO" Foreground="#38BDF8" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,40" FontWeight="Bold"/>
+
+            <!-- Formulario con Efecto Glassmorphism (Frosted Glass) -->
+            <Border CornerRadius="20" Padding="40" BorderBrush="#33FFFFFF" BorderThickness="1.5">
+                <Border.Background>
+                    <SolidColorBrush Color="#1A0F172A" /> 
+                </Border.Background>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="50" Opacity="0.4" ShadowDepth="0" Color="Black"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="CÓDIGO UNIVERSITARIO" Foreground="#94A3B8" Margin="0,0,0,10" FontSize="11" FontWeight="Bold"/>
+                    <TextBox x:Name="txtCodigo" Height="45" Background="#22FFFFFF" Foreground="White" 
+                             BorderBrush="#33FFFFFF" Padding="15,0" Margin="0,0,0,25" 
+                             VerticalContentAlignment="Center" FontSize="16" BorderThickness="1">
+                        <TextBox.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </TextBox.Resources>
+                    </TextBox>
+
+                    <TextBlock Text="DNI / CONTRASEÑA" Foreground="#94A3B8" Margin="0,0,0,10" FontSize="11" FontWeight="Bold"/>
+                    <PasswordBox x:Name="txtDNI" Height="45" Background="#22FFFFFF" Foreground="White" 
+                                 BorderBrush="#33FFFFFF" Padding="15,0" Margin="0,0,0,35" 
+                                 VerticalContentAlignment="Center" FontSize="16" BorderThickness="1">
+                        <PasswordBox.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </PasswordBox.Resources>
+                    </PasswordBox>
+
+                    <Button x:Name="btnLogin" Content="INGRESAR AL SISTEMA" Height="50" 
+                            Background="#9F1239" Foreground="White" BorderThickness="0" 
+                            Click="BtnLogin_Click" FontSize="15" FontWeight="Bold" Cursor="Hand">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </Button.Resources>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#BE123C"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    
+                    <TextBlock x:Name="lblError" Foreground="#FB7185" Margin="0,20,0,0" 
+                               TextAlignment="Center" Visibility="Collapsed" FontWeight="Bold" FontSize="13"/>
+                </StackPanel>
+            </Border>
+
+            <TextBlock x:Name="lblMachineName" Foreground="#94A3B8" Margin="0,25,0,0" 
+                       HorizontalAlignment="Center" FontSize="11" Opacity="0.7"/>
+        </StackPanel>
+    </Grid>
+</Window>

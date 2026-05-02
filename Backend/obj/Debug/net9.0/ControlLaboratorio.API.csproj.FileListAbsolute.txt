@@ -1,0 +1,8 @@
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net9.0\ControlLaboratorio.API.csproj.AssemblyReference.cache
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net9.0\rpswa.dswa.cache.json
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net9.0\ControlLaboratorio.API.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net9.0\ControlLaboratorio.API.AssemblyInfoInputs.cache
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net9.0\ControlLaboratorio.API.AssemblyInfo.cs
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net9.0\ControlLaboratorio.API.csproj.CoreCompileInputs.cache
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net9.0\ControlLaboratorio.API.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Backend\obj\Debug\net9.0\ControlLaboratorio.API.MvcApplicationPartsAssemblyInfo.cache
