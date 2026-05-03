@@ -5,7 +5,7 @@ import axios from 'axios'
 const activeSessions = ref([])
 
 const fetchActive = async () => {
-  const res = await axios.get('https://localhost:7215/api/stats/active')
+  const res = await axios.get('https://bvefamurp.helifyferdigital.cloud/api/stats/active')
   activeSessions.value = res.data
 }
 

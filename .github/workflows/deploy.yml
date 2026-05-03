@@ -1,0 +1,37 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Crear directorio si no existe
+            mkdir -p /var/www/bve-famurp
+            cd /var/www/bve-famurp
+            
+            # Sincronizar código
+            if [ -d .git ]; then
+              git pull origin main || git pull origin master
+            else
+              git clone https://github.com/claudioqy5/Control-Laboratorio.git .
+            fi
+            
+            # Construir y levantar contenedores con Docker Compose
+            docker compose up -d --build
+            
+            # Limpieza opcional de imágenes huérfanas
+            docker image prune -f

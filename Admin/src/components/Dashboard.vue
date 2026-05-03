@@ -20,7 +20,7 @@ let refreshInterval = null
 
 const getDashboardStats = async () => {
   try {
-    const res = await axios.get(`https://localhost:7215/api/stats/dashboard?date=${selectedDate.value}`)
+    const res = await axios.get(`https://bvefamurp.helifyferdigital.cloud/api/stats/dashboard?date=${selectedDate.value}`)
     dashboardData.value = res.data
     loaded.value = true
   } catch (err) {

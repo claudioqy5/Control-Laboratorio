@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import axios from 'axios'
+import { API_BASE_URL } from '../config'
 
 const equipos = ref([])
 const selectedPC = ref(null)
@@ -58,7 +59,7 @@ const submitPassword = async () => {
   }
 
   try {
-    await axios.post('https://localhost:7215/api/stats/assign-map-slot', payload)
+    await axios.post('https://bvefamurp.helifyferdigital.cloud/api/stats/assign-map-slot', payload)
     
     passwordPromptOpen.value = false
     if (pendingAction.value === 'assign') {
@@ -91,7 +92,7 @@ const layoutPositions = [
 
 const fetchMap = async () => {
   try {
-    const res = await axios.get('https://localhost:7215/api/stats/map')
+    const res = await axios.get('https://bvefamurp.helifyferdigital.cloud/api/stats/map')
     equipos.value = res.data
   } catch (error) {
     console.error("Error fetching map:", error)
@@ -135,7 +136,7 @@ const updateSessionLimit = async () => {
     limitDate.setMinutes(parseInt(minutes, 10))
     limitDate.setSeconds(seconds ? parseInt(seconds, 10) : 0)
 
-    const res = await axios.post('https://localhost:7215/api/auth/set-limit', {
+    const res = await axios.post('https://bvefamurp.helifyferdigital.cloud/api/auth/set-limit', {
       sesionId: selectedPC.value.sesionActiva.sesionID,
       nuevaHoraLimite: limitDate.toISOString()
     })
@@ -154,7 +155,7 @@ const forceLogout = async () => {
   if (!confirm("¿Estás seguro de bloquear esta PC inmediatamente?")) return
 
   try {
-    await axios.post('https://localhost:7215/api/auth/logout', {
+    await axios.post(`${API_BASE_URL}/api/auth/logout`, {
       sesionId: selectedPC.value.sesionActiva.sesionID
     })
     selectedPC.value = null
@@ -167,7 +168,7 @@ const forceLogout = async () => {
 const triggerRemoteUnlock = async () => {
   if (!selectedPC.value) return
   try {
-    await axios.post(`https://localhost:7215/api/auth/trigger-remote-unlock/${selectedPC.value.nombreRed}`)
+    await axios.post(`${API_BASE_URL}/api/auth/trigger-remote-unlock/${selectedPC.value.nombreRed}`)
     alert("Se envió la orden de desbloqueo de emergencia al equipo.")
     selectedPC.value = null
     fetchMap()

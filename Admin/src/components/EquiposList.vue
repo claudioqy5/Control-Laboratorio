@@ -15,7 +15,7 @@ const currentEquipo = ref({
 
 const fetchEquipos = async () => {
   try {
-    const res = await axios.get('https://localhost:7215/api/stats/map')
+    const res = await axios.get('https://bvefamurp.helifyferdigital.cloud/api/stats/map')
     equipos.value = res.data
   } catch (error) {
     console.error("Error cargando equipos:", error)
@@ -35,7 +35,7 @@ const toggleEstado = async (equipo) => {
   if (confirm(`¿${equipo.estado ? 'Desactivar' : 'Activar'} el equipo ${equipo.nombreRed}?`)) {
     const updatedEquipo = { ...equipo, estado: !equipo.estado }
     try {
-      await axios.put(`https://localhost:7215/api/equipos/${equipo.equipoID}`, updatedEquipo)
+      await axios.put(`https://bvefamurp.helifyferdigital.cloud/api/equipos/${equipo.equipoID}`, updatedEquipo)
       fetchEquipos()
     } catch (error) {
       console.error("Error al cambiar estado:", error)
@@ -51,7 +51,7 @@ const editEquipo = (equipo) => {
 const deleteEquipo = async (id) => {
   if (confirm("¿Estás seguro de eliminar este equipo? Esta acción no se puede deshacer.")) {
     try {
-      await axios.delete(`https://localhost:7215/api/equipos/${id}`)
+      await axios.delete(`https://bvefamurp.helifyferdigital.cloud/api/equipos/${id}`)
       fetchEquipos()
     } catch (error) {
       console.error("Error al eliminar equipo:", error)
@@ -67,7 +67,7 @@ const saveEquipo = async () => {
   }
   
   try {
-    await axios.put(`https://localhost:7215/api/equipos/${currentEquipo.value.equipoID}`, currentEquipo.value)
+    await axios.put(`https://bvefamurp.helifyferdigital.cloud/api/equipos/${currentEquipo.value.equipoID}`, currentEquipo.value)
     showModal.value = false
     fetchEquipos()
   } catch (error) {

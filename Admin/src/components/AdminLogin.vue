@@ -12,7 +12,7 @@ const login = async () => {
   error.value = ''
   loading.value = true
   try {
-    const res = await axios.post('https://localhost:7215/api/auth/admin-login', {
+    const res = await axios.post('https://bvefamurp.helifyferdigital.cloud/api/auth/admin-login', {
       username: username.value,
       password: password.value
     })

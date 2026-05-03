@@ -1,8 +1,14 @@
 {
   "version": 2,
-  "dgSpecHash": "o8dYNMaFZLU=",
+  "dgSpecHash": "+WdA/OGwanc=",
   "success": true,
   "projectFilePath": "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\ADMIN\\.nuget\\packages\\microsoft.net.illink.tasks\\9.0.10\\microsoft.net.illink.tasks.9.0.10.nupkg.sha512",
+    "C:\\Users\\ADMIN\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\9.0.10\\microsoft.netcore.app.runtime.win-x64.9.0.10.nupkg.sha512",
+    "C:\\Users\\ADMIN\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\9.0.10\\microsoft.windowsdesktop.app.runtime.win-x64.9.0.10.nupkg.sha512",
+    "C:\\Users\\ADMIN\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\9.0.10\\microsoft.aspnetcore.app.runtime.win-x64.9.0.10.nupkg.sha512",
+    "C:\\Users\\ADMIN\\.nuget\\packages\\microsoft.netcore.app.crossgen2.win-x64\\9.0.10\\microsoft.netcore.app.crossgen2.win-x64.9.0.10.nupkg.sha512"
+  ],
   "logs": []
 }

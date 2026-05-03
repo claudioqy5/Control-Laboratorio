@@ -1,0 +1,25 @@
+# .NET folders
+[Bb]in/
+[Oo]bj/
+publish/
+publish_exe/
+
+# Node folders
+node_modules/
+dist/
+
+# Docker
+.dockerignore
+
+# IDEs
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini

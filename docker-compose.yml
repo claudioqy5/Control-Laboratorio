@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  cl-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cl-db
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrongPassword123!
+    volumes:
+      - cl-db-data:/var/opt/mssql
+    networks:
+      - cl-network
+
+  cl-backend:
+    build: 
+      context: ./Backend
+    container_name: cl-backend
+    restart: always
+    environment:
+      - ConnectionStrings__ControlLaboratorioConnection=Server=cl-db;Database=ControlLaboratorio;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ASPNETCORE_ENVIRONMENT=Production
+    depends_on:
+      - cl-db
+    networks:
+      - cl-network
+
+  cl-frontend:
+    build: 
+      context: ./Admin
+    container_name: cl-frontend
+    restart: always
+    ports:
+      - "8080:80"
+    networks:
+      - cl-network
+
+networks:
+  cl-network:
+    driver: bridge
+
+volumes:
+  cl-db-data:

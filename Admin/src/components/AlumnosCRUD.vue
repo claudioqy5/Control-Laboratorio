@@ -25,7 +25,7 @@ const currentAlumno = ref({
 })
 
 const fetchAlumnos = async () => {
-  const res = await axios.get('https://localhost:7215/api/alumnos')
+  const res = await axios.get('https://bvefamurp.helifyferdigital.cloud/api/alumnos')
   alumnos.value = res.data
 }
 
@@ -66,9 +66,9 @@ const prevPage = () => {
 
 const saveAlumno = async () => {
   if (currentAlumno.value.alumnoID) {
-    await axios.put(`https://localhost:7215/api/alumnos/${currentAlumno.value.alumnoID}`, currentAlumno.value)
+    await axios.put(`https://bvefamurp.helifyferdigital.cloud/api/alumnos/${currentAlumno.value.alumnoID}`, currentAlumno.value)
   } else {
-    await axios.post('https://localhost:7215/api/alumnos', currentAlumno.value)
+    await axios.post('https://bvefamurp.helifyferdigital.cloud/api/alumnos', currentAlumno.value)
   }
   showModal.value = false
   fetchAlumnos()
@@ -76,7 +76,7 @@ const saveAlumno = async () => {
 
 const deleteAlumno = async (id) => {
   if (confirm('¿Eliminar registro?')) {
-    await axios.delete(`https://localhost:7215/api/alumnos/${id}`)
+    await axios.delete(`https://bvefamurp.helifyferdigital.cloud/api/alumnos/${id}`)
     fetchAlumnos()
   }
 }
@@ -90,7 +90,7 @@ const toggleEstado = async (alumno) => {
   if (confirm(`¿${alumno.estado ? 'Desactivar' : 'Activar'} a ${alumno.nombres}?`)) {
     const updatedAlumno = { ...alumno, estado: !alumno.estado }
     try {
-      await axios.put(`https://localhost:7215/api/alumnos/${alumno.alumnoID}`, updatedAlumno)
+      await axios.put(`https://bvefamurp.helifyferdigital.cloud/api/alumnos/${alumno.alumnoID}`, updatedAlumno)
       fetchAlumnos()
     } catch (error) {
       console.error("Error al cambiar estado:", error)
@@ -174,7 +174,7 @@ const handleExcelUpload = (event) => {
 const confirmImport = async () => {
   importLoading.value = true
   try {
-    const res = await axios.post('https://localhost:7215/api/alumnos/bulk', importPreviewData.value)
+    const res = await axios.post('https://bvefamurp.helifyferdigital.cloud/api/alumnos/bulk', importPreviewData.value)
     alert(`Importación completada:\n- Procesados: ${res.data.procesados}\n- Insertados: ${res.data.insertados}\n- Omitidos (duplicados): ${res.data.omitidos}`)
     showImportModal.value = false
     fetchAlumnos()

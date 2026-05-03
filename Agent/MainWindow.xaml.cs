@@ -11,7 +11,7 @@ namespace ControlLaboratorio.Agent
 {
     public partial class MainWindow : Window
     {
-        private const string ApiUrl = "https://localhost:7215/api/auth"; // Update with actual URL
+        private const string ApiUrl = "https://bvefamurp.helifyferdigital.cloud/api/auth"; // Producción
         private readonly HttpClient _httpClient = new HttpClient();
         private LowLevelKeyboardProc _proc;
         private IntPtr _hookID = IntPtr.Zero;
