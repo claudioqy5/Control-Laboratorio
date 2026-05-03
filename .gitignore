@@ -21,6 +21,8 @@ dist/
 
 # Agent heavy folders (ignore all publish variations)
 Agent/publish_exe*/
+ControlLaboratorio.Installer/publish_*/
+ControlLaboratorio.Installer/Resources/
 
 # OS files
 Thumbs.db
