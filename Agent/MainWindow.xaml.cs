@@ -43,7 +43,8 @@ namespace ControlLaboratorio.Agent
                 var response = await _httpClient.GetFromJsonAsync<RemoteUnlockResponse>($"{ApiUrl}/check-remote-unlock/{Environment.MachineName}");
                 if (response != null && response.Unlock)
                 {
-                    var sessionBar = new SessionWindow(0, "SUPERADMIN (Remoto)", DateTime.Now.AddHours(3), this);
+                    // Abrir la sesión como Administrador
+                    var sessionBar = new SessionWindow(response.SesionId, "ADMINISTRADOR (Remoto)", DateTime.Now.AddHours(5), this);
                     sessionBar.Show();
                     this.Hide();
                 }
@@ -192,5 +193,6 @@ namespace ControlLaboratorio.Agent
     public class RemoteUnlockResponse
     {
         public bool Unlock { get; set; }
+        public int SesionId { get; set; }
     }
 }

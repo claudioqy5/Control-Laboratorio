@@ -11,7 +11,7 @@ namespace ControlLaboratorio.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        public static HashSet<string> PendingUnlocks = new HashSet<string>();
+
 
         public AuthController(ApplicationDbContext context)
         {
@@ -142,20 +142,56 @@ namespace ControlLaboratorio.API.Controllers
             return Ok(new { message = "Tiempo actualizado.", horaLimite = sesion.HoraLimite });
         }
 
+        private static readonly Dictionary<string, int> PendingUnlocks = new Dictionary<string, int>();
+
         [HttpPost("trigger-remote-unlock/{nombreRed}")]
-        public IActionResult TriggerRemoteUnlock(string nombreRed)
+        public async Task<IActionResult> TriggerRemoteUnlock(string nombreRed)
         {
-            PendingUnlocks.Add(nombreRed);
-            return Ok(new { message = "Desbloqueo enviado al equipo." });
+            var equipo = await _context.Equipos.FirstOrDefaultAsync(e => e.NombreRed == nombreRed);
+            if (equipo == null) return NotFound(new { message = "Equipo no encontrado." });
+
+            // Buscar o crear el alumno Administrador para el registro
+            var admin = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == "ADMIN");
+            if (admin == null)
+            {
+                admin = new Alumno 
+                { 
+                    CodigoUniversitario = "ADMIN", 
+                    DNI = "00000000", 
+                    Nombres = "ADMINISTRADOR", 
+                    ApellidoPaterno = "SISTEMA",
+                    ApellidoMaterno = "BVE",
+                    Email = "admin@bve.com",
+                    Carrera = "SOPORTE"
+                };
+                _context.Alumnos.Add(admin);
+                await _context.SaveChangesAsync();
+            }
+
+            // Crear una sesión virtual para el administrador
+            var sesion = new Sesion
+            {
+                AlumnoID = admin.AlumnoID,
+                EquipoID = equipo.EquipoID,
+                Fecha = DateTime.Now,
+                HoraInicio = DateTime.Now,
+                HoraLimite = DateTime.Now.AddHours(5) // 5 horas por defecto para admin
+            };
+            _context.Sesiones.Add(sesion);
+            await _context.SaveChangesAsync();
+
+            PendingUnlocks[nombreRed] = sesion.SesionID;
+            return Ok(new { message = "Desbloqueo enviado al equipo.", sesionId = sesion.SesionID });
         }
 
         [HttpGet("check-remote-unlock/{nombreRed}")]
         public IActionResult CheckRemoteUnlock(string nombreRed)
         {
-            if (PendingUnlocks.Contains(nombreRed))
+            if (PendingUnlocks.ContainsKey(nombreRed))
             {
+                int sesionId = PendingUnlocks[nombreRed];
                 PendingUnlocks.Remove(nombreRed);
-                return Ok(new { unlock = true });
+                return Ok(new { unlock = true, sesionId = sesionId });
             }
             return Ok(new { unlock = false });
         }
