@@ -1,10 +1,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import * as XLSX from 'xlsx'
 
 const alumnos = ref([])
 const searchQuery = ref('')
 const showModal = ref(false)
+const showImportModal = ref(false)
+const importPreviewData = ref([])
+const currentFileName = ref('')
+const fileInput = ref(null)
+const importLoading = ref(false)
 const currentAlumno = ref({ 
   codigoUniversitario: '', 
   dni: '', 
@@ -68,14 +74,101 @@ const toggleEstado = async (alumno) => {
   }
 }
 
+const handleExcelUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  currentFileName.value = file.name
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result)
+    const workbook = XLSX.read(data, { type: 'array' })
+    const firstSheetName = workbook.SheetNames[0]
+    const worksheet = workbook.Sheets[firstSheetName]
+    const jsonData = XLSX.utils.sheet_to_json(worksheet)
+
+    if (jsonData.length === 0) {
+      alert("El archivo está vacío.")
+      return
+    }
+
+    const mappedData = jsonData.map(row => {
+      const newObj = { 
+        codigoUniversitario: '',
+        dni: '',
+        nombres: '',
+        apellidoPaterno: '',
+        apellidoMaterno: '',
+        carrera: '',
+        telefono: '',
+        correoInstitucional: '',
+        correoPersonal: '',
+        estado: true 
+      }
+      const keys = Object.keys(row)
+      
+      keys.forEach(k => {
+        const key = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+        const val = row[k] ? String(row[k]).trim() : ''
+        
+        if (key.includes('codigo') || key.includes('code') || key === 'id' || key.includes('universitario')) 
+          newObj.codigoUniversitario = val
+        else if (key.includes('dni') || key.includes('documento') || key === 'doc') 
+          newObj.dni = val
+        else if (key.includes('nombres') || key === 'nombre' || key === 'name') 
+          newObj.nombres = val
+        else if (key.includes('paterno') || key.includes('apellido1') || key.includes('last name') || key === 'a. paterno') 
+          newObj.apellidoPaterno = val
+        else if (key.includes('materno') || key.includes('apellido2') || key === 'a. materno') 
+          newObj.apellidoMaterno = val
+        else if (key.includes('carrera') || key.includes('especialidad') || key.includes('facultad') || key.includes('cargo')) 
+          newObj.carrera = val
+        else if (key.includes('telefono') || key.includes('celular') || key.includes('phone')) 
+          newObj.telefono = val
+        else if (key.includes('institucional') || key === 'correo' || key === 'email') 
+          newObj.correoInstitucional = val
+        else if (key.includes('personal') || key.includes('correo2')) 
+          newObj.correoPersonal = val
+      })
+      
+      // If code is empty, generate a temporary one to avoid Bad Request
+      if (!newObj.codigoUniversitario) {
+        newObj.codigoUniversitario = "TEMP-" + Math.random().toString(36).substr(2, 6).toUpperCase()
+      }
+      if (!newObj.dni) newObj.dni = "-"
+      
+      return newObj
+    })
+
+    importPreviewData.value = mappedData
+    showImportModal.value = true
+    event.target.value = '' // Reset input
+  }
+  reader.readAsArrayBuffer(file)
+}
+
+const confirmImport = async () => {
+  importLoading.value = true
+  try {
+    const res = await axios.post('https://localhost:7215/api/alumnos/bulk', importPreviewData.value)
+    alert(`Importación completada:\n- Procesados: ${res.data.procesados}\n- Insertados: ${res.data.insertados}\n- Omitidos (duplicados): ${res.data.omitidos}`)
+    showImportModal.value = false
+    fetchAlumnos()
+  } catch (error) {
+    console.error("Error en importación", error)
+    alert("Ocurrió un error al cargar los datos.")
+  } finally {
+    importLoading.value = false
+  }
+}
+
 onMounted(fetchAlumnos)
 </script>
 
 <template>
   <div>
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
-      <div>
-        <div style="color: #9f1239; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem;">Usuarios</div>
+      <div>        
         <h2 style="color: #111827; font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem;">Participantes</h2>
         <div style="color: #6b7280; font-size: 0.875rem;">{{ alumnos.length }} Registrados</div>
       </div>
@@ -84,6 +177,11 @@ onMounted(fetchAlumnos)
           <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input type="text" v-model="searchQuery" placeholder="Buscar por nombre, código o DNI..." style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; width: 300px; font-size: 0.875rem; color: #111827;">
         </div>
+        <input type="file" ref="fileInput" @change="handleExcelUpload" accept=".xlsx, .xls" style="display: none;">
+        <button class="btn" style="background: #ffffff; color: #16a34a; border: 1px solid #16a34a; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="$refs.fileInput.click()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg>
+          Cargar Excel
+        </button>
         <button class="btn btn-primary" @click="currentAlumno = { estado: true }; showModal = true">Nuevo</button>
       </div>
     </div>
@@ -207,6 +305,83 @@ onMounted(fetchAlumnos)
         </div>
       </div>
     </div>
+
+    <!-- Modal Vista Previa Excel -->
+    <div v-if="showImportModal" class="modal-backdrop" @click.self="showImportModal = false">
+      <div class="modal-card" style="max-width: 1100px;">
+        <div class="modal-header">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon" style="background: #dcfce7; color: #16a34a;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; line-height: 1;">Vista Previa de Importación</h3>
+              <span style="font-size: 0.8rem; color: #16a34a; font-weight: 600;">Archivo: {{ currentFileName }}</span>
+            </div>
+          </div>
+          <button class="close-btn" @click="showImportModal = false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        
+        <div class="modal-body" style="max-height: 90vh; overflow-y: auto; padding: 1.5rem;">
+          <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 1rem; display: flex; gap: 12px; align-items: flex-start;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <div>
+              <div style="color: #0369a1; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px;">RECOMENDACIÓN DE COLUMNAS</div>
+              <p style="color: #0c4a6e; font-size: 0.8rem; margin: 0; line-height: 1.4;">
+                Para una carga automática, asegúrate que tu Excel tenga cabeceras similares a estas: 
+                <strong style="color: #0369a1;">Código, DNI, Nombres, Apellido Paterno, Apellido Materno, Carrera, Teléfono, Correo Institucional, Correo Personal.</strong>
+              </p>
+            </div>
+          </div>
+
+          <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Se han detectado <strong>{{ importPreviewData.length }}</strong> registros. Revisa que el mapeo de columnas sea correcto antes de procesar.</p>
+          
+          <table class="centered-table" style="font-size: 0.75rem;">
+            <thead>
+              <tr style="background: #f8fafc;">
+                <th>N°</th>
+                <th>Código</th>
+                <th>DNI</th>
+                <th>Nombres</th>
+                <th>A. Paterno</th>
+                <th>A. Materno</th>
+                <th>Institucional</th>
+                <th>Personal</th>
+                <th>Carrera</th>
+                <th>Teléfono</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, idx) in importPreviewData" :key="idx">
+                <td style="color: #94a3b8;">{{ idx + 1 }}</td>
+                <td style="font-weight: 700;">{{ row.codigoUniversitario || '-' }}</td>
+                <td>{{ row.dni || '-' }}</td>
+                <td>{{ row.nombres || '-' }}</td>
+                <td>{{ row.apellidoPaterno || '-' }}</td>
+                <td>{{ row.apellidoMaterno || '-' }}</td>
+                <td style="color: #0ea5e9;">{{ row.correoInstitucional || '-' }}</td>
+                <td style="color: #64748b;">{{ row.correoPersonal || '-' }}</td>
+                <td>{{ row.carrera || '-' }}</td>
+                <td>{{ row.telefono || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-footer">
+          <span style="margin-right: auto; color: #64748b; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            Los duplicados por código serán omitidos automáticamente.
+          </span>
+          <button class="btn btn-secondary" @click="showImportModal = false">Cancelar</button>
+          <button class="btn premium-btn" style="background: #16a34a;" @click="confirmImport" :disabled="importLoading">
+            {{ importLoading ? 'Procesando...' : 'Procesar e Importar' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -270,6 +445,7 @@ onMounted(fetchAlumnos)
 .modal-card {
   width: 100%;
   max-width: 650px;
+  height: 90vh;
   background: #ffffff;
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -332,7 +508,7 @@ onMounted(fetchAlumnos)
   padding: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  
 }
 
 .form-grid-2 {

@@ -56,5 +56,31 @@ namespace ControlLaboratorio.API.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpPost("bulk")]
+        public async Task<IActionResult> BulkImport(List<Alumno> alumnos)
+        {
+            if (alumnos == null || alumnos.Count == 0) return BadRequest("Lista vacía");
+
+            var codigosExistentes = await _context.Alumnos
+                .Select(a => a.CodigoUniversitario)
+                .ToListAsync();
+
+            var nuevosAlumnos = alumnos
+                .Where(a => !codigosExistentes.Contains(a.CodigoUniversitario))
+                .ToList();
+
+            if (nuevosAlumnos.Count > 0)
+            {
+                _context.Alumnos.AddRange(nuevosAlumnos);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { 
+                procesados = alumnos.Count, 
+                insertados = nuevosAlumnos.Count, 
+                omitidos = alumnos.Count - nuevosAlumnos.Count 
+            });
+        }
     }
 }
