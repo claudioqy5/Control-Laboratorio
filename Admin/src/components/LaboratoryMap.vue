@@ -25,31 +25,56 @@ const openAssignModal = (index) => {
   assignModalOpen.value = true
 }
 
-const assignEquipoToSlot = async (equipoId) => {
-  try {
-    await axios.post('https://localhost:7215/api/stats/assign-map-slot', {
-      equipoId: equipoId,
-      posicionMapa: selectedSlotIndex.value
-    })
-    assignModalOpen.value = false
-    fetchMap()
-  } catch (error) {
-    console.error("Error assigning slot:", error)
-    alert("Error al asignar el equipo")
-  }
+const passwordPromptOpen = ref(false)
+const passwordInput = ref('')
+const pendingAction = ref(null)
+const pendingEquipoId = ref(null)
+
+const requestAssignEquipo = (equipoId) => {
+  pendingAction.value = 'assign'
+  pendingEquipoId.value = equipoId
+  passwordInput.value = ''
+  passwordPromptOpen.value = true
 }
 
-const unassignEquipo = async (equipoId) => {
+const requestUnassignEquipo = (equipoId) => {
   if (!confirm("¿Seguro que deseas desvincular este equipo de esta posición?")) return
+  pendingAction.value = 'unassign'
+  pendingEquipoId.value = equipoId
+  passwordInput.value = ''
+  passwordPromptOpen.value = true
+}
+
+const submitPassword = async () => {
+  if (!passwordInput.value) {
+    alert("Ingresa una contraseña.")
+    return
+  }
+
+  const payload = {
+    equipoId: pendingEquipoId.value,
+    posicionMapa: pendingAction.value === 'assign' ? selectedSlotIndex.value : null,
+    password: passwordInput.value
+  }
+
   try {
-    await axios.post('https://localhost:7215/api/stats/assign-map-slot', {
-      equipoId: equipoId,
-      posicionMapa: null
-    })
-    selectedPC.value = null
+    await axios.post('https://localhost:7215/api/stats/assign-map-slot', payload)
+    
+    passwordPromptOpen.value = false
+    if (pendingAction.value === 'assign') {
+      assignModalOpen.value = false
+    } else {
+      selectedPC.value = null
+    }
     fetchMap()
+    
   } catch (error) {
-    console.error("Error unassigning slot:", error)
+    if (error.response && error.response.status === 401) {
+      alert("Contraseña incorrecta. Acción denegada.")
+    } else {
+      console.error("Error asignando/desvinculando equipo:", error)
+      alert("Ocurrió un error al intentar modificar el mapa.")
+    }
   }
 }
 
@@ -274,7 +299,7 @@ onUnmounted(() => {
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 15px;">
-          <button class="btn" style="flex: 1; background: #fef2f2; color: #ef4444; font-size: 0.85rem; font-weight: 600; padding: 10px; border-radius: 8px; border: 1px solid #fee2e2;" @click="unassignEquipo(selectedPC.equipoID)">Desvincular Equipo</button>
+          <button class="btn" style="flex: 1; background: #fef2f2; color: #ef4444; font-size: 0.85rem; font-weight: 600; padding: 10px; border-radius: 8px; border: 1px solid #fee2e2;" @click="requestUnassignEquipo(selectedPC.equipoID)">Desvincular Equipo</button>
           <button class="btn" style="flex: 1; background: transparent; color: #9ca3af; font-size: 0.85rem; font-weight: 600; padding: 10px; border-radius: 8px;" @click="selectedPC = null">Cerrar ventana</button>
         </div>
       </div>
@@ -295,7 +320,7 @@ onUnmounted(() => {
         
         <div v-else style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
           <div v-for="eq in unassignedEquipos" :key="eq.equipoID" 
-               @click="assignEquipoToSlot(eq.equipoID)"
+               @click="requestAssignEquipo(eq.equipoID)"
                style="padding: 12px 15px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s;"
                onmouseover="this.style.borderColor='#0ea5e9'; this.style.background='#f0f9ff';"
                onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='transparent';">
@@ -308,6 +333,25 @@ onUnmounted(() => {
         </div>
 
         <button class="btn" style="margin-top: 20px; width: 100%; background: transparent; color: #9ca3af; font-size: 0.85rem; font-weight: 600;" @click="assignModalOpen = false">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Modal de Contraseña -->
+    <div v-if="passwordPromptOpen" class="detail-overlay" @click.self="passwordPromptOpen = false">
+      <div class="card detail-card" style="max-width: 400px; text-align: center;" @click.stop>
+        <div style="background: #fef2f2; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <h3 style="margin: 0 0 10px; color: rgb(17, 24, 39); font-weight: 700; font-size: 1.25rem;">Acción Protegida</h3>
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Ingresa la contraseña de administrador para confirmar esta modificación en el mapa.</p>
+        
+        <input type="password" v-model="passwordInput" placeholder="Contraseña..." @keyup.enter="submitPassword"
+          style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box; text-align: center; letter-spacing: 2px;">
+        
+        <div style="display: flex; gap: 10px;">
+          <button class="btn" style="flex: 1; background: transparent; color: #64748b; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; font-weight: 600;" @click="passwordPromptOpen = false">Cancelar</button>
+          <button class="btn" style="flex: 1; background: #ef4444; color: white; padding: 10px; border-radius: 8px; font-weight: 700; border: none;" @click="submitPassword">Confirmar</button>
+        </div>
       </div>
     </div>
   </div>

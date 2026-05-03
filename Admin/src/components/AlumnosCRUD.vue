@@ -30,15 +30,39 @@ const fetchAlumnos = async () => {
 }
 
 const filteredAlumnos = computed(() => {
-  if (!searchQuery.value) return alumnos.value
-  const query = searchQuery.value.toLowerCase()
-  return alumnos.value.filter(a => 
-    a.nombres.toLowerCase().includes(query) || 
-    a.apellidoPaterno.toLowerCase().includes(query) || 
-    a.codigoUniversitario.toLowerCase().includes(query) || 
-    (a.dni && a.dni.toLowerCase().includes(query))
-  )
+  let result = alumnos.value
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    result = alumnos.value.filter(a => 
+      a.nombres.toLowerCase().includes(query) || 
+      a.apellidoPaterno.toLowerCase().includes(query) || 
+      a.codigoUniversitario.toLowerCase().includes(query) || 
+      (a.dni && a.dni.toLowerCase().includes(query))
+    )
+  }
+  return result
 })
+
+const currentPage = ref(1)
+const pageSize = 10
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredAlumnos.value.length / pageSize) || 1
+})
+
+const paginatedAlumnos = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  const end = start + pageSize
+  return filteredAlumnos.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--
+}
 
 const saveAlumno = async () => {
   if (currentAlumno.value.alumnoID) {
@@ -175,7 +199,7 @@ onMounted(fetchAlumnos)
       <div style="display: flex; gap: 1rem; align-items: center;">
         <div style="position: relative;">
           <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" v-model="searchQuery" placeholder="Buscar por nombre, código o DNI..." style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; width: 300px; font-size: 0.875rem; color: #111827;">
+          <input type="text" v-model="searchQuery" @input="currentPage = 1" placeholder="Buscar por nombre, código o DNI..." style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; width: 300px; font-size: 0.875rem; color: #111827;">
         </div>
         <input type="file" ref="fileInput" @change="handleExcelUpload" accept=".xlsx, .xls" style="display: none;">
         <button class="btn" style="background: #ffffff; color: #16a34a; border: 1px solid #16a34a; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="$refs.fileInput.click()">
@@ -199,8 +223,8 @@ onMounted(fetchAlumnos)
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(a, index) in filteredAlumnos" :key="a.alumnoID">
-          <td style="color: #6b7280; font-weight: 600;">{{ index + 1 }}</td>
+        <tr v-for="(a, index) in paginatedAlumnos" :key="a.alumnoID">
+          <td style="color: #6b7280; font-weight: 600;">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
           <td><strong style="color: #111827;">{{ a.codigoUniversitario }}</strong></td>
           <td>{{ a.dni }}</td>
           <td>{{ a.nombres }} {{ a.apellidoPaterno }} {{ a.apellidoMaterno }}</td>
@@ -225,6 +249,28 @@ onMounted(fetchAlumnos)
         </tr>
       </tbody>
     </table>
+
+    <!-- Paginación -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <span style="color: #64748b; font-size: 0.875rem; font-weight: 500;">
+        Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ Math.min(currentPage * pageSize, filteredAlumnos.length) }} de {{ filteredAlumnos.length }} registros
+      </span>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button class="btn" style="background: white; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 4px;" @click="prevPage" :disabled="currentPage === 1" :style="{ opacity: currentPage === 1 ? '0.5' : '1', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Anterior
+        </button>
+        
+        <span style="color: #111827; font-size: 0.875rem; font-weight: 600; padding: 0 0.5rem;">
+          Página {{ currentPage }} de {{ totalPages }}
+        </span>
+
+        <button class="btn" style="background: white; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 4px;" @click="nextPage" :disabled="currentPage === totalPages" :style="{ opacity: currentPage === totalPages ? '0.5' : '1', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }">
+          Siguiente
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
 
     <!-- Premium Modal Overlay -->
     <div v-if="showModal" class="modal-backdrop" @click.self="showModal = false">

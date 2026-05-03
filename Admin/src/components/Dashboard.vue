@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
+import * as XLSX from 'xlsx'
 import { Line, Doughnut, Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Filler } from 'chart.js'
 
@@ -8,10 +9,18 @@ ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale,
 
 const dashboardData = ref(null)
 const loaded = ref(false)
+// Obtener fecha actual en zona horaria de Perú (UTC-5)
+const getPeruDate = () => {
+  const options = { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' };
+  const formatter = new Intl.DateTimeFormat('en-CA', options); // en-CA da formato YYYY-MM-DD
+  return formatter.format(new Date());
+}
+const selectedDate = ref(getPeruDate())
+let refreshInterval = null
 
 const getDashboardStats = async () => {
   try {
-    const res = await axios.get('https://localhost:7215/api/stats/dashboard')
+    const res = await axios.get(`https://localhost:7215/api/stats/dashboard?date=${selectedDate.value}`)
     dashboardData.value = res.data
     loaded.value = true
   } catch (err) {
@@ -19,9 +28,40 @@ const getDashboardStats = async () => {
   }
 }
 
+const exportToExcel = (type) => {
+  if (!dashboardData.value) return
+  
+  let dataToExport = []
+  let fileName = ""
+  
+  if (type === 'hourly') {
+    fileName = `Afluencia_Horaria_${selectedDate.value}.xlsx`
+    dataToExport = dashboardData.value.afluenciaPorHora.map((count, i) => ({
+      Hora: `${i + 7}:00`,
+      Sesiones: count
+    }))
+  } else if (type === 'weekly') {
+    fileName = `Asistencia_Semanal_${selectedDate.value}.xlsx`
+    dataToExport = dashboardData.value.afluenciaPorDia.map(d => ({
+      Fecha: d.dia,
+      Sesiones: d.cantidad
+    }))
+  }
+  
+  const ws = XLSX.utils.json_to_sheet(dataToExport)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, "Reporte")
+  XLSX.writeFile(wb, fileName)
+}
+
 onMounted(() => {
   getDashboardStats()
-  setInterval(getDashboardStats, 10000) 
+  refreshInterval = setInterval(() => {
+    // Solo refrescar si es el día de hoy en Perú
+    if (selectedDate.value === getPeruDate()) {
+      getDashboardStats()
+    }
+  }, 10000) 
 })
 
 const ocupacionPorcentaje = computed(() => {
@@ -104,13 +144,19 @@ const donutOptions = {
   <div v-if="loaded" class="dashboard-wrapper">
     <!-- Header Minimal -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <div>
-        <h2 style="color: #111827; font-size: 1.5rem; font-weight: 800; margin: 0;">Resumen General</h2>
-        <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Control en tiempo real · {{ new Date().toLocaleDateString() }}</p>
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <div>
+          <h2 style="color: #111827; font-size: 1.5rem; font-weight: 800; margin: 0;">Resumen General</h2>
+          <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Control en tiempo real · {{ selectedDate }}</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <input type="date" v-model="selectedDate" @change="getDashboardStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+        </div>
       </div>
       <div class="status-pill">
         <span class="pulse-dot"></span>
-        Sistema en línea
+        {{ selectedDate === new Date().toISOString().split('T')[0] ? 'Sistema en línea' : 'Datos Históricos' }}
       </div>
     </div>
 
@@ -152,8 +198,14 @@ const donutOptions = {
       <div class="charts-left">
         <div class="chart-box">
           <div class="chart-header">
-            <span>Afluencia por hora (Últimas 24h)</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline></svg>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>Afluencia por hora</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline></svg>
+            </div>
+            <button @click="exportToExcel('hourly')" class="export-btn" title="Descargar Excel">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Reporte
+            </button>
           </div>
           <div class="chart-container">
             <Line :data="lineChartData" :options="commonOptions" />
@@ -162,8 +214,14 @@ const donutOptions = {
         
         <div class="chart-box">
           <div class="chart-header">
-            <span>Asistencia Semanal</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="18" y="3" width="4" height="18"></rect><rect x="10" y="8" width="4" height="13"></rect><rect x="2" y="13" width="4" height="8"></rect></svg>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>Asistencia Semanal</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="18" y="3" width="4" height="18"></rect><rect x="10" y="8" width="4" height="13"></rect><rect x="2" y="13" width="4" height="8"></rect></svg>
+            </div>
+            <button @click="exportToExcel('weekly')" class="export-btn" title="Descargar Excel">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Reporte
+            </button>
           </div>
           <div class="chart-container">
             <Bar :data="barChartData" :options="commonOptions" />
@@ -338,4 +396,29 @@ const donutOptions = {
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.export-btn svg {
+  color: #16a34a; /* Color verde para excel */
+}
 </style>

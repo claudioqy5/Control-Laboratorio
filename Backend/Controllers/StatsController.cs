@@ -1,6 +1,7 @@
 using ControlLaboratorio.API.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace ControlLaboratorio.API.Controllers
 {
@@ -78,48 +79,57 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpGet("dashboard")]
-        public async Task<IActionResult> GetDashboardStats()
+        public async Task<IActionResult> GetDashboardStats([FromQuery] DateTime? date)
         {
-            var now = DateTime.Now;
-            var todayStart = now.Date;
-            var lastMonth = now.AddMonths(-1);
+            var targetDate = date?.Date ?? DateTime.Now.Date;
+            var targetDayEnd = targetDate.AddDays(1);
 
-            var sesionesActivas = await _context.Sesiones.CountAsync(s => s.HoraFin == null);
+            // Sesiones activas (Solo tiene sentido para hoy)
+            var sesionesActivas = (targetDate == DateTime.Now.Date) 
+                ? await _context.Sesiones.CountAsync(s => s.HoraFin == null)
+                : 0;
+
             var totalEstaciones = await _context.Equipos.CountAsync();
-            var sesionesHoy = await _context.Sesiones.CountAsync(s => s.HoraInicio >= todayStart);
+            
+            // Sesiones en el día seleccionado
+            var sesionesHoy = await _context.Sesiones.CountAsync(s => s.HoraInicio >= targetDate && s.HoraInicio < targetDayEnd);
 
             var closedSessions = await _context.Sesiones
-                .Where(s => s.HoraFin != null && s.HoraInicio >= lastMonth)
+                .Where(s => s.HoraFin != null && s.HoraInicio >= targetDate && s.HoraInicio < targetDayEnd)
                 .ToListAsync();
 
             var tiempoPromedioMinutos = closedSessions.Any() 
                 ? closedSessions.Average(s => (s.HoraFin!.Value - s.HoraInicio).TotalMinutes)
                 : 0;
 
+            // Afluencia por hora del día seleccionado
             var afluenciaPorHoraRaw = await _context.Sesiones
-                .Where(s => s.HoraInicio >= lastMonth)
+                .Where(s => s.HoraInicio >= targetDate && s.HoraInicio < targetDayEnd)
                 .GroupBy(s => s.HoraInicio.Hour)
                 .Select(g => new { Hora = g.Key, Cantidad = g.Count() })
                 .ToDictionaryAsync(k => k.Hora, v => v.Cantidad);
 
             var afluenciaPorHora = Enumerable.Range(7, 15).Select(h => afluenciaPorHoraRaw.ContainsKey(h) ? afluenciaPorHoraRaw[h] : 0).ToList();
 
+            // Asistencia semanal relativa al día seleccionado (los 7 días anteriores)
+            var weekStart = targetDate.AddDays(-6);
             var afluenciaPorDiaRaw = await _context.Sesiones
-                .Where(s => s.HoraInicio >= now.AddDays(-6))
+                .Where(s => s.HoraInicio >= weekStart && s.HoraInicio < targetDayEnd)
                 .GroupBy(s => s.HoraInicio.Date)
                 .Select(g => new { Fecha = g.Key, Cantidad = g.Count() })
                 .ToDictionaryAsync(k => k.Fecha, v => v.Cantidad);
 
+            var culture = new CultureInfo("es-PE");
             var afluenciaPorDia = Enumerable.Range(0, 7).Select(i => {
-                var d = now.Date.AddDays(-6 + i);
+                var d = weekStart.AddDays(i);
                 return new {
-                    Dia = d.ToString("dd/MM"),
+                    Dia = culture.TextInfo.ToTitleCase(d.ToString("ddd dd", culture)).Replace(".", ""),
                     Cantidad = afluenciaPorDiaRaw.ContainsKey(d) ? afluenciaPorDiaRaw[d] : 0
                 };
             }).ToList();
 
             var distribucionCarrera = await _context.Sesiones
-                .Where(s => s.HoraInicio >= lastMonth)
+                .Where(s => s.HoraInicio >= targetDate && s.HoraInicio < targetDayEnd)
                 .Include(s => s.Alumno)
                 .Where(s => s.Alumno != null && !string.IsNullOrEmpty(s.Alumno.Carrera))
                 .GroupBy(s => s.Alumno!.Carrera)
@@ -140,6 +150,11 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("assign-map-slot")]
         public async Task<IActionResult> AssignMapSlot([FromBody] AssignMapSlotRequest request)
         {
+            if (request.Password != "admin12345")
+            {
+                return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
+            }
+
             var equipo = await _context.Equipos.FindAsync(request.EquipoID);
             if (equipo == null) return NotFound(new { message = "Equipo no encontrado" });
 
@@ -163,5 +178,6 @@ namespace ControlLaboratorio.API.Controllers
     {
         public int EquipoID { get; set; }
         public int? PosicionMapa { get; set; }
+        public string Password { get; set; } = string.Empty;
     }
 }

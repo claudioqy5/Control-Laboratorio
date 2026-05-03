@@ -87,16 +87,26 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
         {
-            var sesion = await _context.Sesiones.FindAsync(request.SesionId);
+            var sesion = await _context.Sesiones
+                .Include(s => s.Alumno)
+                .FirstOrDefaultAsync(s => s.SesionID == request.SesionId);
+
             if (sesion == null)
             {
                 return NotFound(new { message = "Sesión no encontrada." });
             }
 
             sesion.HoraFin = DateTime.Now;
+
+            // Desactivar al alumno automáticamente al finalizar su sesión
+            if (sesion.Alumno != null)
+            {
+                sesion.Alumno.Estado = false;
+            }
+
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Sesión finalizada correctamente." });
+            return Ok(new { message = "Sesión finalizada y alumno desactivado correctamente." });
         }
 
         [HttpPost("admin-login")]
