@@ -19,6 +19,10 @@ dist/
 *.userosscache
 *.sln.docstates
 
+# Agent heavy folders
+Agent/publish_exe/
+Agent/publish_exe_final/
+
 # OS files
 Thumbs.db
 ehthumbs.db
