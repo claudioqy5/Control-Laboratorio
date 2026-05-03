@@ -29,6 +29,9 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     try
     {
+        // Crear base de datos y tablas si no existen
+        db.Database.EnsureCreated();
+
         db.Database.ExecuteSqlRaw(@"
             IF COL_LENGTH('Sesiones', 'HoraLimite') IS NULL
             BEGIN
