@@ -145,13 +145,13 @@ const updateSessionLimit = async () => {
     limitDate.setMinutes(parseInt(minutes, 10))
     limitDate.setSeconds(seconds ? parseInt(seconds, 10) : 0)
 
-    // Formatear como fecha local para evitar conversiones UTC
+    // Formatear como fecha local CON OFFSET DE LIMA (-05:00) para evitar desfaces
     const localISO = limitDate.getFullYear() + '-' + 
       String(limitDate.getMonth() + 1).padStart(2, '0') + '-' + 
       String(limitDate.getDate()).padStart(2, '0') + 'T' + 
       String(limitDate.getHours()).padStart(2, '0') + ':' + 
       String(limitDate.getMinutes()).padStart(2, '0') + ':' + 
-      String(limitDate.getSeconds()).padStart(2, '0');
+      String(limitDate.getSeconds()).padStart(2, '0') + '-05:00';
 
     const res = await axios.post(`${API_BASE_URL}/api/auth/set-limit`, {
       sesionId: selectedPC.value.sesionActiva.sesionID,

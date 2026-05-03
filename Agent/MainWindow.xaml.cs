@@ -24,13 +24,14 @@ namespace ControlLaboratorio.Agent
             lblMachineName.Text = $"Equipo: {Environment.MachineName}";
             _proc = HookCallback;
             _hookID = SetHook(_proc);
-            this.Closing += (s, e) => UnhookWindowsHookEx(_hookID);
+            this.Closing += (s, e) => { if (this.Visibility == Visibility.Visible) e.Cancel = true; else UnhookWindowsHookEx(_hookID); };
 
             // Iniciar timer para desbloqueo remoto
             _remoteUnlockTimer = new DispatcherTimer();
             _remoteUnlockTimer.Interval = TimeSpan.FromSeconds(3);
             _remoteUnlockTimer.Tick += RemoteUnlockTimer_Tick;
             _remoteUnlockTimer.Start();
+            this.Activated += (s, e) => txtCodigo.Focus();
         }
 
         private async void RemoteUnlockTimer_Tick(object sender, EventArgs e)
@@ -55,11 +56,10 @@ namespace ControlLaboratorio.Agent
             lblError.Visibility = Visibility.Collapsed;
             
             // LOGICA DE EMERGENCIA (SUPERADMINISTRADOR)
-            // Si el código es el de emergencia, desbloqueamos sin internet.
             if (txtCodigo.Text == "ADMIN_MASTER_99")
             {
                 MessageBox.Show("ACCESO DE EMERGENCIA ACTIVADO", "SuperAdministrador");
-                this.Close(); // O Hide() dependiendo de si quieres cerrar el app
+                Application.Current.Shutdown(); // Cerrar todo el sistema
                 return;
             }
 
@@ -79,7 +79,8 @@ namespace ControlLaboratorio.Agent
                     var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
                     _currentSesionId = result.SesionId;
                     
-                    // Abrir la barra de sesión y ocultar el bloqueo
+                    // Limpiar y ocultar el bloqueo
+                    ClearFields();
                     var sessionBar = new SessionWindow(_currentSesionId, result.Alumno.Nombres, result.HoraLimite, this);
                     sessionBar.Show();
                     this.Hide();
@@ -116,6 +117,14 @@ namespace ControlLaboratorio.Agent
             }
         }
 
+        public void ClearFields()
+        {
+            txtCodigo.Text = "";
+            txtDNI.Password = "";
+            lblError.Visibility = Visibility.Collapsed;
+            txtCodigo.Focus();
+        }
+
         #region Win32 Keyboard Hook logic
 
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
@@ -131,17 +140,19 @@ namespace ControlLaboratorio.Agent
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
+            if (nCode >= 0)
             {
                 int vkCode = Marshal.ReadInt32(lParam);
-                Key key = KeyInterop.KeyFromVirtualKey(vkCode);
-
-                // Bloquear Alt+Tab, Alt+F4, Win Key
-                bool alt = Keyboard.Modifiers.HasFlag(ModifierKeys.Alt);
                 
-                if (key == Key.System && alt && (key == Key.Tab || key == Key.F4)) return (IntPtr)1;
-                if (key == Key.LWin || key == Key.RWin) return (IntPtr)1;
-                if (alt && key == Key.Tab) return (IntPtr)1;
+                // Bloqueos críticos:
+                // 91/92 = Tecla Windows, 115 = F4 (Alt+F4), 9 = Tab (Alt+Tab), 27 = Esc (Ctrl+Esc)
+                bool isAlt = (Keyboard.Modifiers & ModifierKeys.Alt) != 0;
+                bool isCtrl = (Keyboard.Modifiers & ModifierKeys.Control) != 0;
+
+                if (vkCode == 91 || vkCode == 92) return (IntPtr)1; // Teclas Windows
+                if (isAlt && vkCode == 115) return (IntPtr)1;      // Alt + F4
+                if (isAlt && vkCode == 9) return (IntPtr)1;        // Alt + Tab
+                if (isCtrl && vkCode == 27) return (IntPtr)1;      // Ctrl + Esc
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
         }

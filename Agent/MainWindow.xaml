@@ -7,6 +7,8 @@
         Title="Control de Acceso - Laboratorio" 
         WindowState="Maximized" 
         WindowStyle="None" 
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
         Topmost="True" 
         Background="#0F172A"
         FontFamily="Segoe UI Semibold">
