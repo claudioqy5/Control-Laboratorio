@@ -1,12 +1,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { API_BASE_URL } from '../config'
 
 const activeSessions = ref([])
 
 const fetchActive = async () => {
-  const res = await axios.get('https://bvefamurp.helifyferdigital.cloud/api/stats/active')
+  const res = await axios.get(`${API_BASE_URL}/api/stats/active`)
   activeSessions.value = res.data
+}
+
+const formatTime12h = (isoString) => {
+  if (!isoString) return ''
+  return new Date(isoString).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
 }
 
 onMounted(() => {
@@ -34,7 +44,7 @@ onMounted(() => {
         <tr v-for="s in activeSessions" :key="s.sesionID">
           <td><span style="background: #ccfbf1; color: #0f766e; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #5eead4;">{{ s.equipo }}</span></td>
           <td>{{ s.alumno }}</td>
-          <td>{{ new Date(s.horaInicio).toLocaleTimeString() }}</td>
+          <td>{{ formatTime12h(s.horaInicio) }}</td>
           <td><span style="color: #10b981; font-weight: bold;">● Conectado</span></td>
         </tr>
         <tr v-if="activeSessions.length === 0">

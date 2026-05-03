@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import * as XLSX from 'xlsx'
+import { API_BASE_URL } from '../config'
 import { Line, Doughnut, Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Filler } from 'chart.js'
 
@@ -9,6 +10,14 @@ ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale,
 
 const dashboardData = ref(null)
 const loaded = ref(false)
+
+// Helper para convertir hora 24h a 12h con AM/PM
+const formatHour12 = (h) => {
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour} ${period}`
+}
+
 // Obtener fecha actual en zona horaria de Perú (UTC-5)
 const getPeruDate = () => {
   const options = { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' };
@@ -20,7 +29,7 @@ let refreshInterval = null
 
 const getDashboardStats = async () => {
   try {
-    const res = await axios.get(`https://bvefamurp.helifyferdigital.cloud/api/stats/dashboard?date=${selectedDate.value}`)
+    const res = await axios.get(`${API_BASE_URL}/api/stats/dashboard?date=${selectedDate.value}`)
     dashboardData.value = res.data
     loaded.value = true
   } catch (err) {
@@ -37,7 +46,7 @@ const exportToExcel = (type) => {
   if (type === 'hourly') {
     fileName = `Afluencia_Horaria_${selectedDate.value}.xlsx`
     dataToExport = dashboardData.value.afluenciaPorHora.map((count, i) => ({
-      Hora: `${i + 7}:00`,
+      Hora: formatHour12(i + 7),
       Sesiones: count
     }))
   } else if (type === 'weekly') {
@@ -72,7 +81,7 @@ const ocupacionPorcentaje = computed(() => {
 const lineChartData = computed(() => {
   if (!dashboardData.value) return null
   return {
-    labels: dashboardData.value.afluenciaPorHora.map((_, i) => `${i + 7}:00`),
+    labels: dashboardData.value.afluenciaPorHora.map((_, i) => formatHour12(i + 7)),
     datasets: [{
       label: 'Sesiones',
       data: dashboardData.value.afluenciaPorHora,

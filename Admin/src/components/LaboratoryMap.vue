@@ -59,7 +59,7 @@ const submitPassword = async () => {
   }
 
   try {
-    await axios.post('https://bvefamurp.helifyferdigital.cloud/api/stats/assign-map-slot', payload)
+    await axios.post(`${API_BASE_URL}/api/stats/assign-map-slot`, payload)
     
     passwordPromptOpen.value = false
     if (pendingAction.value === 'assign') {
@@ -92,7 +92,7 @@ const layoutPositions = [
 
 const fetchMap = async () => {
   try {
-    const res = await axios.get('https://bvefamurp.helifyferdigital.cloud/api/stats/map')
+    const res = await axios.get(`${API_BASE_URL}/api/stats/map`)
     equipos.value = res.data
   } catch (error) {
     console.error("Error fetching map:", error)
@@ -103,13 +103,22 @@ onMounted(() => {
   fetchMap()
   intervalId = setInterval(fetchMap, 5000) // Fast refresh for map
   clockIntervalId = setInterval(() => {
-    currentTime.value = new Date().toLocaleTimeString()
+    currentTime.value = new Date().toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    })
   }, 1000)
 })
 
 const formatTime = (isoString) => {
   if (!isoString) return ''
-  return new Date(isoString).toLocaleTimeString()
+  return new Date(isoString).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
 }
 
 // Convert Date to HH:MM format for the input
@@ -136,9 +145,17 @@ const updateSessionLimit = async () => {
     limitDate.setMinutes(parseInt(minutes, 10))
     limitDate.setSeconds(seconds ? parseInt(seconds, 10) : 0)
 
-    const res = await axios.post('https://bvefamurp.helifyferdigital.cloud/api/auth/set-limit', {
+    // Formatear como fecha local para evitar conversiones UTC
+    const localISO = limitDate.getFullYear() + '-' + 
+      String(limitDate.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(limitDate.getDate()).padStart(2, '0') + 'T' + 
+      String(limitDate.getHours()).padStart(2, '0') + ':' + 
+      String(limitDate.getMinutes()).padStart(2, '0') + ':' + 
+      String(limitDate.getSeconds()).padStart(2, '0');
+
+    const res = await axios.post(`${API_BASE_URL}/api/auth/set-limit`, {
       sesionId: selectedPC.value.sesionActiva.sesionID,
-      nuevaHoraLimite: limitDate.toISOString()
+      nuevaHoraLimite: localISO
     })
     
     selectedPC.value.sesionActiva.horaLimite = res.data.horaLimite
