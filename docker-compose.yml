@@ -8,6 +8,7 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=YourStrongPassword123!
+      - TZ=America/Lima
     volumes:
       - cl-db-data:/var/opt/mssql
     networks:
@@ -23,6 +24,7 @@ services:
     environment:
       - ConnectionStrings__ControlLaboratorioConnection=Server=cl-db;Database=ControlLaboratorio;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=True;MultipleActiveResultSets=true
       - ASPNETCORE_ENVIRONMENT=Production
+      - TZ=America/Lima
     depends_on:
       - cl-db
     networks:
