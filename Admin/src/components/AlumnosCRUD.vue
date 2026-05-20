@@ -161,6 +161,9 @@ const handleExcelUpload = (event) => {
         newObj.codigoUniversitario = "TEMP-" + Math.random().toString(36).substr(2, 6).toUpperCase()
       }
       if (!newObj.dni) newObj.dni = "-"
+      if (!newObj.nombres) newObj.nombres = "-"
+      if (!newObj.apellidoPaterno) newObj.apellidoPaterno = "-"
+      if (!newObj.apellidoMaterno) newObj.apellidoMaterno = "-"
       
       return newObj
     })

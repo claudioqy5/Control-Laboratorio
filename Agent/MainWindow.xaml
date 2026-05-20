@@ -34,7 +34,7 @@
     <Grid x:Name="MainRoot">
         <!-- Fondo con Imagen Animada -->
         <Grid ClipToBounds="True">
-            <Image x:Name="BgImage" Source="assets/fondoLogin.png" 
+            <Image x:Name="BgImage" Source="pack://application:,,,/assets/fondoLogin.png" 
                    Stretch="UniformToFill" 
                    HorizontalAlignment="Left"
                    Margin="-100">
@@ -44,7 +44,7 @@
             </Image>
             
             <!-- Gradiente Oscuro Superpuesto para mejor legibilidad -->
-            <Rectangle Opacity="0.85">
+            <Rectangle Opacity="0.4">
                 <Rectangle.Fill>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#FF020617" Offset="0"/>
@@ -57,21 +57,28 @@
 
         <!-- Contenido del Login -->
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="400">
-            <!-- Logo o Título -->
+                        
+
+            <!-- Formulario con Fondo Oscuro para mejor legibilidad -->
+<!-- Logo o Título -->
             <TextBlock Text="SISTEMA DE CONTROL" Foreground="White" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10">
                 <TextBlock.Effect>
                     <DropShadowEffect BlurRadius="10" Opacity="0.5" ShadowDepth="2"/>
                 </TextBlock.Effect>
             </TextBlock>
-            <TextBlock Text="LABORATORIO DE COMPUTO" Foreground="#38BDF8" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,40" FontWeight="Bold"/>
 
-            <!-- Formulario con Efecto Glassmorphism (Frosted Glass) -->
-            <Border CornerRadius="20" Padding="40" BorderBrush="#33FFFFFF" BorderThickness="1.5">
+            <TextBlock Text="ACCESO BVE-FAMURP" Foreground="White" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10">
+                <TextBlock.Effect>
+                    <DropShadowEffect BlurRadius="10" Opacity="0.5" ShadowDepth="2"/>
+                </TextBlock.Effect>
+            </TextBlock>
+
+            <Border CornerRadius="20" Padding="40" BorderBrush="#55FFFFFF" BorderThickness="1.5">
                 <Border.Background>
-                    <SolidColorBrush Color="#1A0F172A" /> 
+                    <SolidColorBrush Color="#CC020617" /> 
                 </Border.Background>
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="50" Opacity="0.4" ShadowDepth="0" Color="Black"/>
+                    <DropShadowEffect BlurRadius="50" Opacity="0.8" ShadowDepth="10" Color="Black"/>
                 </Border.Effect>
                 <StackPanel>
                     <TextBlock Text="CÓDIGO UNIVERSITARIO" Foreground="#94A3B8" Margin="0,0,0,10" FontSize="11" FontWeight="Bold"/>
