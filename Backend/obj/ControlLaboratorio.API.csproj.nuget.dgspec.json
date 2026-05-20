@@ -1,25 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\backend\\ControlLaboratorio.API.csproj": {}
+    "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\backend\\ControlLaboratorio.API.csproj": {
+    "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\backend\\ControlLaboratorio.API.csproj",
+        "projectUniqueName": "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj",
         "projectName": "ControlLaboratorio.API",
-        "projectPath": "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\backend\\ControlLaboratorio.API.csproj",
-        "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\backend\\obj\\",
+        "projectPath": "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj",
+        "packagesPath": "C:\\Users\\FAMHURP\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Backend\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
-          "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\FAMHURP\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -45,7 +40,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -95,7 +90,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

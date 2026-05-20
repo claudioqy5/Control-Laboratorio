@@ -11,7 +11,11 @@ namespace ControlLaboratorio.Agent
 {
     public partial class MainWindow : Window
     {
-        private const string ApiUrl = "https://bvefamurp.helifyferdigital.cloud/api/auth"; // Producción
+#if DEBUG
+        public const string ApiUrl = "http://localhost:5087/api/auth"; // Desarrollo local
+#else
+        public const string ApiUrl = "https://bvefamurp.helifyferdigital.cloud/api/auth"; // Producción
+#endif
         private readonly HttpClient _httpClient = new HttpClient();
         private LowLevelKeyboardProc _proc;
         private IntPtr _hookID = IntPtr.Zero;
@@ -41,12 +45,20 @@ namespace ControlLaboratorio.Agent
             try
             {
                 var response = await _httpClient.GetFromJsonAsync<RemoteUnlockResponse>($"{ApiUrl}/check-remote-unlock/{Environment.MachineName}");
-                if (response != null && response.Unlock)
+                if (response != null)
                 {
-                    // Abrir la sesión como Administrador
-                    var sessionBar = new SessionWindow(response.SesionId, "ADMINISTRADOR (Remoto)", DateTime.Now.AddHours(5), this);
-                    sessionBar.Show();
-                    this.Hide();
+                    if (response.Shutdown)
+                    {
+                        Process.Start(new ProcessStartInfo("shutdown", "/s /t 5") { CreateNoWindow = true, UseShellExecute = false });
+                        return;
+                    }
+                    if (response.Unlock)
+                    {
+                        // Abrir la sesión como Administrador
+                        var sessionBar = new SessionWindow(response.SesionId, "ADMINISTRADOR (Remoto)", DateTime.Now.AddHours(5), this);
+                        sessionBar.Show();
+                        this.Hide();
+                    }
                 }
             }
             catch { }
@@ -193,6 +205,7 @@ namespace ControlLaboratorio.Agent
     public class RemoteUnlockResponse
     {
         public bool Unlock { get; set; }
+        public bool Shutdown { get; set; }
         public int SesionId { get; set; }
     }
 }

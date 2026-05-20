@@ -34,7 +34,7 @@
     <Grid x:Name="MainRoot">
         <!-- Fondo con Imagen Animada -->
         <Grid ClipToBounds="True">
-            <Image x:Name="BgImage" Source="assets/FondoEstudiante.jpg" 
+            <Image x:Name="BgImage" Source="assets/fondoLogin.png" 
                    Stretch="UniformToFill" 
                    HorizontalAlignment="Left"
                    Margin="-100">

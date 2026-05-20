@@ -1,25 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj": {}
+    "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj": {
+    "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
+        "projectUniqueName": "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
         "projectName": "ControlLaboratorio.Agent",
-        "projectPath": "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
-        "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ADMIN\\Desktop\\MIS PROYECTOS\\Control Laboratorio\\Agent\\obj\\",
+        "projectPath": "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
+        "packagesPath": "C:\\Users\\FAMHURP\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\FAMHURP\\Desktop\\AGENTE\\Control-Laboratorio\\Agent\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
-          "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\FAMHURP\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -45,19 +40,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net9.0-windows7.0": {
           "targetAlias": "net9.0-windows",
-          "dependencies": {
-            "Microsoft.NET.ILLink.Tasks": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[9.0.10, )",
-              "autoReferenced": true
-            }
-          },
           "imports": [
             "net461",
             "net462",
@@ -71,20 +58,20 @@
           "warn": true,
           "downloadDependencies": [
             {
-              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-              "version": "[9.0.10, 9.0.10]"
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[9.0.15, 9.0.15]"
             },
             {
-              "name": "Microsoft.NETCore.App.Crossgen2.win-x64",
-              "version": "[9.0.10, 9.0.10]"
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[9.0.15, 9.0.15]"
             },
             {
-              "name": "Microsoft.NETCore.App.Runtime.win-x64",
-              "version": "[9.0.10, 9.0.10]"
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.15, 9.0.15]"
             },
             {
-              "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-              "version": "[9.0.10, 9.0.10]"
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[9.0.15, 9.0.15]"
             }
           ],
           "frameworkReferences": {
@@ -95,12 +82,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
-        }
-      },
-      "runtimes": {
-        "win-x64": {
-          "#import": []
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

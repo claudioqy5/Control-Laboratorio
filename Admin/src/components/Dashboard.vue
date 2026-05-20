@@ -45,16 +45,110 @@ const exportToExcel = (type) => {
   
   if (type === 'hourly') {
     fileName = `Afluencia_Horaria_${selectedDate.value}.xlsx`
-    dataToExport = dashboardData.value.afluenciaPorHora.map((count, i) => ({
-      Hora: formatHour12(i + 7),
-      Sesiones: count
-    }))
+    dashboardData.value.afluenciaPorHora.forEach((h, i) => {
+      const horaStr = formatHour12(i + 7)
+      const count = typeof h === 'object' && h !== null ? (h.cantidad ?? 0) : h
+      const sesionesList = typeof h === 'object' && h !== null && Array.isArray(h.sesiones) ? h.sesiones : []
+      
+      if (sesionesList.length === 0) {
+        dataToExport.push({
+          'Hora': horaStr,
+          'Sesiones': count,
+          'Código Universitario': '',
+          'DNI': '',
+          'Nombres': '',
+          'Apellido Paterno': '',
+          'Apellido Materno': '',
+          'Nombre Completo': '',
+          'Carrera': '',
+          'Teléfono': '',
+          'Correo Institucional': '',
+          'Correo Personal': '',
+          'Equipo': '',
+          'Ubicación de PC': '',
+          'Hora Inicio': '',
+          'Hora Fin': '',
+          'Duración (minutos)': ''
+        })
+      } else {
+        sesionesList.forEach(s => {
+          dataToExport.push({
+            'Hora': horaStr,
+            'Sesiones': count,
+            'Código Universitario': s.codigoUniversitario || '',
+            'DNI': s.dni || '',
+            'Nombres': s.nombres || '',
+            'Apellido Paterno': s.apellidoPaterno || '',
+            'Apellido Materno': s.apellidoMaterno || '',
+            'Nombre Completo': s.alumnoNombre || '',
+            'Carrera': s.carrera || '',
+            'Teléfono': s.telefono || '',
+            'Correo Institucional': s.correoInstitucional || '',
+            'Correo Personal': s.correoPersonal || '',
+            'Equipo': s.equipo || '',
+            'Ubicación de PC': s.equipoUbicacion || '',
+            'Hora Inicio': s.horaInicio || '',
+            'Hora Fin': s.horaFin || '',
+            'Duración (minutos)': s.duracionMinutos !== null && s.duracionMinutos !== undefined ? s.duracionMinutos : 'Activo'
+          })
+        })
+      }
+    })
   } else if (type === 'weekly') {
     fileName = `Asistencia_Semanal_${selectedDate.value}.xlsx`
-    dataToExport = dashboardData.value.afluenciaPorDia.map(d => ({
-      Fecha: d.dia,
-      Sesiones: d.cantidad
-    }))
+    dataToExport = []
+    dashboardData.value.afluenciaPorDia.forEach(d => {
+      const dayLabel = typeof d === 'object' && d !== null ? d.dia : ''
+      const count = typeof d === 'object' && d !== null ? (d.cantidad ?? 0) : d
+      const sesionesList = typeof d === 'object' && d !== null && Array.isArray(d.sesiones) ? d.sesiones : []
+      const fechaStr = typeof d === 'object' && d !== null ? (d.fechaCompleta ?? '') : ''
+      
+      if (sesionesList.length === 0) {
+        dataToExport.push({
+          'Día': dayLabel,
+          'Fecha': fechaStr,
+          'Asistencias Totales': count,
+          'Código Universitario': '',
+          'DNI': '',
+          'Nombres': '',
+          'Apellido Paterno': '',
+          'Apellido Materno': '',
+          'Nombre Completo': '',
+          'Carrera': '',
+          'Teléfono': '',
+          'Correo Institucional': '',
+          'Correo Personal': '',
+          'Equipo': '',
+          'Ubicación de PC': '',
+          'Hora Inicio': '',
+          'Hora Fin': '',
+          'Duración (minutos)': ''
+        })
+      } else {
+        sesionesList.forEach(s => {
+          dataToExport.push({
+            'Día': dayLabel,
+            'Fecha': fechaStr,
+            'Asistencias Totales': count,
+            'Código Universitario': s.codigoUniversitario || '',
+            'DNI': s.dni || '',
+            'Nombres': s.nombres || '',
+            'Apellido Paterno': s.apellidoPaterno || '',
+            'Apellido Materno': s.apellidoMaterno || '',
+            'Nombre Completo': s.alumnoNombre || '',
+            'Carrera': s.carrera || '',
+            'Teléfono': s.telefono || '',
+            'Correo Institucional': s.correoInstitucional || '',
+            'Correo Personal': s.correoPersonal || '',
+            'Equipo': s.equipo || '',
+            'Ubicación de PC': s.equipoUbicacion || '',
+            'Hora Inicio': s.horaInicio || '',
+            'Hora Fin': s.horaFin || '',
+            'Duración (minutos)': s.duracionMinutos !== null && s.duracionMinutos !== undefined ? s.duracionMinutos : 'Activo'
+          })
+        })
+      }
+    })
   }
   
   const ws = XLSX.utils.json_to_sheet(dataToExport)
@@ -84,7 +178,7 @@ const lineChartData = computed(() => {
     labels: dashboardData.value.afluenciaPorHora.map((_, i) => formatHour12(i + 7)),
     datasets: [{
       label: 'Sesiones',
-      data: dashboardData.value.afluenciaPorHora,
+      data: dashboardData.value.afluenciaPorHora.map(h => typeof h === 'object' && h !== null ? (h.cantidad ?? 0) : h),
       borderColor: '#e11d48',
       backgroundColor: 'rgba(225, 29, 72, 0.05)',
       borderWidth: 3,

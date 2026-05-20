@@ -63,7 +63,7 @@ namespace ControlLaboratorio.Agent
 
             try
             {
-                var response = await _httpClient.GetFromJsonAsync<SessionStatusResponse>($"https://bvefamurp.helifyferdigital.cloud/api/auth/session-status/{_sesionId}");
+                var response = await _httpClient.GetFromJsonAsync<SessionStatusResponse>($"{MainWindow.ApiUrl}/session-status/{_sesionId}");
                 if (response != null)
                 {
                     if (response.IsFinished)
@@ -99,7 +99,7 @@ namespace ControlLaboratorio.Agent
             {
                 try
                 {
-                    await _httpClient.PostAsJsonAsync("https://bvefamurp.helifyferdigital.cloud/api/auth/logout", new { SesionId = _sesionId });
+                    await _httpClient.PostAsJsonAsync($"{MainWindow.ApiUrl}/logout", new { SesionId = _sesionId });
                 }
                 catch { }
             }

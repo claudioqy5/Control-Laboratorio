@@ -194,6 +194,32 @@ const triggerRemoteUnlock = async () => {
   }
 }
 
+const triggerRemoteShutdown = async () => {
+  if (!selectedPC.value) return
+  if (!confirm(`¿Estás seguro de apagar el equipo ${selectedPC.value.nombreRed} de manera remota?`)) return
+  try {
+    await axios.post(`${API_BASE_URL}/api/auth/trigger-remote-shutdown/${selectedPC.value.nombreRed}`)
+    alert(`Se envió la orden de apagado al equipo ${selectedPC.value.nombreRed}.`)
+    selectedPC.value = null
+    fetchMap()
+  } catch (error) {
+    console.error("Error triggering remote shutdown", error)
+    alert("No se pudo enviar la orden de apagado.")
+  }
+}
+
+const triggerRemoteShutdownAll = async () => {
+  if (!confirm("⚠️ ¿Estás COMPLETAMENTE seguro de apagar TODOS los equipos del laboratorio? Esta acción forzará el cierre de todas las sesiones activas inmediatamente.")) return
+  try {
+    await axios.post(`${API_BASE_URL}/api/auth/trigger-remote-shutdown-all`)
+    alert("Se ha enviado la orden de apagado general a todas las computadoras.")
+    fetchMap()
+  } catch (error) {
+    console.error("Error triggering remote shutdown all", error)
+    alert("No se pudo enviar la orden de apagado general.")
+  }
+}
+
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
   if (clockIntervalId) clearInterval(clockIntervalId)
@@ -204,9 +230,15 @@ onUnmounted(() => {
   <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
       <h2 style="color: rgb(17, 24, 39);">Computadoras de Laboratorio</h2>
-      <div style="background: #f0fdfa; padding: 10px 20px; border-radius: 8px; border: 1px solid #99f6e4;">
-        <span style="color: #64748b; font-size: 0.85rem; margin-right: 10px;">HORA ACTUAL:</span>
-        <span style="color: #0f766e; font-size: 1.2rem; font-weight: bold; font-family: Consolas;">{{ currentTime }}</span>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <button class="btn" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3); cursor: pointer;" @click="triggerRemoteShutdownAll" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+          APAGAR TODO EL LABORATORIO
+        </button>
+        <div style="background: #f0fdfa; padding: 10px 20px; border-radius: 8px; border: 1px solid #99f6e4; display: flex; align-items: center; height: 42px; box-sizing: border-box;">
+          <span style="color: #64748b; font-size: 0.85rem; margin-right: 10px;">HORA ACTUAL:</span>
+          <span style="color: #0f766e; font-size: 1.2rem; font-weight: bold; font-family: Consolas;">{{ currentTime }}</span>
+        </div>
       </div>
     </div>
     
@@ -298,6 +330,10 @@ onUnmounted(() => {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               BLOQUEAR INMEDIATAMENTE
             </button>
+            <button class="btn" style="width: 100%; padding: 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #7f1d1d; color: #fca5a5; font-weight: 700; border: none; margin-top: 10px; box-shadow: 0 4px 6px -1px rgba(127, 29, 29, 0.2); cursor: pointer;" @click="triggerRemoteShutdown" onmouseover="this.style.background='#991b1b'" onmouseout="this.style.background='#7f1d1d'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+              APAGAR EQUIPO
+            </button>
           </div>
         </div>
         
@@ -310,9 +346,13 @@ onUnmounted(() => {
             <p style="color: #64748b; font-size: 0.9rem; margin: 0; line-height: 1.5;">El equipo se encuentra bloqueado y esperando a un usuario.</p>
           </div>
           
-          <button class="btn" style="width: 100%; padding: 12px; background: #ffffff; color: #0d9488; border: 1px solid #0d9488; border-radius: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" @click="triggerRemoteUnlock">
+          <button class="btn" style="width: 100%; padding: 12px; background: #ffffff; color: #0d9488; border: 1px solid #0d9488; border-radius: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; cursor: pointer;" @click="triggerRemoteUnlock">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
             DESBLOQUEAR (EMERGENCIA)
+          </button>
+          <button class="btn" style="width: 100%; padding: 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #7f1d1d; color: #fca5a5; font-weight: 700; border: none; margin-top: 10px; box-shadow: 0 4px 6px -1px rgba(127, 29, 29, 0.2); cursor: pointer;" @click="triggerRemoteShutdown" onmouseover="this.style.background='#991b1b'" onmouseout="this.style.background='#7f1d1d'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+            APAGAR EQUIPO
           </button>
         </div>
 

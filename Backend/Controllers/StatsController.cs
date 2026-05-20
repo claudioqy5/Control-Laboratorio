@@ -102,29 +102,76 @@ namespace ControlLaboratorio.API.Controllers
                 ? closedSessions.Average(s => (s.HoraFin!.Value - s.HoraInicio).TotalMinutes)
                 : 0;
 
-            // Afluencia por hora del día seleccionado
-            var afluenciaPorHoraRaw = await _context.Sesiones
+            // Obtener todas las sesiones del día seleccionado con sus relaciones
+            var sesionesDelDia = await _context.Sesiones
+                .Include(s => s.Alumno)
+                .Include(s => s.Equipo)
                 .Where(s => s.HoraInicio >= targetDate && s.HoraInicio < targetDayEnd)
-                .GroupBy(s => s.HoraInicio.Hour)
-                .Select(g => new { Hora = g.Key, Cantidad = g.Count() })
-                .ToDictionaryAsync(k => k.Hora, v => v.Cantidad);
+                .OrderBy(s => s.HoraInicio)
+                .ToListAsync();
 
-            var afluenciaPorHora = Enumerable.Range(7, 15).Select(h => afluenciaPorHoraRaw.ContainsKey(h) ? afluenciaPorHoraRaw[h] : 0).ToList();
+            // Afluencia detallada por hora del día seleccionado
+            var afluenciaPorHora = Enumerable.Range(7, 15).Select(h => {
+                var sesionesDeLaHora = sesionesDelDia.Where(s => s.HoraInicio.Hour == h).ToList();
+                return new {
+                    Hora = h,
+                    Cantidad = sesionesDeLaHora.Count,
+                    Sesiones = sesionesDeLaHora.Select(s => new {
+                        s.SesionID,
+                        CodigoUniversitario = s.Alumno?.CodigoUniversitario ?? string.Empty,
+                        DNI = s.Alumno?.DNI ?? string.Empty,
+                        AlumnoNombre = s.Alumno != null ? $"{s.Alumno.Nombres} {s.Alumno.ApellidoPaterno} {s.Alumno.ApellidoMaterno}".Trim() : string.Empty,
+                        Nombres = s.Alumno?.Nombres ?? string.Empty,
+                        ApellidoPaterno = s.Alumno?.ApellidoPaterno ?? string.Empty,
+                        ApellidoMaterno = s.Alumno?.ApellidoMaterno ?? string.Empty,
+                        Carrera = s.Alumno?.Carrera ?? string.Empty,
+                        Telefono = s.Alumno?.Telefono ?? string.Empty,
+                        CorreoInstitucional = s.Alumno?.CorreoInstitucional ?? string.Empty,
+                        CorreoPersonal = s.Alumno?.CorreoPersonal ?? string.Empty,
+                        Equipo = s.Equipo?.NombreRed ?? string.Empty,
+                        EquipoUbicacion = s.Equipo?.Ubicacion ?? string.Empty,
+                        HoraInicio = s.HoraInicio.ToString("hh:mm tt", CultureInfo.InvariantCulture),
+                        HoraFin = s.HoraFin?.ToString("hh:mm tt", CultureInfo.InvariantCulture) ?? "Activo",
+                        DuracionMinutos = s.HoraFin.HasValue ? (int?)(s.HoraFin.Value - s.HoraInicio).TotalMinutes : null
+                    }).ToList()
+                };
+            }).ToList();
 
             // Asistencia semanal relativa al día seleccionado (los 7 días anteriores)
             var weekStart = targetDate.AddDays(-6);
-            var afluenciaPorDiaRaw = await _context.Sesiones
+            var sesionesDeLaSemana = await _context.Sesiones
+                .Include(s => s.Alumno)
+                .Include(s => s.Equipo)
                 .Where(s => s.HoraInicio >= weekStart && s.HoraInicio < targetDayEnd)
-                .GroupBy(s => s.HoraInicio.Date)
-                .Select(g => new { Fecha = g.Key, Cantidad = g.Count() })
-                .ToDictionaryAsync(k => k.Fecha, v => v.Cantidad);
+                .OrderBy(s => s.HoraInicio)
+                .ToListAsync();
 
             var culture = new CultureInfo("es-PE");
             var afluenciaPorDia = Enumerable.Range(0, 7).Select(i => {
                 var d = weekStart.AddDays(i);
+                var sesionesDelDia = sesionesDeLaSemana.Where(s => s.HoraInicio.Date == d).ToList();
                 return new {
                     Dia = culture.TextInfo.ToTitleCase(d.ToString("ddd dd", culture)).Replace(".", ""),
-                    Cantidad = afluenciaPorDiaRaw.ContainsKey(d) ? afluenciaPorDiaRaw[d] : 0
+                    FechaCompleta = d.ToString("yyyy-MM-dd"),
+                    Cantidad = sesionesDelDia.Count,
+                    Sesiones = sesionesDelDia.Select(s => new {
+                        s.SesionID,
+                        CodigoUniversitario = s.Alumno?.CodigoUniversitario ?? string.Empty,
+                        DNI = s.Alumno?.DNI ?? string.Empty,
+                        AlumnoNombre = s.Alumno != null ? $"{s.Alumno.Nombres} {s.Alumno.ApellidoPaterno} {s.Alumno.ApellidoMaterno}".Trim() : string.Empty,
+                        Nombres = s.Alumno?.Nombres ?? string.Empty,
+                        ApellidoPaterno = s.Alumno?.ApellidoPaterno ?? string.Empty,
+                        ApellidoMaterno = s.Alumno?.ApellidoMaterno ?? string.Empty,
+                        Carrera = s.Alumno?.Carrera ?? string.Empty,
+                        Telefono = s.Alumno?.Telefono ?? string.Empty,
+                        CorreoInstitucional = s.Alumno?.CorreoInstitucional ?? string.Empty,
+                        CorreoPersonal = s.Alumno?.CorreoPersonal ?? string.Empty,
+                        Equipo = s.Equipo?.NombreRed ?? string.Empty,
+                        EquipoUbicacion = s.Equipo?.Ubicacion ?? string.Empty,
+                        HoraInicio = s.HoraInicio.ToString("hh:mm tt", CultureInfo.InvariantCulture),
+                        HoraFin = s.HoraFin?.ToString("hh:mm tt", CultureInfo.InvariantCulture) ?? "Activo",
+                        DuracionMinutos = s.HoraFin.HasValue ? (int?)(s.HoraFin.Value - s.HoraInicio).TotalMinutes : null
+                    }).ToList()
                 };
             }).ToList();
 

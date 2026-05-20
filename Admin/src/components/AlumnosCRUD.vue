@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import * as XLSX from 'xlsx'
+import { API_BASE_URL } from '../config'
 
 const alumnos = ref([])
 const searchQuery = ref('')
@@ -25,7 +26,7 @@ const currentAlumno = ref({
 })
 
 const fetchAlumnos = async () => {
-  const res = await axios.get('https://bvefamurp.helifyferdigital.cloud/api/alumnos')
+  const res = await axios.get(`${API_BASE_URL}/api/alumnos`)
   alumnos.value = res.data
 }
 
@@ -66,9 +67,9 @@ const prevPage = () => {
 
 const saveAlumno = async () => {
   if (currentAlumno.value.alumnoID) {
-    await axios.put(`https://bvefamurp.helifyferdigital.cloud/api/alumnos/${currentAlumno.value.alumnoID}`, currentAlumno.value)
+    await axios.put(`${API_BASE_URL}/api/alumnos/${currentAlumno.value.alumnoID}`, currentAlumno.value)
   } else {
-    await axios.post('https://bvefamurp.helifyferdigital.cloud/api/alumnos', currentAlumno.value)
+    await axios.post(`${API_BASE_URL}/api/alumnos`, currentAlumno.value)
   }
   showModal.value = false
   fetchAlumnos()
@@ -76,7 +77,7 @@ const saveAlumno = async () => {
 
 const deleteAlumno = async (id) => {
   if (confirm('¿Eliminar registro?')) {
-    await axios.delete(`https://bvefamurp.helifyferdigital.cloud/api/alumnos/${id}`)
+    await axios.delete(`${API_BASE_URL}/api/alumnos/${id}`)
     fetchAlumnos()
   }
 }
@@ -90,7 +91,7 @@ const toggleEstado = async (alumno) => {
   if (confirm(`¿${alumno.estado ? 'Desactivar' : 'Activar'} a ${alumno.nombres}?`)) {
     const updatedAlumno = { ...alumno, estado: !alumno.estado }
     try {
-      await axios.put(`https://bvefamurp.helifyferdigital.cloud/api/alumnos/${alumno.alumnoID}`, updatedAlumno)
+      await axios.put(`${API_BASE_URL}/api/alumnos/${alumno.alumnoID}`, updatedAlumno)
       fetchAlumnos()
     } catch (error) {
       console.error("Error al cambiar estado:", error)
@@ -174,7 +175,7 @@ const handleExcelUpload = (event) => {
 const confirmImport = async () => {
   importLoading.value = true
   try {
-    const res = await axios.post('https://bvefamurp.helifyferdigital.cloud/api/alumnos/bulk', importPreviewData.value)
+    const res = await axios.post(`${API_BASE_URL}/api/alumnos/bulk`, importPreviewData.value)
     alert(`Importación completada:\n- Procesados: ${res.data.procesados}\n- Insertados: ${res.data.insertados}\n- Omitidos (duplicados): ${res.data.omitidos}`)
     showImportModal.value = false
     fetchAlumnos()
@@ -321,7 +322,27 @@ onMounted(fetchAlumnos)
           <div class="form-grid-2">
             <div class="input-group">
               <label>Carrera / Cargo</label>
-              <input v-model="currentAlumno.carrera" placeholder="Ej. Medicina Humana" class="premium-input">
+              <select v-model="currentAlumno.carrera" class="premium-input" style="cursor: pointer;">
+                <option value="" disabled>Seleccione una carrera...</option>
+                <option value="Ingeniería Civil">Ingeniería Civil</option>
+                <option value="Ingeniería Electrónica">Ingeniería Electrónica</option>
+                <option value="Ingeniería Industrial">Ingeniería Industrial</option>
+                <option value="Ingeniería Informática">Ingeniería Informática</option>
+                <option value="Ingeniería Mecatrónica">Ingeniería Mecatrónica</option>
+                <option value="Administración y Gerencia">Administración y Gerencia</option>
+                <option value="Administración de Negocios Globales">Administración de Negocios Globales</option>
+                <option value="Contabilidad y Finanzas">Contabilidad y Finanzas</option>
+                <option value="Economía">Economía</option>
+                <option value="Marketing Global y Administración Comercial">Marketing Global y Administración Comercial</option>
+                <option value="Turismo, Hotelería y Gastronomía">Turismo, Hotelería y Gastronomía</option>
+                <option value="Arquitectura y Urbanismo">Arquitectura y Urbanismo</option>
+                <option value="Medicina Humana">Medicina Humana</option>
+                <option value="Psicología">Psicología</option>
+                <option value="Biología">Biología</option>
+                <option value="Medicina Veterinaria">Medicina Veterinaria</option>
+                <option value="Derecho y Ciencia Política">Derecho y Ciencia Política</option>
+                <option value="Traducción e Interpretación">Traducción e Interpretación</option>
+              </select>
             </div>
             <div class="input-group">
               <label>Teléfono</label>
@@ -491,7 +512,7 @@ onMounted(fetchAlumnos)
 .modal-card {
   width: 100%;
   max-width: 650px;
-  height: 90vh;
+  max-height: 95vh;
   background: #ffffff;
   border-radius: 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -554,7 +575,8 @@ onMounted(fetchAlumnos)
   padding: 2rem;
   display: flex;
   flex-direction: column;
-  
+  gap: 1.25rem;
+  overflow-y: auto;
 }
 
 .form-grid-2 {

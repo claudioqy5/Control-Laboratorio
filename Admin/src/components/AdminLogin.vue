@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { API_BASE_URL } from '../config'
 
 const emit = defineEmits(['login-success'])
 const username = ref('')
@@ -12,7 +13,7 @@ const login = async () => {
   error.value = ''
   loading.value = true
   try {
-    const res = await axios.post('https://bvefamurp.helifyferdigital.cloud/api/auth/admin-login', {
+    const res = await axios.post(`${API_BASE_URL}/api/auth/admin-login`, {
       username: username.value,
       password: password.value
     })

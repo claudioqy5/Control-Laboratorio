@@ -20,3 +20,25 @@ C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\agent\obj\Debug\net9.0-
 C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.genruntimeconfig.cache
 C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\agent\obj\Debug\net9.0-windows\ref\ControlLaboratorio.Agent.dll
 C:\Users\ADMIN\Desktop\MIS PROYECTOS\Control Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.sourcelink.json
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\bin\Debug\net9.0-windows\ControlLaboratorio.Agent.exe
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\bin\Debug\net9.0-windows\ControlLaboratorio.Agent.deps.json
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\bin\Debug\net9.0-windows\ControlLaboratorio.Agent.runtimeconfig.json
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\bin\Debug\net9.0-windows\ControlLaboratorio.Agent.dll
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\bin\Debug\net9.0-windows\ControlLaboratorio.Agent.pdb
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\MainWindow.baml
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\SessionWindow.baml
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\MainWindow.g.cs
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\SessionWindow.g.cs
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\App.g.cs
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent_MarkupCompile.cache
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.g.resources
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.AssemblyInfoInputs.cache
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.AssemblyInfo.cs
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.csproj.CoreCompileInputs.cache
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.sourcelink.json
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.dll
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\refint\ControlLaboratorio.Agent.dll
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.pdb
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ControlLaboratorio.Agent.genruntimeconfig.cache
+C:\Users\FAMHURP\Desktop\AGENTE\Control-Laboratorio\Agent\obj\Debug\net9.0-windows\ref\ControlLaboratorio.Agent.dll
