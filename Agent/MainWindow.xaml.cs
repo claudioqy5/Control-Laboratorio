@@ -71,6 +71,16 @@ namespace ControlLaboratorio.Agent
             // LOGICA DE EMERGENCIA (SUPERADMINISTRADOR)
             if (txtCodigo.Text == "ADMIN_MASTER_99")
             {
+                // Intentar registrar el equipo silenciosamente por si hay conexión
+                try
+                {
+                    await _httpClient.PostAsJsonAsync($"{ApiUrl}/register-equipment", new
+                    {
+                        NombreRed = Environment.MachineName
+                    });
+                }
+                catch { /* Falla silenciosamente si no hay internet */ }
+
                 MessageBox.Show("ACCESO DE EMERGENCIA ACTIVADO", "SuperAdministrador");
                 Application.Current.Shutdown(); // Cerrar todo el sistema
                 return;

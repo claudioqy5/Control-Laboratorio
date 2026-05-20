@@ -23,4 +23,9 @@ namespace ControlLaboratorio.API.Dtos
         public int SesionId { get; set; }
         public DateTime NuevaHoraLimite { get; set; }
     }
+
+    public class RegisterEquipmentRequest
+    {
+        public string NombreRed { get; set; } = string.Empty;
+    }
 }

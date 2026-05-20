@@ -18,6 +18,25 @@ namespace ControlLaboratorio.API.Controllers
             _context = context;
         }
 
+        [HttpPost("register-equipment")]
+        public async Task<IActionResult> RegisterEquipment([FromBody] RegisterEquipmentRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NombreRed))
+            {
+                return BadRequest(new { message = "El nombre de red es requerido." });
+            }
+
+            var equipo = await _context.Equipos.FirstOrDefaultAsync(e => e.NombreRed == request.NombreRed);
+            if (equipo == null)
+            {
+                equipo = new Equipo { NombreRed = request.NombreRed, Ubicacion = "Laboratorio Central", Estado = true };
+                _context.Equipos.Add(equipo);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { message = "Equipo registrado." });
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
