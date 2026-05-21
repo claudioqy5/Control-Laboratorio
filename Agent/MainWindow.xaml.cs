@@ -21,6 +21,7 @@ namespace ControlLaboratorio.Agent
         private IntPtr _hookID = IntPtr.Zero;
         private int _currentSesionId = 0;
         private DispatcherTimer _remoteUnlockTimer;
+        private Process _guardianProcess;
 
         public MainWindow()
         {
@@ -36,6 +37,50 @@ namespace ControlLaboratorio.Agent
             _remoteUnlockTimer.Tick += RemoteUnlockTimer_Tick;
             _remoteUnlockTimer.Start();
             this.Activated += (s, e) => txtCodigo.Focus();
+
+            this.Loaded += MainWindow_Loaded;
+
+            // Lanzar proceso guardián
+            try
+            {
+                int myPid = Process.GetCurrentProcess().Id;
+                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                _guardianProcess = Process.Start(new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = $"--guardian {myPid}",
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true
+                });
+            }
+            catch { }
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            await CheckActiveSessionAsync();
+        }
+
+        private async Task CheckActiveSessionAsync()
+        {
+            try
+            {
+                // Reusamos el HttpClient local apuntando a la ruta que terminamos en AuthController
+                string baseUrl = ApiUrl.Replace("/api/auth", "");
+                var response = await _httpClient.GetFromJsonAsync<ActiveSessionResponse>($"{baseUrl}/api/auth/active-session/{Environment.MachineName}");
+                if (response != null && response.HasActiveSession)
+                {
+                    _currentSesionId = response.SesionId;
+                    string fullName = (response.Alumno?.Nombres + " " + response.Alumno?.Apellidos).Trim();
+                    if (string.IsNullOrEmpty(fullName)) fullName = "Estudiante (Restaurado)";
+                    
+                    var sessionBar = new SessionWindow(_currentSesionId, fullName, response.HoraLimite, this);
+                    sessionBar.Show();
+                    this.Hide();
+                }
+            }
+            catch { /* Silencioso en caso de error de red al iniciar */ }
         }
 
         private async void RemoteUnlockTimer_Tick(object sender, EventArgs e)
@@ -81,6 +126,7 @@ namespace ControlLaboratorio.Agent
                 }
                 catch { /* Falla silenciosamente si no hay internet */ }
 
+                try { _guardianProcess?.Kill(); } catch { }
                 MessageBox.Show("ACCESO DE EMERGENCIA ACTIVADO", "SuperAdministrador");
                 Application.Current.Shutdown(); // Cerrar todo el sistema
                 return;
@@ -217,5 +263,13 @@ namespace ControlLaboratorio.Agent
         public bool Unlock { get; set; }
         public bool Shutdown { get; set; }
         public int SesionId { get; set; }
+    }
+
+    public class ActiveSessionResponse
+    {
+        public bool HasActiveSession { get; set; }
+        public int SesionId { get; set; }
+        public DateTime HoraLimite { get; set; }
+        public AlumnoData Alumno { get; set; }
     }
 }

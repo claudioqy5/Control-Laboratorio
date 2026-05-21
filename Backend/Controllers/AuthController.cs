@@ -161,6 +161,31 @@ namespace ControlLaboratorio.API.Controllers
             return Ok(new { message = "Tiempo actualizado.", horaLimite = sesion.HoraLimite });
         }
 
+        [HttpGet("active-session/{nombreRed}")]
+        public async Task<IActionResult> GetActiveSession(string nombreRed)
+        {
+            var equipo = await _context.Equipos.FirstOrDefaultAsync(e => e.NombreRed == nombreRed);
+            if (equipo == null) return NotFound(new { message = "Equipo no encontrado." });
+
+            var sesionActiva = await _context.Sesiones
+                .Include(s => s.Alumno)
+                .FirstOrDefaultAsync(s => s.EquipoID == equipo.EquipoID && s.HoraFin == null);
+
+            if (sesionActiva == null) return Ok(new { hasActiveSession = false });
+
+            return Ok(new
+            {
+                hasActiveSession = true,
+                sesionId = sesionActiva.SesionID,
+                horaLimite = sesionActiva.HoraLimite,
+                alumno = new
+                {
+                    nombres = sesionActiva.Alumno?.Nombres,
+                    apellidos = $"{sesionActiva.Alumno?.ApellidoPaterno} {sesionActiva.Alumno?.ApellidoMaterno}"
+                }
+            });
+        }
+
         private static readonly Dictionary<string, int> PendingUnlocks = new Dictionary<string, int>();
         private static readonly HashSet<string> PendingShutdowns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 

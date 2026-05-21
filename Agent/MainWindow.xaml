@@ -81,7 +81,7 @@
                     <DropShadowEffect BlurRadius="50" Opacity="0.8" ShadowDepth="10" Color="Black"/>
                 </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="CÓDIGO UNIVERSITARIO" Foreground="#94A3B8" Margin="0,0,0,10" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="CÓDIGO UNIVERSITARIO" Foreground="#94A3B8" Margin="0,0,0,10" FontSize="18" FontWeight="Bold"/>
                     <TextBox x:Name="txtCodigo" Height="45" Background="#22FFFFFF" Foreground="White" 
                              BorderBrush="#33FFFFFF" Padding="15,0" Margin="0,0,0,25" 
                              VerticalContentAlignment="Center" FontSize="16" BorderThickness="1">
@@ -92,7 +92,7 @@
                         </TextBox.Resources>
                     </TextBox>
 
-                    <TextBlock Text="DNI / CONTRASEÑA" Foreground="#94A3B8" Margin="0,0,0,10" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="DNI / CONTRASEÑA" Foreground="#94A3B8" Margin="0,0,0,10" FontSize="18" FontWeight="Bold"/>
                     <PasswordBox x:Name="txtDNI" Height="45" Background="#22FFFFFF" Foreground="White" 
                                  BorderBrush="#33FFFFFF" Padding="15,0" Margin="0,0,0,35" 
                                  VerticalContentAlignment="Center" FontSize="16" BorderThickness="1">
@@ -103,7 +103,7 @@
                         </PasswordBox.Resources>
                     </PasswordBox>
 
-                    <Button x:Name="btnLogin" Content="INGRESAR AL SISTEMA" Height="50" 
+                    <Button x:Name="btnLogin" Content="INGRESAR" Height="50" 
                             Background="#9F1239" Foreground="White" BorderThickness="0" 
                             Click="BtnLogin_Click" FontSize="15" FontWeight="Bold" Cursor="Hand">
                         <Button.Resources>
