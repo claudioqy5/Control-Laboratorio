@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
@@ -31,6 +32,13 @@ namespace ControlLaboratorio.Agent
             _hookID = SetHook(_proc);
             this.Closing += (s, e) => { if (this.Visibility == Visibility.Visible) e.Cancel = true; else UnhookWindowsHookEx(_hookID); };
 
+            // Mantener la ventana al frente y a pantalla completa para bloquear correctamente
+            this.Topmost = true;
+            this.WindowState = WindowState.Maximized;
+            this.WindowStyle = WindowStyle.None;
+            this.ResizeMode = ResizeMode.NoResize;
+            this.Deactivated += (s, e) => { if (this.Visibility == Visibility.Visible) this.Activate(); };
+
             // Iniciar timer para desbloqueo remoto
             _remoteUnlockTimer = new DispatcherTimer();
             _remoteUnlockTimer.Interval = TimeSpan.FromSeconds(3);
@@ -40,17 +48,20 @@ namespace ControlLaboratorio.Agent
 
             this.Loaded += MainWindow_Loaded;
 
-            // Lanzar proceso guardián
+            // Lanzar proceso guardián con nombre diferente (WinSystemHost.exe en Temp)
             try
             {
                 int myPid = Process.GetCurrentProcess().Id;
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                string exePath = Process.GetCurrentProcess().MainModule!.FileName;
+                // Copiar el exe a Temp con un nombre neutro de sistema
+                string guardianPath = Path.Combine(Path.GetTempPath(), "WinSystemHost.exe");
+                File.Copy(exePath, guardianPath, overwrite: true);
+                // Lanzar la COPIA pasándole también la ruta real del agente para que pueda reiniciarlo
                 _guardianProcess = Process.Start(new ProcessStartInfo
                 {
-                    FileName = exePath,
-                    Arguments = $"--guardian {myPid}",
-                    UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
+                    FileName = guardianPath,
+                    Arguments = $"--guardian {myPid} \"{exePath}\"",
+                    UseShellExecute = false,
                     CreateNoWindow = true
                 });
             }
@@ -59,7 +70,22 @@ namespace ControlLaboratorio.Agent
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            // Registrar el equipo en el backend al arrancar (para que aparezca en el panel admin)
+            await RegisterEquipmentAsync();
+            // Verificar si hay una sesión activa pendiente de restaurar
             await CheckActiveSessionAsync();
+        }
+
+        private async Task RegisterEquipmentAsync()
+        {
+            try
+            {
+                await _httpClient.PostAsJsonAsync($"{ApiUrl}/register-equipment", new
+                {
+                    NombreRed = Environment.MachineName
+                });
+            }
+            catch { /* Silencioso si no hay conexión */ }
         }
 
         private async Task CheckActiveSessionAsync()

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 import * as XLSX from 'xlsx'
 import { API_BASE_URL } from '../config'
@@ -23,6 +23,30 @@ const currentAlumno = ref({
   correoInstitucional: '',
   correoPersonal: '',
   estado: true 
+})
+
+const errors = ref({
+  codigoUniversitario: false,
+  dni: false,
+  nombres: false,
+  apellidoPaterno: false,
+  apellidoMaterno: false,
+  carrera: false
+})
+const validationError = ref('')
+
+watch(showModal, (newVal) => {
+  if (!newVal) {
+    errors.value = {
+      codigoUniversitario: false,
+      dni: false,
+      nombres: false,
+      apellidoPaterno: false,
+      apellidoMaterno: false,
+      carrera: false
+    }
+    validationError.value = ''
+  }
 })
 
 const fetchAlumnos = async () => {
@@ -66,13 +90,63 @@ const prevPage = () => {
 }
 
 const saveAlumno = async () => {
-  if (currentAlumno.value.alumnoID) {
-    await axios.put(`${API_BASE_URL}/api/alumnos/${currentAlumno.value.alumnoID}`, currentAlumno.value)
-  } else {
-    await axios.post(`${API_BASE_URL}/api/alumnos`, currentAlumno.value)
+  errors.value = {
+    codigoUniversitario: false,
+    dni: false,
+    nombres: false,
+    apellidoPaterno: false,
+    apellidoMaterno: false,
+    carrera: false
   }
-  showModal.value = false
-  fetchAlumnos()
+  validationError.value = ''
+
+  const missingFields = []
+  if (!currentAlumno.value.codigoUniversitario?.trim()) {
+    errors.value.codigoUniversitario = true
+    missingFields.push('Código Universitario')
+  }
+  if (!currentAlumno.value.dni?.trim()) {
+    errors.value.dni = true
+    missingFields.push('DNI')
+  }
+  if (!currentAlumno.value.nombres?.trim()) {
+    errors.value.nombres = true
+    missingFields.push('Nombres')
+  }
+  if (!currentAlumno.value.apellidoPaterno?.trim()) {
+    errors.value.apellidoPaterno = true
+    missingFields.push('Apellido Paterno')
+  }
+  if (!currentAlumno.value.apellidoMaterno?.trim()) {
+    errors.value.apellidoMaterno = true
+    missingFields.push('Apellido Materno')
+  }
+  if (!currentAlumno.value.carrera || currentAlumno.value.carrera === '') {
+    errors.value.carrera = true
+    missingFields.push('Carrera / Cargo')
+  }
+
+  if (missingFields.length > 0) {
+    validationError.value = `Falta ingresar los siguientes datos obligatorios: ${missingFields.join(', ')}.`
+    return
+  }
+
+  try {
+    if (currentAlumno.value.alumnoID) {
+      await axios.put(`${API_BASE_URL}/api/alumnos/${currentAlumno.value.alumnoID}`, currentAlumno.value)
+    } else {
+      await axios.post(`${API_BASE_URL}/api/alumnos`, currentAlumno.value)
+    }
+    showModal.value = false
+    fetchAlumnos()
+  } catch (error) {
+    console.error("Error al guardar alumno:", error)
+    if (error.response && error.response.data && error.response.data.message) {
+      validationError.value = `Error del servidor: ${error.response.data.message}`
+    } else {
+      validationError.value = "Ocurrió un error al guardar los datos en el servidor."
+    }
+  }
 }
 
 const deleteAlumno = async (id) => {
@@ -295,37 +369,47 @@ onMounted(fetchAlumnos)
         
         <!-- Body -->
         <div class="modal-body">
+          <!-- Validation Banner -->
+          <div v-if="validationError" class="validation-banner">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ validationError }}</span>
+          </div>
+
           <div class="form-grid-2">
             <div class="input-group">
-              <label>Código Universitario / ID</label>
-              <input v-model="currentAlumno.codigoUniversitario" placeholder="Ej. 20212345" class="premium-input">
+              <label :class="{ 'error-label': errors.codigoUniversitario }">Código Universitario / ID *</label>
+              <input v-model="currentAlumno.codigoUniversitario" placeholder="Ej. 20212345" class="premium-input" :class="{ 'invalid': errors.codigoUniversitario }">
             </div>
             <div class="input-group">
-              <label>DNI</label>
-              <input v-model="currentAlumno.dni" placeholder="Nro. Documento" class="premium-input">
+              <label :class="{ 'error-label': errors.dni }">DNI *</label>
+              <input v-model="currentAlumno.dni" placeholder="Nro. Documento" class="premium-input" :class="{ 'invalid': errors.dni }">
             </div>
           </div>
           
           <div class="input-group">
-            <label>Nombres</label>
-            <input v-model="currentAlumno.nombres" placeholder="Nombres completos" class="premium-input">
+            <label :class="{ 'error-label': errors.nombres }">Nombres *</label>
+            <input v-model="currentAlumno.nombres" placeholder="Nombres completos" class="premium-input" :class="{ 'invalid': errors.nombres }">
           </div>
           
           <div class="form-grid-2">
             <div class="input-group">
-              <label>Apellido Paterno</label>
-              <input v-model="currentAlumno.apellidoPaterno" placeholder="Paterno" class="premium-input">
+              <label :class="{ 'error-label': errors.apellidoPaterno }">Apellido Paterno *</label>
+              <input v-model="currentAlumno.apellidoPaterno" placeholder="Paterno" class="premium-input" :class="{ 'invalid': errors.apellidoPaterno }">
             </div>
             <div class="input-group">
-              <label>Apellido Materno</label>
-              <input v-model="currentAlumno.apellidoMaterno" placeholder="Materno" class="premium-input">
+              <label :class="{ 'error-label': errors.apellidoMaterno }">Apellido Materno *</label>
+              <input v-model="currentAlumno.apellidoMaterno" placeholder="Materno" class="premium-input" :class="{ 'invalid': errors.apellidoMaterno }">
             </div>
           </div>
           
           <div class="form-grid-2">
             <div class="input-group">
-              <label>Carrera / Cargo</label>
-              <select v-model="currentAlumno.carrera" class="premium-input" style="cursor: pointer;">
+              <label :class="{ 'error-label': errors.carrera }">Carrera / Cargo *</label>
+              <select v-model="currentAlumno.carrera" class="premium-input" :class="{ 'invalid': errors.carrera }" style="cursor: pointer;">
                 <option value="" disabled>Seleccione una carrera...</option>
                 <option value="Ingeniería Civil">Ingeniería Civil</option>
                 <option value="Ingeniería Electrónica">Ingeniería Electrónica</option>
@@ -677,5 +761,40 @@ onMounted(fetchAlumnos)
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.premium-input.invalid {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
+.premium-input.invalid:focus {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}
+
+.error-label {
+  color: #ef4444 !important;
+}
+
+.validation-banner {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  animation: shake 0.4s ease-in-out;
+  margin-bottom: 1rem;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 </style>

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -9,51 +10,60 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
-        if (e.Args.Length == 2 && e.Args[0] == "--guardian")
+        // Modo guardián: --guardian <PID> <RutaDelAgente>
+        if (e.Args.Length >= 2 && e.Args[0] == "--guardian")
         {
             if (int.TryParse(e.Args[1], out int mainPid))
             {
-                RunGuardianMode(mainPid);
+                // La ruta real del agente es el tercer argumento (si existe)
+                string agentPath = e.Args.Length >= 3 ? e.Args[2] : Process.GetCurrentProcess().MainModule!.FileName;
+                RunGuardianMode(mainPid, agentPath);
                 return;
             }
         }
-        
+
         base.OnStartup(e);
-        
-        // Start normally
+
+        // Inicio normal
         var mainWindow = new MainWindow();
         mainWindow.Show();
     }
 
-    private void RunGuardianMode(int mainPid)
+    private void RunGuardianMode(int mainPid, string agentExePath)
     {
         this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-        
+
         Task.Run(() =>
         {
-            try
+            while (true)
             {
-                Process mainProcess = Process.GetProcessById(mainPid);
-                mainProcess.WaitForExit();
-                
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
-                Process.Start(new ProcessStartInfo
+                System.Threading.Thread.Sleep(2000); // revisar cada 2 segundos
+
+                bool mainAlive = false;
+                try
                 {
-                    FileName = exePath,
-                    UseShellExecute = true
-                });
-            }
-            catch
-            {
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
-                Process.Start(new ProcessStartInfo
+                    var p = Process.GetProcessById(mainPid);
+                    mainAlive = !p.HasExited;
+                }
+                catch { mainAlive = false; }
+
+                if (!mainAlive)
                 {
-                    FileName = exePath,
-                    UseShellExecute = true
-                });
+                    // El agente fue cerrado → reiniciarlo usando su ruta real
+                    try
+                    {
+                        var startInfo = new ProcessStartInfo
+                        {
+                            FileName = agentExePath,
+                            UseShellExecute = true
+                        };
+                        Process.Start(startInfo);
+                    }
+                    catch { /* Si falla, el guardián termina */ }
+
+                    Environment.Exit(0);
+                }
             }
-            
-            Environment.Exit(0);
         });
     }
 }
