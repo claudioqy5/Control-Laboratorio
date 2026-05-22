@@ -117,15 +117,28 @@ namespace ControlLaboratorio.API.Controllers
 
             double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
             double segundosLimite = 3 * 3600; // 3 horas
+            double segundosRestantes;
 
             if (segundosConsumidosHoy >= segundosLimite)
             {
-                alumno.Estado = false;
-                await _context.SaveChangesAsync();
-                return Unauthorized(new { message = "Has consumido tu límite de 3 horas por el día de hoy." });
+                // Si el alumno ya consumió sus horas hoy, pero su Estado es true, significa que
+                // el administrador lo reactivó manualmente desde el panel de administración.
+                // En este caso, le permitimos volver a iniciar sesión otorgándole un nuevo límite de 3 horas.
+                if (alumno.Estado)
+                {
+                    segundosRestantes = segundosLimite;
+                }
+                else
+                {
+                    alumno.Estado = false;
+                    await _context.SaveChangesAsync();
+                    return Unauthorized(new { message = "Has consumido tu límite de 3 horas por el día de hoy." });
+                }
             }
-
-            double segundosRestantes = segundosLimite - segundosConsumidosHoy;
+            else
+            {
+                segundosRestantes = segundosLimite - segundosConsumidosHoy;
+            }
 
             var nuevaSesion = new Sesion
             {
