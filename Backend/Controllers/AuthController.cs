@@ -76,8 +76,38 @@ namespace ControlLaboratorio.API.Controllers
 
             if (sesionActiva != null)
             {
-                // Podríamos cerrarla o simplemente no permitir el login
-                return BadRequest(new { message = "El equipo ya tiene una sesión activa." });
+                // Si la sesión activa en el equipo es de un día anterior, es una sesión huérfana.
+                // La cerramos automáticamente con su HoraLimite o HoraInicio + 3 horas y guardamos.
+                if (sesionActiva.Fecha.Date < TimeHelper.GetPeruTime().Date)
+                {
+                    sesionActiva.HoraFin = sesionActiva.HoraLimite ?? sesionActiva.HoraInicio.AddHours(3);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    return BadRequest(new { message = "El equipo ya tiene una sesión activa." });
+                }
+            }
+
+            // Verificar si EL ALUMNO ya tiene una sesión abierta en CUALQUIER otro equipo (Evita bypass del límite)
+            var sesionAlumnoActiva = await _context.Sesiones
+                .Include(s => s.Equipo)
+                .FirstOrDefaultAsync(s => s.AlumnoID == alumno.AlumnoID && s.HoraFin == null);
+
+            if (sesionAlumnoActiva != null)
+            {
+                // Si la sesión activa del alumno es de un día anterior, es una sesión huérfana.
+                // La cerramos automáticamente con su HoraLimite o HoraInicio + 3 horas y guardamos.
+                if (sesionAlumnoActiva.Fecha.Date < TimeHelper.GetPeruTime().Date)
+                {
+                    sesionAlumnoActiva.HoraFin = sesionAlumnoActiva.HoraLimite ?? sesionAlumnoActiva.HoraInicio.AddHours(3);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    string nombreEquipo = sesionAlumnoActiva.Equipo?.NombreRed ?? "otra computadora";
+                    return Unauthorized(new { message = $"Ya tienes una sesión abierta en el equipo '{nombreEquipo}'. Por favor, ciérrala primero." });
+                }
             }
 
             // --- LÓGICA DE BOLSA DE TIEMPO DIARIA ---
@@ -290,9 +320,24 @@ namespace ControlLaboratorio.API.Controllers
             if (sesionActiva != null)
             {
                 sesionActiva.HoraFin = TimeHelper.GetPeruTime();
+                await _context.SaveChangesAsync();
+
                 if (sesionActiva.Alumno != null)
                 {
-                    sesionActiva.Alumno.Estado = false;
+                    var sesionesHoy = await _context.Sesiones
+                        .Where(s => s.AlumnoID == sesionActiva.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
+                        .ToListAsync();
+
+                    double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
+                    
+                    if (segundosConsumidosHoy >= (3 * 3600 - 60))
+                    {
+                        sesionActiva.Alumno.Estado = false;
+                    }
+                    else
+                    {
+                        sesionActiva.Alumno.Estado = true;
+                    }
                 }
             }
 
@@ -314,9 +359,24 @@ namespace ControlLaboratorio.API.Controllers
                 if (sesionActiva != null)
                 {
                     sesionActiva.HoraFin = TimeHelper.GetPeruTime();
+                    await _context.SaveChangesAsync();
+
                     if (sesionActiva.Alumno != null)
                     {
-                        sesionActiva.Alumno.Estado = false;
+                        var sesionesHoy = await _context.Sesiones
+                            .Where(s => s.AlumnoID == sesionActiva.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
+                            .ToListAsync();
+
+                        double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
+                        
+                        if (segundosConsumidosHoy >= (3 * 3600 - 60))
+                        {
+                            sesionActiva.Alumno.Estado = false;
+                        }
+                        else
+                        {
+                            sesionActiva.Alumno.Estado = true;
+                        }
                     }
                 }
                 PendingShutdowns.Add(e.NombreRed);

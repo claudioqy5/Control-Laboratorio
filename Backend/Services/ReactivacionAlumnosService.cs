@@ -50,22 +50,18 @@ namespace ControlLaboratorio.API.Services
 
             foreach (var alumno in alumnosInactivos)
             {
-                // Buscar la última sesión terminada del alumno
+                // Buscar la última sesión absoluta del alumno (sea terminada o no)
                 var ultimaSesion = alumno.Sesiones
-                    .Where(s => s.HoraFin.HasValue)
-                    .OrderByDescending(s => s.HoraFin)
+                    .OrderByDescending(s => s.HoraInicio)
                     .FirstOrDefault();
 
-                if (ultimaSesion != null && ultimaSesion.HoraFin.HasValue)
+                // Si no tiene sesiones o la última sesión fue ayer o antes, lo reactivamos para darle sus nuevas 3 horas del día
+                if (ultimaSesion == null || ultimaSesion.Fecha.Date < TimeHelper.GetPeruTime().Date)
                 {
-                    // Si la última sesión fue ayer o antes, lo reactivamos para darle sus nuevas 3 horas del día
-                    if (ultimaSesion.HoraFin.Value.Date < TimeHelper.GetPeruTime().Date)
-                    {
-                        alumno.Estado = true;
-                        reactivadosCount++;
-                        _logger.LogInformation("Alumno {Codigo} reactivado automáticamente. Su última sesión fue el {HoraFin}.", 
-                            alumno.CodigoUniversitario, ultimaSesion.HoraFin.Value);
-                    }
+                    alumno.Estado = true;
+                    reactivadosCount++;
+                    _logger.LogInformation("Alumno {Codigo} reactivado automáticamente. Su última actividad fue anterior al día de hoy.", 
+                        alumno.CodigoUniversitario);
                 }
             }
 
