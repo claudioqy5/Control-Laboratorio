@@ -6,6 +6,7 @@ import ActiveSessions from './components/ActiveSessions.vue'
 import AdminLogin from './components/AdminLogin.vue'
 import LaboratoryMap from './components/LaboratoryMap.vue'
 import EquiposList from './components/EquiposList.vue'
+import ReportesConexiones from './components/ReportesConexiones.vue'
 
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
@@ -67,6 +68,10 @@ onMounted(checkAuth)
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
         <span v-if="!isSidebarCollapsed">En Línea</span>
       </a>
+      <a href="#" class="nav-item" :class="{ active: currentView === 'conexiones' }" @click="currentView = 'conexiones'" :title="isSidebarCollapsed ? 'Reportes' : ''">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <span v-if="!isSidebarCollapsed">Reportes</span>
+      </a>
       
       <div style="margin-top: auto; background: #f9fafb; padding: 1rem; border-radius: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; overflow: hidden;">
         <div v-if="!isSidebarCollapsed">
@@ -86,6 +91,7 @@ onMounted(checkAuth)
       <EquiposList v-if="currentView === 'equipos'" />
       <AlumnosCRUD v-if="currentView === 'alumnos'" />
       <ActiveSessions v-if="currentView === 'active'" />
+      <ReportesConexiones v-if="currentView === 'conexiones'" />
     </main>
   </template>
 </template>
