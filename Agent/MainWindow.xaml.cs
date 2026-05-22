@@ -119,7 +119,7 @@ namespace ControlLaboratorio.Agent
                     string fullName = (response.Alumno?.Nombres + " " + response.Alumno?.Apellidos).Trim();
                     if (string.IsNullOrEmpty(fullName)) fullName = "Estudiante (Restaurado)";
                     
-                    var sessionBar = new SessionWindow(_currentSesionId, fullName, response.HoraLimite, this);
+                    var sessionBar = new SessionWindow(_currentSesionId, fullName, response.RemainingSeconds, this);
                     sessionBar.Show();
                     this.Hide();
                 }
@@ -143,8 +143,8 @@ namespace ControlLaboratorio.Agent
                     }
                     if (response.Unlock)
                     {
-                        // Abrir la sesión como Administrador
-                        var sessionBar = new SessionWindow(response.SesionId, "ADMINISTRADOR (Remoto)", DateTime.Now.AddHours(5), this);
+                        // Abrir la sesión como Administrador (5 horas = 18000 segundos)
+                        var sessionBar = new SessionWindow(response.SesionId, "ADMINISTRADOR (Remoto)", 18000, this);
                         sessionBar.Show();
                         this.Hide();
                     }
@@ -194,7 +194,7 @@ namespace ControlLaboratorio.Agent
                     
                     // Limpiar y ocultar el bloqueo
                     ClearFields();
-                    var sessionBar = new SessionWindow(_currentSesionId, result.Alumno.Nombres, result.HoraLimite, this);
+                    var sessionBar = new SessionWindow(_currentSesionId, result.Alumno.Nombres, result.RemainingSeconds, this);
                     sessionBar.Show();
                     this.Hide();
                 }
@@ -293,6 +293,7 @@ namespace ControlLaboratorio.Agent
     {
         public int SesionId { get; set; }
         public DateTime HoraLimite { get; set; }
+        public double RemainingSeconds { get; set; }
         public AlumnoData Alumno { get; set; }
     }
 
@@ -314,6 +315,7 @@ namespace ControlLaboratorio.Agent
         public bool HasActiveSession { get; set; }
         public int SesionId { get; set; }
         public DateTime HoraLimite { get; set; }
+        public double RemainingSeconds { get; set; }
         public AlumnoData Alumno { get; set; }
     }
 }

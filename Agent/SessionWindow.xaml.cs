@@ -11,15 +11,15 @@ namespace ControlLaboratorio.Agent
         private readonly int _sesionId;
         private readonly MainWindow _lockWindow;
         private readonly HttpClient _httpClient = new HttpClient();
-        private DateTime _horaLimite;
+        private double _remainingSeconds;
         private DispatcherTimer _countdownTimer;
         private DispatcherTimer _pollingTimer;
 
-        public SessionWindow(int sesionId, string userName, DateTime horaLimite, MainWindow lockWindow)
+        public SessionWindow(int sesionId, string userName, double remainingSeconds, MainWindow lockWindow)
         {
             InitializeComponent();
             _sesionId = sesionId;
-            _horaLimite = horaLimite;
+            _remainingSeconds = remainingSeconds;
             _lockWindow = lockWindow;
             lblUser.Text = userName;
 
@@ -47,9 +47,14 @@ namespace ControlLaboratorio.Agent
 
         private void CountdownTimer_Tick(object sender, EventArgs e)
         {
+            if (_remainingSeconds > 0)
+            {
+                _remainingSeconds--;
+            }
+            
             UpdateTimerDisplay();
             
-            if (DateTime.Now >= _horaLimite)
+            if (_remainingSeconds <= 0)
             {
                 _countdownTimer.Stop();
                 _pollingTimer.Stop();
@@ -72,9 +77,13 @@ namespace ControlLaboratorio.Agent
                         _pollingTimer.Stop();
                         ForceLogout();
                     }
-                    else if (response.HoraLimite.HasValue)
+                    else
                     {
-                        _horaLimite = response.HoraLimite.Value;
+                        // Solo sincronizar si la diferencia es mayor a 5 segundos para evitar saltos
+                        if (Math.Abs(response.RemainingSeconds - _remainingSeconds) > 5)
+                        {
+                            _remainingSeconds = response.RemainingSeconds;
+                        }
                     }
                 }
             }
@@ -83,7 +92,7 @@ namespace ControlLaboratorio.Agent
 
         private void UpdateTimerDisplay()
         {
-            var remaining = _horaLimite - DateTime.Now;
+            var remaining = TimeSpan.FromSeconds(_remainingSeconds);
             if (remaining.TotalSeconds < 0) remaining = TimeSpan.Zero;
             lblTimer.Text = $"{(int)remaining.TotalHours:D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
             
@@ -121,5 +130,6 @@ namespace ControlLaboratorio.Agent
     {
         public DateTime? HoraLimite { get; set; }
         public bool IsFinished { get; set; }
+        public double RemainingSeconds { get; set; }
     }
 }

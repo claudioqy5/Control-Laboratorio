@@ -1,6 +1,7 @@
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Dtos;
 using ControlLaboratorio.API.Models;
+using ControlLaboratorio.API.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -79,13 +80,30 @@ namespace ControlLaboratorio.API.Controllers
                 return BadRequest(new { message = "El equipo ya tiene una sesión activa." });
             }
 
+            // --- LÓGICA DE BOLSA DE TIEMPO DIARIA ---
+            var sesionesHoy = await _context.Sesiones
+                .Where(s => s.AlumnoID == alumno.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
+                .ToListAsync();
+
+            double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
+            double segundosLimite = 3 * 3600; // 3 horas
+
+            if (segundosConsumidosHoy >= segundosLimite)
+            {
+                alumno.Estado = false;
+                await _context.SaveChangesAsync();
+                return Unauthorized(new { message = "Has consumido tu límite de 3 horas por el día de hoy." });
+            }
+
+            double segundosRestantes = segundosLimite - segundosConsumidosHoy;
+
             var nuevaSesion = new Sesion
             {
                 AlumnoID = alumno.AlumnoID,
                 EquipoID = equipo.EquipoID,
-                Fecha = DateTime.Now.Date,
-                HoraInicio = DateTime.Now,
-                HoraLimite = DateTime.Now.AddHours(3) // 3 horas por defecto
+                Fecha = TimeHelper.GetPeruTime().Date,
+                HoraInicio = TimeHelper.GetPeruTime(),
+                HoraLimite = TimeHelper.GetPeruTime().AddSeconds(segundosRestantes)
             };
 
             _context.Sesiones.Add(nuevaSesion);
@@ -95,6 +113,7 @@ namespace ControlLaboratorio.API.Controllers
             {
                 sesionId = nuevaSesion.SesionID,
                 horaLimite = nuevaSesion.HoraLimite,
+                remainingSeconds = segundosRestantes,
                 alumno = new
                 {
                     nombres = alumno.Nombres,
@@ -115,17 +134,31 @@ namespace ControlLaboratorio.API.Controllers
                 return NotFound(new { message = "Sesión no encontrada." });
             }
 
-            sesion.HoraFin = DateTime.Now;
-
-            // Desactivar al alumno automáticamente al finalizar su sesión
-            if (sesion.Alumno != null)
-            {
-                sesion.Alumno.Estado = false;
-            }
-
+            sesion.HoraFin = TimeHelper.GetPeruTime();
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Sesión finalizada y alumno desactivado correctamente." });
+            // Calcular el total consumido hoy
+            if (sesion.Alumno != null)
+            {
+                var sesionesHoy = await _context.Sesiones
+                    .Where(s => s.AlumnoID == sesion.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
+                    .ToListAsync();
+
+                double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
+                
+                // Si consumió sus 3 horas (con un pequeño margen de 1 minuto por retrasos de red)
+                if (segundosConsumidosHoy >= (3 * 3600 - 60))
+                {
+                    sesion.Alumno.Estado = false;
+                }
+                else
+                {
+                    sesion.Alumno.Estado = true;
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { message = "Sesión finalizada." });
         }
 
         [HttpPost("admin-login")]
@@ -146,7 +179,14 @@ namespace ControlLaboratorio.API.Controllers
             var sesion = await _context.Sesiones.FindAsync(sesionId);
             if (sesion == null) return NotFound();
             
-            return Ok(new { horaLimite = sesion.HoraLimite, isFinished = sesion.HoraFin != null });
+            double remainingSeconds = 0;
+            if (sesion.HoraLimite.HasValue)
+            {
+                remainingSeconds = (sesion.HoraLimite.Value - TimeHelper.GetPeruTime()).TotalSeconds;
+                if (remainingSeconds < 0) remainingSeconds = 0;
+            }
+
+            return Ok(new { horaLimite = sesion.HoraLimite, isFinished = sesion.HoraFin != null, remainingSeconds = remainingSeconds });
         }
 
         [HttpPost("set-limit")]
@@ -173,11 +213,19 @@ namespace ControlLaboratorio.API.Controllers
 
             if (sesionActiva == null) return Ok(new { hasActiveSession = false });
 
+            double remainingSeconds = 0;
+            if (sesionActiva.HoraLimite.HasValue)
+            {
+                remainingSeconds = (sesionActiva.HoraLimite.Value - TimeHelper.GetPeruTime()).TotalSeconds;
+                if (remainingSeconds < 0) remainingSeconds = 0;
+            }
+
             return Ok(new
             {
                 hasActiveSession = true,
                 sesionId = sesionActiva.SesionID,
                 horaLimite = sesionActiva.HoraLimite,
+                remainingSeconds = remainingSeconds,
                 alumno = new
                 {
                     nombres = sesionActiva.Alumno?.Nombres,
@@ -218,9 +266,9 @@ namespace ControlLaboratorio.API.Controllers
             {
                 AlumnoID = admin.AlumnoID,
                 EquipoID = equipo.EquipoID,
-                Fecha = DateTime.Now,
-                HoraInicio = DateTime.Now,
-                HoraLimite = DateTime.Now.AddHours(5) // 5 horas por defecto para admin
+                Fecha = TimeHelper.GetPeruTime().Date,
+                HoraInicio = TimeHelper.GetPeruTime(),
+                HoraLimite = TimeHelper.GetPeruTime().AddHours(5) // 5 horas por defecto para admin
             };
             _context.Sesiones.Add(sesion);
             await _context.SaveChangesAsync();
@@ -241,7 +289,7 @@ namespace ControlLaboratorio.API.Controllers
                 .FirstOrDefaultAsync(s => s.EquipoID == equipo.EquipoID && s.HoraFin == null);
             if (sesionActiva != null)
             {
-                sesionActiva.HoraFin = DateTime.Now;
+                sesionActiva.HoraFin = TimeHelper.GetPeruTime();
                 if (sesionActiva.Alumno != null)
                 {
                     sesionActiva.Alumno.Estado = false;
@@ -265,7 +313,7 @@ namespace ControlLaboratorio.API.Controllers
                     .FirstOrDefaultAsync(s => s.EquipoID == e.EquipoID && s.HoraFin == null);
                 if (sesionActiva != null)
                 {
-                    sesionActiva.HoraFin = DateTime.Now;
+                    sesionActiva.HoraFin = TimeHelper.GetPeruTime();
                     if (sesionActiva.Alumno != null)
                     {
                         sesionActiva.Alumno.Estado = false;

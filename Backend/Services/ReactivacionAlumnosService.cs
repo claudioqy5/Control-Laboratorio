@@ -1,5 +1,6 @@
 using ControlLaboratorio.API.Data;
 using Microsoft.EntityFrameworkCore;
+using ControlLaboratorio.API.Helpers;
 
 namespace ControlLaboratorio.API.Services
 {
@@ -57,8 +58,8 @@ namespace ControlLaboratorio.API.Services
 
                 if (ultimaSesion != null && ultimaSesion.HoraFin.HasValue)
                 {
-                    // Si han pasado 8 o más horas, lo reactivamos
-                    if (ultimaSesion.HoraFin.Value.AddHours(8) <= DateTime.Now)
+                    // Si la última sesión fue ayer o antes, lo reactivamos para darle sus nuevas 3 horas del día
+                    if (ultimaSesion.HoraFin.Value.Date < TimeHelper.GetPeruTime().Date)
                     {
                         alumno.Estado = true;
                         reactivadosCount++;

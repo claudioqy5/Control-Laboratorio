@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ControlLaboratorio.API.Helpers;
 
 namespace ControlLaboratorio.API.Models
 {
@@ -15,10 +16,10 @@ namespace ControlLaboratorio.API.Models
         public int EquipoID { get; set; }
 
         [Required]
-        public DateTime Fecha { get; set; } = DateTime.Now;
+        public DateTime Fecha { get; set; } = TimeHelper.GetPeruTime();
 
         [Required]
-        public DateTime HoraInicio { get; set; } = DateTime.Now;
+        public DateTime HoraInicio { get; set; } = TimeHelper.GetPeruTime();
 
         public DateTime? HoraFin { get; set; }
 

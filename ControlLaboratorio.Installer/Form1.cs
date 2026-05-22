@@ -124,7 +124,7 @@ namespace ControlLaboratorio.Installer
         private void CreateStartupShortcut(string exePath)
         {
             // Método más seguro y rápido usando el Registro de Windows en lugar de accesos directos de PowerShell
-            using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true)!)
+            using (Microsoft.Win32.RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true)!)
             {
                 key.SetValue("BVE_ControlLaboratorioAgent", $"\"{exePath}\"");
             }
