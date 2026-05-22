@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../config'
 
 const alumnos = ref([])
 const searchQuery = ref('')
+const statusFilter = ref('Todos')
 const showModal = ref(false)
 const showImportModal = ref(false)
 const importPreviewData = ref([])
@@ -56,9 +57,15 @@ const fetchAlumnos = async () => {
 
 const filteredAlumnos = computed(() => {
   let result = alumnos.value
+
+  if (statusFilter.value !== 'Todos') {
+    const isActive = statusFilter.value === 'Activos'
+    result = result.filter(a => a.estado === isActive)
+  }
+
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    result = alumnos.value.filter(a => 
+    result = result.filter(a => 
       a.nombres.toLowerCase().includes(query) || 
       a.apellidoPaterno.toLowerCase().includes(query) || 
       a.codigoUniversitario.toLowerCase().includes(query) || 
@@ -275,9 +282,20 @@ onMounted(fetchAlumnos)
         <div style="color: #6b7280; font-size: 0.875rem;">{{ alumnos.length }} Registrados</div>
       </div>
       <div style="display: flex; gap: 1rem; align-items: center;">
+        
+        <!-- Filtro por Estado -->
+        <div style="position: relative;">
+          <select v-model="statusFilter" @change="currentPage = 1" style="padding: 0.5rem 2.5rem 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827; background: white; appearance: none; cursor: pointer; outline: none;">
+            <option value="Todos">Todos los Estados</option>
+            <option value="Activos">Solo Activos</option>
+            <option value="Inactivos">Solo Inactivos</option>
+          </select>
+          <svg style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+
         <div style="position: relative;">
           <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" v-model="searchQuery" @input="currentPage = 1" placeholder="Buscar por nombre, código o DNI..." style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; width: 300px; font-size: 0.875rem; color: #111827;">
+          <input type="text" v-model="searchQuery" @input="currentPage = 1" placeholder="Buscar por nombre, código o DNI..." style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; width: 280px; font-size: 0.875rem; color: #111827; outline: none;">
         </div>
         <input type="file" ref="fileInput" @change="handleExcelUpload" accept=".xlsx, .xls" style="display: none;">
         <button class="btn" style="background: #ffffff; color: #16a34a; border: 1px solid #16a34a; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="$refs.fileInput.click()">

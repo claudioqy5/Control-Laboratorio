@@ -80,9 +80,11 @@ namespace ControlLaboratorio.Installer
                 await Task.Run(() => CreateStartupShortcut(targetExe));
 
                 lblStatus.Text = "Iniciando el sistema...";
-                await Task.Delay(500);
-                
                 Process.Start(new ProcessStartInfo { FileName = targetExe, UseShellExecute = true });
+
+                // Esperar a que el agente tome el control de pantalla antes de cerrar el instalador
+                lblStatus.Text = "Esperando que el sistema arranque...";
+                await Task.Delay(3000);
 
                 MessageBox.Show("Instalación completada con éxito. El sistema ya está funcionando.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Application.Exit();

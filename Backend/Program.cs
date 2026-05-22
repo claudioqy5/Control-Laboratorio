@@ -1,5 +1,6 @@
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Models;
+using ControlLaboratorio.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Agregar el BackgroundService para la reactivación automática
+builder.Services.AddHostedService<ReactivacionAlumnosService>();
 
 // Database Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

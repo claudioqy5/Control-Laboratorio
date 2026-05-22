@@ -6,10 +6,16 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Solicitar permisos de Administrador al ejecutar (UAC) -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\ControlLaboratorio.Agent.exe" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="app.manifest" />
   </ItemGroup>
 
 </Project>

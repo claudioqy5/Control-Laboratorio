@@ -20,7 +20,7 @@ dist/
 *.sln.docstates
 
 # Agent heavy folders (ignore all publish variations)
-Agent/publish_exe*/
+Agent/publish_*/
 ControlLaboratorio.Installer/publish_*/
 ControlLaboratorio.Installer/Resources/
 

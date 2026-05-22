@@ -39,6 +39,9 @@ namespace ControlLaboratorio.Agent
             this.ResizeMode = ResizeMode.NoResize;
             this.Deactivated += (s, e) => { if (this.Visibility == Visibility.Visible) this.Activate(); };
 
+            // Forzar foco y bloqueo inmediato de pantalla
+            this.Loaded += (s, e) => { this.Activate(); this.Focus(); };
+
             // Iniciar timer para desbloqueo remoto
             _remoteUnlockTimer = new DispatcherTimer();
             _remoteUnlockTimer.Interval = TimeSpan.FromSeconds(3);
@@ -78,14 +81,29 @@ namespace ControlLaboratorio.Agent
 
         private async Task RegisterEquipmentAsync()
         {
-            try
+            // Reintentar hasta 5 veces con espera incremental para garantizar el registro
+            // incluso si el backend tarda en responder al arrancar la PC
+            int maxRetries = 5;
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                await _httpClient.PostAsJsonAsync($"{ApiUrl}/register-equipment", new
+                try
                 {
-                    NombreRed = Environment.MachineName
-                });
+                    var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/register-equipment", new
+                    {
+                        NombreRed = Environment.MachineName
+                    });
+
+                    if (response.IsSuccessStatusCode)
+                        return; // Registro exitoso, no necesitamos más reintentos
+                }
+                catch { /* Sin conexión todavía, reintentamos */ }
+
+                if (attempt < maxRetries)
+                {
+                    // Espera incremental: 2s, 4s, 8s, 16s entre intentos
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+                }
             }
-            catch { /* Silencioso si no hay conexión */ }
         }
 
         private async Task CheckActiveSessionAsync()

@@ -27,6 +27,7 @@ public partial class App : Application
         // Inicio normal
         var mainWindow = new MainWindow();
         mainWindow.Show();
+        mainWindow.Activate(); // Forzar foco inmediato para bloquear la pantalla
     }
 
     private void RunGuardianMode(int mainPid, string agentExePath)
