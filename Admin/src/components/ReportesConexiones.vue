@@ -51,7 +51,8 @@ onMounted(() => {
           />
           <button 
             @click="fetchReporte" 
-            style="background: #f1f5f9; hover:bg-gray-200 text-gray-700 px-3 py-2 border: none; cursor: pointer; rounded-lg; border-radius: 0.5rem; text-sm font-medium transition-colors flex items-center gap-2; display: flex; align-items: center; justify-content: center; padding: 0.5rem 1rem;"
+            style="background: #f1f5f9; border: 1px solid #e2e8f0; cursor: pointer; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #475569; display: flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; transition: background 0.2s;"
+            onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
             Actualizar
