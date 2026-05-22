@@ -291,31 +291,55 @@ namespace ControlLaboratorio.Agent
 
     public class LoginResponse
     {
+        [System.Text.Json.Serialization.JsonPropertyName("sesionId")]
         public int SesionId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("horaLimite")]
         public DateTime HoraLimite { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("remainingSeconds")]
         public double RemainingSeconds { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("alumno")]
         public AlumnoData Alumno { get; set; }
     }
 
     public class AlumnoData
     {
+        [System.Text.Json.Serialization.JsonPropertyName("nombres")]
         public string Nombres { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("apellidos")]
         public string Apellidos { get; set; }
     }
 
     public class RemoteUnlockResponse
     {
+        [System.Text.Json.Serialization.JsonPropertyName("unlock")]
         public bool Unlock { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("shutdown")]
         public bool Shutdown { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("sesionId")]
         public int SesionId { get; set; }
     }
 
     public class ActiveSessionResponse
     {
+        [System.Text.Json.Serialization.JsonPropertyName("hasActiveSession")]
         public bool HasActiveSession { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("sesionId")]
         public int SesionId { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("horaLimite")]
         public DateTime HoraLimite { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("remainingSeconds")]
         public double RemainingSeconds { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("alumno")]
         public AlumnoData Alumno { get; set; }
     }
 }

@@ -8,6 +8,8 @@ namespace ControlLaboratorio.Agent;
 
 public partial class App : Application
 {
+    private static System.Threading.Mutex? _mutex;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         // Modo guardián: --guardian <PID> <RutaDelAgente>
@@ -22,12 +24,39 @@ public partial class App : Application
             }
         }
 
+        // Control de instancia única (Mutex del sistema)
+        const string mutexName = @"Global\BVE_ControlLaboratorioAgent_UniqueMutex";
+        _mutex = new System.Threading.Mutex(true, mutexName, out bool createdNew);
+
+        if (!createdNew)
+        {
+            // Ya hay una instancia ejecutándose. Salir de inmediato.
+            _mutex.Dispose();
+            _mutex = null;
+            Environment.Exit(0);
+            return;
+        }
+
         base.OnStartup(e);
 
         // Inicio normal
         var mainWindow = new MainWindow();
         mainWindow.Show();
         mainWindow.Activate(); // Forzar foco inmediato para bloquear la pantalla
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        if (_mutex != null)
+        {
+            try
+            {
+                _mutex.ReleaseMutex();
+            }
+            catch { }
+            _mutex.Dispose();
+        }
+        base.OnExit(e);
     }
 
     private void RunGuardianMode(int mainPid, string agentExePath)

@@ -128,8 +128,13 @@ namespace ControlLaboratorio.Agent
 
     public class SessionStatusResponse
     {
+        [System.Text.Json.Serialization.JsonPropertyName("horaLimite")]
         public DateTime? HoraLimite { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("isFinished")]
         public bool IsFinished { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("remainingSeconds")]
         public double RemainingSeconds { get; set; }
     }
 }
