@@ -158,7 +158,7 @@ namespace ControlLaboratorio.Agent
             lblError.Visibility = Visibility.Collapsed;
             
             // LOGICA DE EMERGENCIA (SUPERADMINISTRADOR)
-            if (txtCodigo.Text == "ADMIN_MASTER_99")
+            if (txtCodigo.Text == "ADMIN_MASTER_99" && txtDNI.Password == "masterfamurp")
             {
                 // Intentar registrar el equipo silenciosamente por si hay conexión
                 try
