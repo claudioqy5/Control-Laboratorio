@@ -79,15 +79,15 @@ const submitPassword = async () => {
   }
 }
 
-// Mapeo exacto de posiciones según la imagen (11 columnas x 8 filas)
+// Mapeo exacto de posiciones (12 columnas x 9 filas ahora)
 const layoutPositions = [
-  [1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[1,10],[1,11],
-  [2,1],                                                      [2,11],
-  [3,1],                                                      [3,11],
-  [4,1],       [4,3],[4,4],[4,5],[4,6],[4,7],[4,8],[4,9],       [4,11],
-  [5,1],       [5,3],[5,4],[5,5],[5,6],[5,7],[5,8],[5,9],       [5,11],
-  [6,11],
-  [8,1],                                                      [7,1]
+  [2,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[1,10],[1,12],
+  [3,1],                                                      [2,12],
+  [4,1],                                                      [3,12],
+  [5,1],       [4,3],[4,4],[4,5],[4,6],[4,7],[4,8],[4,9],       [4,12],
+  [6,1],       [5,3],[5,4],[5,5],[5,6],[5,7],[5,8],[5,9],       [5,12],
+  [6,12],
+  [9,1],                                                      [8,1]
 ]
 
 const fetchMap = async () => {
@@ -425,8 +425,8 @@ onUnmounted(() => {
 }
 .pc-grid {
   display: grid;
-  grid-template-columns: repeat(11, 75px);
-  grid-template-rows: repeat(8, 100px);
+  grid-template-columns: repeat(12, 75px);
+  grid-template-rows: repeat(9, 100px);
   gap: 45px;
   justify-content: center;
 }
