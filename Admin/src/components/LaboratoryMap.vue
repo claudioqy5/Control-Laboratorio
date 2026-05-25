@@ -81,13 +81,13 @@ const submitPassword = async () => {
 
 // Mapeo exacto de posiciones según la imagen (11 columnas x 8 filas)
 const layoutPositions = [
-  [2,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[1,10],[1,11], // Fila 1 (La primera columna bajó a Fila 2)
-  [3,1],                                                      [2,11], // Fila 2 (La primera columna bajó a Fila 3)
-  [4,1],                                                      [3,11], // Fila 3 (La primera columna bajó a Fila 4)
-  [5,1],       [4,3],[4,4],[4,5],[4,6],[4,7],[4,8],[4,9],       [4,11], // Fila 4 (Removido [4,10], primera col a Fila 5)
-  [6,1],       [5,3],[5,4],[5,5],[5,6],[5,7],[5,8],[5,9],       [5,11], // Fila 5 (Removido [5,10], primera col a Fila 6)
-  [6,11],                                                             // Fila 6
-  [8,1],                                                      [7,1]   // Fila 8 y 7 (Movido [8,11] a [7,1])
+  [1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[1,10],[1,11],
+  [2,1],                                                      [2,11],
+  [3,1],                                                      [3,11],
+  [4,1],       [4,3],[4,4],[4,5],[4,6],[4,7],[4,8],[4,9],       [4,11],
+  [5,1],       [5,3],[5,4],[5,5],[5,6],[5,7],[5,8],[5,9],       [5,11],
+  [6,11],
+  [8,1],                                                      [7,1]
 ]
 
 const fetchMap = async () => {
