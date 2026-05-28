@@ -57,32 +57,30 @@ namespace ControlLaboratorio.API.Controllers
         {
             string serverVersion = _configuration["AgentUpdate:CurrentVersion"] ?? "1.0.0";
 
-            var equipos = await _context.Equipos
+            var equiposDb = await _context.Equipos
                 .Select(e => new
                 {
                     e.NombreRed,
                     e.AgentVersion,
-                    agentVersionFecha = e.AgentVersionFecha,
-                    pendiente = PendingUpdates.ContainsKey(e.NombreRed)
+                    e.AgentVersionFecha
                 })
                 .ToListAsync();
 
-            var result = equipos.Select(e => new
+            var result = equiposDb.Select(e => 
             {
-                e.NombreRed,
-                versionInstalada = e.AgentVersion ?? "Desconocida",
-                fechaActualizacion = e.agentVersionFecha,
-                // Estado:
-                // "pendiente"   → se ordenó actualizar pero el Agente aún no respondió
-                // "alDia"       → versión instalada = versión del servidor
-                // "disponible"  → hay versión nueva pero no se ha ordenado actualizar
-                // "sinSenal"    → nunca reportó versión (nunca conectó al servidor)
-                estado = e.pendiente
-                    ? "pendiente"
-                    : (e.AgentVersion == null
-                        ? "sinSenal"
-                        : (e.AgentVersion == serverVersion ? "alDia" : "disponible")),
-                serverVersion
+                bool isPendiente = PendingUpdates.ContainsKey(e.NombreRed);
+                return new
+                {
+                    e.NombreRed,
+                    versionInstalada = e.AgentVersion ?? "Desconocida",
+                    fechaActualizacion = e.AgentVersionFecha,
+                    estado = isPendiente
+                        ? "pendiente"
+                        : (e.AgentVersion == null
+                            ? "sinSenal"
+                            : (e.AgentVersion == serverVersion ? "alDia" : "disponible")),
+                    serverVersion
+                };
             });
 
             return Ok(result);
