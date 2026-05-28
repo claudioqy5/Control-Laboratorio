@@ -258,7 +258,7 @@ onUnmounted(() => {
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
       <h2 style="color: rgb(17, 24, 39);">Computadoras de Laboratorio</h2>
       <div style="display: flex; gap: 15px; align-items: center;">
-        <button class="btn" style="background: #0ea5e9; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.3); cursor: pointer;" @click="triggerRemoteUnlockAll" onmouseover="this.style.background='#0284c7'" onmouseout="this.style.background='#0ea5e9'">
+        <button class="btn" style="background: rgb(51 119 47); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.3); cursor: pointer;" @click="triggerRemoteUnlockAll" onmouseover="this.style.background='#0284c7'" onmouseout="this.style.background='#0ea5e9'">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
           DESBLOQUEAR TODO
         </button>
