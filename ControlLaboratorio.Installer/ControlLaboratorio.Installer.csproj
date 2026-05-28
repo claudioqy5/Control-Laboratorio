@@ -12,6 +12,11 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\ControlLaboratorio.Agent.exe" />
+    <EmbeddedResource Include="Resources\wpfgfx_cor3.dll" />
+    <EmbeddedResource Include="Resources\PresentationNative_cor3.dll" />
+    <EmbeddedResource Include="Resources\PenImc_cor3.dll" />
+    <EmbeddedResource Include="Resources\D3DCompiler_47_cor3.dll" />
+    <EmbeddedResource Include="Resources\vcruntime140_cor3.dll" />
   </ItemGroup>
 
   <ItemGroup>

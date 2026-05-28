@@ -74,7 +74,14 @@ namespace ControlLaboratorio.Installer
                 if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
 
                 lblStatus.Text = "Copiando archivos del sistema...";
-                await Task.Run(() => ExtractResource("ControlLaboratorio.Installer.Resources.ControlLaboratorio.Agent.exe", targetExe));
+                await Task.Run(() => {
+                    ExtractResource("ControlLaboratorio.Installer.Resources.ControlLaboratorio.Agent.exe", targetExe);
+                    ExtractResource("ControlLaboratorio.Installer.Resources.wpfgfx_cor3.dll", Path.Combine(targetDir, "wpfgfx_cor3.dll"));
+                    ExtractResource("ControlLaboratorio.Installer.Resources.PresentationNative_cor3.dll", Path.Combine(targetDir, "PresentationNative_cor3.dll"));
+                    ExtractResource("ControlLaboratorio.Installer.Resources.PenImc_cor3.dll", Path.Combine(targetDir, "PenImc_cor3.dll"));
+                    ExtractResource("ControlLaboratorio.Installer.Resources.D3DCompiler_47_cor3.dll", Path.Combine(targetDir, "D3DCompiler_47_cor3.dll"));
+                    ExtractResource("ControlLaboratorio.Installer.Resources.vcruntime140_cor3.dll", Path.Combine(targetDir, "vcruntime140_cor3.dll"));
+                });
 
                 lblStatus.Text = "Configurando inicio automático (Registro de Windows)...";
                 await Task.Run(() => CreateStartupShortcut(targetExe));
@@ -109,6 +116,10 @@ namespace ControlLaboratorio.Installer
                 try
                 {
                     foreach (var process in Process.GetProcessesByName("ControlLaboratorio.Agent"))
+                    {
+                        process.Kill();
+                    }
+                    foreach (var process in Process.GetProcessesByName("WinSystemHost"))
                     {
                         process.Kill();
                     }
