@@ -14,14 +14,17 @@ namespace ControlLaboratorio.Agent
     {
 #if DEBUG
         public const string ApiUrl = "http://localhost:5087/api/auth"; // Desarrollo local
+        public const string UpdateApiUrl = "http://localhost:5087/api/update"; // Desarrollo local
 #else
         public const string ApiUrl = "https://bvefamurp.helifyferdigital.cloud/api/auth"; // Producción
+        public const string UpdateApiUrl = "https://bvefamurp.helifyferdigital.cloud/api/update"; // Producción
 #endif
         private readonly HttpClient _httpClient = new HttpClient();
         private LowLevelKeyboardProc _proc;
         private IntPtr _hookID = IntPtr.Zero;
         private int _currentSesionId = 0;
         private DispatcherTimer _remoteUnlockTimer;
+        private DispatcherTimer _updateCheckTimer;
         private Process _guardianProcess;
 
         public MainWindow()
@@ -47,6 +50,12 @@ namespace ControlLaboratorio.Agent
             _remoteUnlockTimer.Interval = TimeSpan.FromSeconds(3);
             _remoteUnlockTimer.Tick += RemoteUnlockTimer_Tick;
             _remoteUnlockTimer.Start();
+
+            // Iniciar timer para verificar actualizaciones (cada 60 segundos)
+            _updateCheckTimer = new DispatcherTimer();
+            _updateCheckTimer.Interval = TimeSpan.FromSeconds(60);
+            _updateCheckTimer.Tick += UpdateCheckTimer_Tick;
+            _updateCheckTimer.Start();
             this.Activated += (s, e) => txtCodigo.Focus();
 
             this.Loaded += MainWindow_Loaded;
@@ -75,8 +84,92 @@ namespace ControlLaboratorio.Agent
         {
             // Registrar el equipo en el backend al arrancar (para que aparezca en el panel admin)
             await RegisterEquipmentAsync();
+            // Reportar la versión instalada del Agente al Backend
+            await ReportVersionAsync();
             // Verificar si hay una sesión activa pendiente de restaurar
             await CheckActiveSessionAsync();
+        }
+
+        private async Task ReportVersionAsync()
+        {
+            try
+            {
+                await _httpClient.PostAsJsonAsync($"{UpdateApiUrl}/report-version", new
+                {
+                    NombreRed = Environment.MachineName,
+                    Version = App.AgentVersion
+                });
+            }
+            catch { /* Silencioso, reintentará en el siguiente reinicio */ }
+        }
+
+        private async void UpdateCheckTimer_Tick(object sender, EventArgs e)
+        {
+            // Solo actualizar si NO hay sesión activa (Opción A: no interrumpir al alumno)
+            if (this.Visibility != Visibility.Visible) return; // Hay sesión activa → esperar
+
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<UpdateCheckResponse>(
+                    $"{UpdateApiUrl}/check/{Environment.MachineName}");
+
+                if (response == null || !response.HayActualizacion) return;
+
+                // Hay actualización disponible → iniciar proceso de descarga
+                _updateCheckTimer.Stop(); // Evitar polling adicional durante la descarga
+                await DownloadAndApplyUpdateAsync();
+            }
+            catch { /* Sin conexión, reintentará en el próximo tick */ }
+        }
+
+        private async Task DownloadAndApplyUpdateAsync()
+        {
+            try
+            {
+                string exePath = Process.GetCurrentProcess().MainModule!.FileName;
+                string exeDir = Path.GetDirectoryName(exePath)!;
+                string tempExePath = Path.Combine(exeDir, "Agent_new.exe");
+                string batPath = Path.Combine(exeDir, "updater.bat");
+
+                // 1. Descargar el nuevo exe
+                using var response = await _httpClient.GetAsync($"{UpdateApiUrl}/download");
+                if (!response.IsSuccessStatusCode) 
+                { 
+                    _updateCheckTimer.Start(); 
+                    return; 
+                }
+
+                using (var fs = new FileStream(tempExePath, FileMode.Create, FileAccess.Write))
+                {
+                    await response.Content.CopyToAsync(fs);
+                }
+
+                // 2. Crear el script .bat que reemplaza el exe y reinicia el Agente
+                //    (Windows no permite sobreescribir un .exe mientras está corriendo)
+                string batContent =
+                    $"@echo off\r\n" +
+                    $"timeout /t 3 /nobreak >nul\r\n" +
+                    $"move /y \"{tempExePath}\" \"{exePath}\"\r\n" +
+                    $"start \"\" \"{exePath}\"\r\n" +
+                    $"del \"%~f0\"\r\n";
+
+                await File.WriteAllTextAsync(batPath, batContent);
+
+                // 3. Ejecutar el bat en segundo plano y cerrar el Agente
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = batPath,
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true
+                });
+
+                Application.Current.Shutdown();
+            }
+            catch 
+            { 
+                _updateCheckTimer?.Start(); // Reiniciar el timer si algo falló
+            }
         }
 
         private async Task RegisterEquipmentAsync()
@@ -341,5 +434,14 @@ namespace ControlLaboratorio.Agent
 
         [System.Text.Json.Serialization.JsonPropertyName("alumno")]
         public AlumnoData Alumno { get; set; }
+    }
+
+    public class UpdateCheckResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("hayActualizacion")]
+        public bool HayActualizacion { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("version")]
+        public string? Version { get; set; }
     }
 }

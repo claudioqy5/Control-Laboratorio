@@ -1,4 +1,5 @@
 using ControlLaboratorio.API.Data;
+using ControlLaboratorio.API.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
@@ -81,11 +82,11 @@ namespace ControlLaboratorio.API.Controllers
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboardStats([FromQuery] DateTime? date)
         {
-            var targetDate = date?.Date ?? DateTime.Now.Date;
+            var targetDate = date?.Date ?? TimeHelper.GetPeruTime().Date;
             var targetDayEnd = targetDate.AddDays(1);
 
             // Sesiones activas (Solo tiene sentido para hoy)
-            var sesionesActivas = (targetDate == DateTime.Now.Date) 
+            var sesionesActivas = (targetDate == TimeHelper.GetPeruTime().Date) 
                 ? await _context.Sesiones.CountAsync(s => s.HoraFin == null)
                 : 0;
 

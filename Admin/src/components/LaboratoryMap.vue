@@ -21,6 +21,9 @@ const unassignedEquipos = computed(() => {
 const assignModalOpen = ref(false)
 const selectedSlotIndex = ref(-1)
 
+const unlockConfirmModalOpen = ref(false)
+const activePCsCount = ref(0)
+
 const openAssignModal = (index) => {
   selectedSlotIndex.value = index
   assignModalOpen.value = true
@@ -220,6 +223,30 @@ const triggerRemoteShutdownAll = async () => {
   }
 }
 
+const triggerRemoteUnlockAll = () => {
+  const activePCs = equipos.value.filter(e => e.sesionActiva && e.posicionMapa != null)
+  activePCsCount.value = activePCs.length
+  if (activePCsCount.value > 0) {
+    unlockConfirmModalOpen.value = true
+  } else {
+    if (confirm("⚠️ ¿Estás seguro de desbloquear todos los equipos del laboratorio? Esto abrirá sesión de administrador en todas las computadoras libres.")) {
+      sendUnlockAllCommand(false) // false means onlyFree = false, since none are active it unlocks everything anyway.
+    }
+  }
+}
+
+const sendUnlockAllCommand = async (onlyFree) => {
+  unlockConfirmModalOpen.value = false
+  try {
+    await axios.post(`${API_BASE_URL}/api/auth/trigger-remote-unlock-all?onlyFree=${onlyFree}`)
+    alert("Se ha enviado la orden de desbloqueo general a las computadoras seleccionadas.")
+    fetchMap()
+  } catch (error) {
+    console.error("Error triggering remote unlock all", error)
+    alert("No se pudo enviar la orden de desbloqueo general.")
+  }
+}
+
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
   if (clockIntervalId) clearInterval(clockIntervalId)
@@ -231,9 +258,13 @@ onUnmounted(() => {
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 15px;">
       <h2 style="color: rgb(17, 24, 39);">Computadoras de Laboratorio</h2>
       <div style="display: flex; gap: 15px; align-items: center;">
+        <button class="btn" style="background: #0ea5e9; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.3); cursor: pointer;" @click="triggerRemoteUnlockAll" onmouseover="this.style.background='#0284c7'" onmouseout="this.style.background='#0ea5e9'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+          DESBLOQUEAR TODO
+        </button>
         <button class="btn" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3); cursor: pointer;" @click="triggerRemoteShutdownAll" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
-          APAGAR TODO EL LABORATORIO
+          APAGAR TODO
         </button>
         <div style="background: #f0fdfa; padding: 10px 20px; border-radius: 8px; border: 1px solid #99f6e4; display: flex; align-items: center; height: 42px; box-sizing: border-box;">
           <span style="color: #64748b; font-size: 0.85rem; margin-right: 10px;">HORA ACTUAL:</span>
@@ -409,6 +440,35 @@ onUnmounted(() => {
         <div style="display: flex; gap: 10px;">
           <button class="btn" style="flex: 1; background: transparent; color: #64748b; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; font-weight: 600;" @click="passwordPromptOpen = false">Cancelar</button>
           <button class="btn" style="flex: 1; background: #ef4444; color: white; padding: 10px; border-radius: 8px; font-weight: 700; border: none;" @click="submitPassword">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmación de Desbloqueo General -->
+    <div v-if="unlockConfirmModalOpen" class="detail-overlay" @click.self="unlockConfirmModalOpen = false">
+      <div class="card detail-card" style="max-width: 500px; text-align: center;" @click.stop>
+        <div style="background: #fffbeb; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; border: 1px solid #fde68a;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+        </div>
+        <h3 style="margin: 0 0 10px; color: rgb(17, 24, 39); font-weight: 800; font-size: 1.3rem;">¡Sesiones Activas Detectadas!</h3>
+        <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px;">
+          Hay <strong style="color: #b45309;">{{ activePCsCount }}</strong> computadora(s) siendo utilizadas actualmente por alumnos en este laboratorio.
+        </p>
+
+        <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #92400e; text-align: left; margin-bottom: 25px; line-height: 1.4;">
+          ⚠️ <strong>Desbloquear todas</strong> forzará el cierre de sesión de los alumnos (registrando su tiempo consumido) para poner todas las PC en sesión de Administrador.
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn" style="background: #0ea5e9; color: white; padding: 12px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s;" @click="sendUnlockAllCommand(true)">
+            Desbloquear SOLO equipos libres
+          </button>
+          <button class="btn" style="background: #ef4444; color: white; padding: 12px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s;" @click="sendUnlockAllCommand(false)">
+            Desbloquear ABSOLUTAMENTE TODO (Cerrar sesiones)
+          </button>
+          <button class="btn" style="background: transparent; color: #64748b; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer;" @click="unlockConfirmModalOpen = false">
+            Cancelar
+          </button>
         </div>
       </div>
     </div>

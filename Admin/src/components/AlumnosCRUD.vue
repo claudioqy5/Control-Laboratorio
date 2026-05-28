@@ -64,13 +64,11 @@ const filteredAlumnos = computed(() => {
   }
 
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(a => 
-      a.nombres.toLowerCase().includes(query) || 
-      a.apellidoPaterno.toLowerCase().includes(query) || 
-      a.codigoUniversitario.toLowerCase().includes(query) || 
-      (a.dni && a.dni.toLowerCase().includes(query))
-    )
+    const queryWords = searchQuery.value.toLowerCase().split(/\s+/).filter(Boolean)
+    result = result.filter(a => {
+      const studentString = `${a.nombres} ${a.apellidoPaterno} ${a.apellidoMaterno} ${a.codigoUniversitario} ${a.dni || ''}`.toLowerCase()
+      return queryWords.every(word => studentString.includes(word))
+    })
   }
   return result
 })

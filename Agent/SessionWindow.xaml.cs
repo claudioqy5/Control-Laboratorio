@@ -27,6 +27,19 @@ namespace ControlLaboratorio.Agent
             this.Left = SystemParameters.PrimaryScreenWidth - this.Width - 30;
             this.Top = 30;
 
+            // Capturar apagado/reinicio del sistema para cerrar sesión
+            Application.Current.SessionEnding += Current_SessionEnding;
+
+            // Evitar fugas de memoria limpiando el evento al cerrar la ventana normalmente
+            this.Closed += (s, e) =>
+            {
+                try
+                {
+                    Application.Current.SessionEnding -= Current_SessionEnding;
+                }
+                catch { }
+            };
+
             SetupTimers();
         }
 
@@ -123,6 +136,19 @@ namespace ControlLaboratorio.Agent
             _countdownTimer?.Stop();
             _pollingTimer?.Stop();
             ForceLogout();
+        }
+
+        private void Current_SessionEnding(object sender, SessionEndingCancelEventArgs e)
+        {
+            if (_sesionId != 0)
+            {
+                try
+                {
+                    // Llamada síncrona súper rápida para registrar el cierre de sesión en base de datos antes del shutdown
+                    var response = _httpClient.PostAsJsonAsync($"{MainWindow.ApiUrl}/logout", new { SesionId = _sesionId }).GetAwaiter().GetResult();
+                }
+                catch { }
+            }
         }
     }
 

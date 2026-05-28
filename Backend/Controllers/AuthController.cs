@@ -278,7 +278,7 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         private static readonly Dictionary<string, int> PendingUnlocks = new Dictionary<string, int>();
-        private static readonly HashSet<string> PendingShutdowns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, DateTime> PendingShutdowns = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
 
         [HttpPost("trigger-remote-unlock/{nombreRed}")]
         public async Task<IActionResult> TriggerRemoteUnlock(string nombreRed)
@@ -320,6 +320,75 @@ namespace ControlLaboratorio.API.Controllers
             return Ok(new { message = "Desbloqueo enviado al equipo.", sesionId = sesion.SesionID });
         }
 
+        [HttpPost("trigger-remote-unlock-all")]
+        public async Task<IActionResult> TriggerRemoteUnlockAll([FromQuery] bool onlyFree = false)
+        {
+            var equipos = await _context.Equipos.ToListAsync();
+            var now = TimeHelper.GetPeruTime();
+            var today = now.Date;
+
+            var admin = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == "ADMIN");
+            if (admin == null)
+            {
+                admin = new Alumno 
+                { 
+                    CodigoUniversitario = "ADMIN", 
+                    DNI = "00000000", 
+                    Nombres = "ADMINISTRADOR", 
+                    ApellidoPaterno = "SISTEMA",
+                    ApellidoMaterno = "BVE",
+                    CorreoInstitucional = "admin@bve.com",
+                    Carrera = "SOPORTE"
+                };
+                _context.Alumnos.Add(admin);
+                await _context.SaveChangesAsync();
+            }
+
+            foreach (var equipo in equipos)
+            {
+                // Cerramos sesión activa si la hubiera
+                var sesionActiva = await _context.Sesiones
+                    .Include(s => s.Alumno)
+                    .FirstOrDefaultAsync(s => s.EquipoID == equipo.EquipoID && s.HoraFin == null);
+                
+                if (sesionActiva != null)
+                {
+                    if (onlyFree)
+                    {
+                        // Si onlyFree es true y hay sesión activa, ignoramos este equipo
+                        continue;
+                    }
+
+                    sesionActiva.HoraFin = now;
+                    // También actualizamos estado del alumno si corresponde (opcional, pero buena práctica)
+                    if (sesionActiva.Alumno != null)
+                    {
+                        var sesionesHoy = await _context.Sesiones
+                            .Where(s => s.AlumnoID == sesionActiva.AlumnoID && s.Fecha.Date == today && s.HoraFin != null)
+                            .ToListAsync();
+                        double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
+                        sesionActiva.Alumno.Estado = segundosConsumidosHoy < (3 * 3600 - 60);
+                    }
+                }
+
+                // Crear sesión virtual para el administrador
+                var sesion = new Sesion
+                {
+                    AlumnoID = admin.AlumnoID,
+                    EquipoID = equipo.EquipoID,
+                    Fecha = today,
+                    HoraInicio = now,
+                    HoraLimite = now.AddHours(5)
+                };
+                _context.Sesiones.Add(sesion);
+                await _context.SaveChangesAsync(); // Se necesita guardar para generar SesionID
+
+                PendingUnlocks[equipo.NombreRed] = sesion.SesionID;
+            }
+
+            return Ok(new { message = "Comando de desbloqueo enviado a todos los equipos." });
+        }
+
         [HttpPost("trigger-remote-shutdown/{nombreRed}")]
         public async Task<IActionResult> TriggerRemoteShutdown(string nombreRed)
         {
@@ -354,7 +423,7 @@ namespace ControlLaboratorio.API.Controllers
                 }
             }
 
-            PendingShutdowns.Add(nombreRed);
+            PendingShutdowns[nombreRed] = TimeHelper.GetPeruTime();
             await _context.SaveChangesAsync();
             return Ok(new { message = $"Comando de apagado enviado al equipo {nombreRed}." });
         }
@@ -363,37 +432,37 @@ namespace ControlLaboratorio.API.Controllers
         public async Task<IActionResult> TriggerRemoteShutdownAll()
         {
             var equipos = await _context.Equipos.ToListAsync();
+            var now = TimeHelper.GetPeruTime();
+            var today = now.Date;
+
             foreach (var e in equipos)
             {
-                // Cerrar sesiones activas de todos
+                // Registrar comando de apagado para TODOS los equipos (con o sin sesión activa)
+                PendingShutdowns[e.NombreRed] = now;
+
+                // Si tiene sesión activa, la cerramos
                 var sesionActiva = await _context.Sesiones
                     .Include(s => s.Alumno)
                     .FirstOrDefaultAsync(s => s.EquipoID == e.EquipoID && s.HoraFin == null);
+
                 if (sesionActiva != null)
                 {
-                    sesionActiva.HoraFin = TimeHelper.GetPeruTime();
-                    await _context.SaveChangesAsync();
+                    sesionActiva.HoraFin = now;
 
                     if (sesionActiva.Alumno != null)
                     {
                         var sesionesHoy = await _context.Sesiones
-                            .Where(s => s.AlumnoID == sesionActiva.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
+                            .Where(s => s.AlumnoID == sesionActiva.AlumnoID && s.Fecha.Date == today && s.HoraFin != null)
                             .ToListAsync();
 
-                        double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
-                        
-                        if (segundosConsumidosHoy >= (3 * 3600 - 60))
-                        {
-                            sesionActiva.Alumno.Estado = false;
-                        }
-                        else
-                        {
-                            sesionActiva.Alumno.Estado = true;
-                        }
+                        double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
+
+                        sesionActiva.Alumno.Estado = segundosConsumidosHoy < (3 * 3600 - 60);
                     }
                 }
-                PendingShutdowns.Add(e.NombreRed);
             }
+
+            // Un único guardado al final para evitar conflictos de concurrencia
             await _context.SaveChangesAsync();
             return Ok(new { message = "Comando de apagado enviado a todos los equipos." });
         }
@@ -402,9 +471,13 @@ namespace ControlLaboratorio.API.Controllers
         public IActionResult CheckRemoteUnlock(string nombreRed)
         {
             bool shouldShutdown = false;
-            if (PendingShutdowns.Contains(nombreRed))
+            if (PendingShutdowns.TryGetValue(nombreRed, out DateTime shutdownTime))
             {
-                shouldShutdown = true;
+                // Solo apagar si el comando fue enviado hace menos de 10 minutos (evita apagados fantasmas en encendidos del día siguiente)
+                if ((TimeHelper.GetPeruTime() - shutdownTime).TotalMinutes <= 10)
+                {
+                    shouldShutdown = true;
+                }
                 PendingShutdowns.Remove(nombreRed); // Consumir comando
             }
 

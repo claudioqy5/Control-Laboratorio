@@ -8,6 +8,8 @@ namespace ControlLaboratorio.Agent;
 
 public partial class App : Application
 {
+    public const string AgentVersion = "1.0.0";
+
     private static System.Threading.Mutex? _mutex;
 
     protected override void OnStartup(StartupEventArgs e)

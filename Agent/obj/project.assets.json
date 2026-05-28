@@ -2,7 +2,7 @@
   "version": 3,
   "targets": {
     "net9.0-windows7.0": {
-      "Microsoft.NET.ILLink.Tasks/9.0.15": {
+      "Microsoft.NET.ILLink.Tasks/9.0.0-rc.1.24431.7": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.ILLink.Tasks.props": {}
@@ -10,7 +10,7 @@
       }
     },
     "net9.0-windows7.0/win-x64": {
-      "Microsoft.NET.ILLink.Tasks/9.0.15": {
+      "Microsoft.NET.ILLink.Tasks/9.0.0-rc.1.24431.7": {
         "type": "package",
         "build": {
           "build/Microsoft.NET.ILLink.Tasks.props": {}
@@ -19,10 +19,10 @@
     }
   },
   "libraries": {
-    "Microsoft.NET.ILLink.Tasks/9.0.15": {
-      "sha512": "EejcbfCMR77Dthy77qxRbEShmzLApHZUPqXMBVQK+A0pNrRThkaHoGGMGvbq/gTkC/waKcDEgjBkbaejB58Wtw==",
+    "Microsoft.NET.ILLink.Tasks/9.0.0-rc.1.24431.7": {
+      "sha512": "B8jHIIszeUdDY+O4G1/xPOuhrriwsv9Z8/u3XSOAqc8Z0mQCeLBKg2oLGElDZeRF8wWXDGklAKY3f0IHopyXkQ==",
       "type": "package",
-      "path": "microsoft.net.illink.tasks/9.0.15",
+      "path": "microsoft.net.illink.tasks/9.0.0-rc.1.24431.7",
       "hasTools": true,
       "files": [
         ".nupkg.metadata",
@@ -36,7 +36,7 @@
         "build/Microsoft.NET.ILLink.Analyzers.props",
         "build/Microsoft.NET.ILLink.Tasks.props",
         "build/Microsoft.NET.ILLink.targets",
-        "microsoft.net.illink.tasks.9.0.15.nupkg.sha512",
+        "microsoft.net.illink.tasks.9.0.0-rc.1.24431.7.nupkg.sha512",
         "microsoft.net.illink.tasks.nuspec",
         "tools/net472/ILLink.Tasks.dll",
         "tools/net472/ILLink.Tasks.dll.config",
@@ -73,30 +73,28 @@
   },
   "projectFileDependencyGroups": {
     "net9.0-windows7.0": [
-      "Microsoft.NET.ILLink.Tasks >= 9.0.15"
+      "Microsoft.NET.ILLink.Tasks >= 9.0.0-rc.1.24431.7"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\FAMHURP\\.nuget\\packages\\": {}
+    "C:\\Users\\PC-37\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
+      "projectUniqueName": "C:\\Users\\PC-37\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
       "projectName": "ControlLaboratorio.Agent",
-      "projectPath": "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
-      "packagesPath": "C:\\Users\\FAMHURP\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Agent\\obj\\",
+      "projectPath": "C:\\Users\\PC-37\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Agent\\ControlLaboratorio.Agent.csproj",
+      "packagesPath": "C:\\Users\\PC-37\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\PC-37\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Agent\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\FAMHURP\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\PC-37\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0-windows"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -113,9 +111,9 @@
       "restoreAuditProperties": {
         "enableAudit": "true",
         "auditLevel": "low",
-        "auditMode": "direct"
+        "auditMode": "all"
       },
-      "SdkAnalysisLevel": "10.0.200"
+      "SdkAnalysisLevel": "9.0.100"
     },
     "frameworks": {
       "net9.0-windows7.0": {
@@ -124,7 +122,7 @@
           "Microsoft.NET.ILLink.Tasks": {
             "suppressParent": "All",
             "target": "Package",
-            "version": "[9.0.15, )",
+            "version": "[9.0.0-rc.1.24431.7, )",
             "autoReferenced": true
           }
         },
@@ -141,32 +139,20 @@
         "warn": true,
         "downloadDependencies": [
           {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[9.0.15, 9.0.15]"
-          },
-          {
             "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-            "version": "[9.0.15, 9.0.15]"
+            "version": "[9.0.0-rc.1.24452.1, 9.0.0-rc.1.24452.1]"
           },
           {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[9.0.15, 9.0.15]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[9.0.15, 9.0.15]"
+            "name": "Microsoft.NETCore.App.Crossgen2.win-x64",
+            "version": "[9.0.0-rc.1.24431.7, 9.0.0-rc.1.24431.7]"
           },
           {
             "name": "Microsoft.NETCore.App.Runtime.win-x64",
-            "version": "[9.0.15, 9.0.15]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[9.0.15, 9.0.15]"
+            "version": "[9.0.0-rc.1.24431.7, 9.0.0-rc.1.24431.7]"
           },
           {
             "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-            "version": "[9.0.15, 9.0.15]"
+            "version": "[9.0.0-rc.1.24452.1, 9.0.0-rc.1.24452.1]"
           }
         ],
         "frameworkReferences": {
@@ -177,7 +163,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.100-rc.1.24452.12/PortableRuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {

@@ -18,6 +18,10 @@ namespace ControlLaboratorio.API.Models
 
         public int? PosicionMapa { get; set; }
 
+        public string? AgentVersion { get; set; }
+
+        public DateTime? AgentVersionFecha { get; set; }
+
         public ICollection<Sesion> Sesiones { get; set; } = new List<Sesion>();
     }
 }

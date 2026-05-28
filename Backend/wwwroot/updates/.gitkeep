@@ -1,0 +1,3 @@
+# Esta carpeta contiene el agente compilado para distribución automática.
+# Coloca aquí el archivo: ControlLaboratorio.Agent.exe
+# y actualiza el archivo version.txt con la versión correspondiente.

@@ -62,6 +62,16 @@ using (var scope = app.Services.CreateScope())
             BEGIN
                 ALTER TABLE Equipos ADD PosicionMapa INT NULL
             END
+
+            IF COL_LENGTH('Equipos', 'AgentVersion') IS NULL
+            BEGIN
+                ALTER TABLE Equipos ADD AgentVersion NVARCHAR(20) NULL
+            END
+
+            IF COL_LENGTH('Equipos', 'AgentVersionFecha') IS NULL
+            BEGIN
+                ALTER TABLE Equipos ADD AgentVersionFecha DATETIME2 NULL
+            END
         ");
 
         // Force cleanup and re-seeding if we want to ensure fresh mock data with all new columns populated (only in development)
@@ -107,7 +117,7 @@ using (var scope = app.Services.CreateScope())
             {
                 var alumnos = db.Alumnos.ToList();
                 var equipos = db.Equipos.ToList();
-                var hoy = DateTime.Now.Date;
+                var hoy = ControlLaboratorio.API.Helpers.TimeHelper.GetPeruTime().Date;
                 
                 var random = new Random();
                 var sesionesMock = new List<Sesion>();
@@ -162,6 +172,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 
