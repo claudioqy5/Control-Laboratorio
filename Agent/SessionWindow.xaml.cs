@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
@@ -81,6 +82,15 @@ namespace ControlLaboratorio.Agent
 
             try
             {
+                // 1. Verificar primero si hay un apagado remoto urgente
+                var unlockResponse = await _httpClient.GetFromJsonAsync<RemoteUnlockResponse>($"{MainWindow.ApiUrl}/check-remote-unlock/{Environment.MachineName}");
+                if (unlockResponse != null && unlockResponse.Shutdown)
+                {
+                    Process.Start(new ProcessStartInfo("shutdown", "/s /t 5") { CreateNoWindow = true, UseShellExecute = false });
+                    return;
+                }
+
+                // 2. Si no hay apagado, verificamos estado de la sesión
                 var response = await _httpClient.GetFromJsonAsync<SessionStatusResponse>($"{MainWindow.ApiUrl}/session-status/{_sesionId}");
                 if (response != null)
                 {

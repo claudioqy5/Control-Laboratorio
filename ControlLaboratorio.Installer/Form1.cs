@@ -83,8 +83,11 @@ namespace ControlLaboratorio.Installer
                     ExtractResource("ControlLaboratorio.Installer.Resources.vcruntime140_cor3.dll", Path.Combine(targetDir, "vcruntime140_cor3.dll"));
                 });
 
-                lblStatus.Text = "Configurando inicio automático (Registro de Windows)...";
-                await Task.Run(() => CreateStartupShortcut(targetExe));
+                lblStatus.Text = "Configurando inicio automático y políticas de energía...";
+                await Task.Run(() => {
+                    CreateStartupShortcut(targetExe);
+                    ApplySystemConfigurations();
+                });
 
                 lblStatus.Text = "Iniciando el sistema...";
                 Process.Start(new ProcessStartInfo { FileName = targetExe, UseShellExecute = true });
@@ -139,6 +142,29 @@ namespace ControlLaboratorio.Installer
             {
                 key.SetValue("BVE_ControlLaboratorioAgent", $"\"{exePath}\"");
             }
+        }
+
+        private void ApplySystemConfigurations()
+        {
+            try
+            {
+                // Disable sleep on AC power
+                Process.Start(new ProcessStartInfo("powercfg", "/change standby-timeout-ac 0") { CreateNoWindow = true, UseShellExecute = false })?.WaitForExit();
+                
+                // Disable hibernation
+                Process.Start(new ProcessStartInfo("powercfg", "/h off") { CreateNoWindow = true, UseShellExecute = false })?.WaitForExit();
+
+                // Disable Lock Screen
+                using (var key = Microsoft.Win32.Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Policies\Microsoft\Windows\Personalization"))
+                {
+                    key.SetValue("NoLockScreen", 1, Microsoft.Win32.RegistryValueKind.DWord);
+                }
+
+                // Disable require sign-in on wakeup
+                Process.Start(new ProcessStartInfo("powercfg", "/SETACVALUEINDEX SCHEME_CURRENT SUB_NONE CONSOLELOCK 0") { CreateNoWindow = true, UseShellExecute = false })?.WaitForExit();
+                Process.Start(new ProcessStartInfo("powercfg", "/SETACTIVE SCHEME_CURRENT") { CreateNoWindow = true, UseShellExecute = false })?.WaitForExit();
+            }
+            catch { }
         }
     }
 }
