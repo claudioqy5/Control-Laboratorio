@@ -121,9 +121,7 @@ namespace ControlLaboratorio.API.Controllers
 
             if (segundosConsumidosHoy >= segundosLimite)
             {
-                // Si el alumno ya consumió sus horas hoy, pero su Estado es true, significa que
-                // el administrador lo reactivó manualmente desde el panel de administración.
-                // En este caso, le permitimos volver a iniciar sesión otorgándole un nuevo límite de 3 horas.
+                // Alumno consumió el límite. Si Estado=true, el admin lo reactivó → 3 horas completas.
                 if (alumno.Estado)
                 {
                     segundosRestantes = segundosLimite;
@@ -137,7 +135,28 @@ namespace ControlLaboratorio.API.Controllers
             }
             else
             {
-                segundosRestantes = segundosLimite - segundosConsumidosHoy;
+                double tiempoRestante = segundosLimite - segundosConsumidosHoy;
+
+                // CORRECCIÓN DE RACE CONDITION:
+                // En reactivaciones múltiples, puede ocurrir que el logout de la sesión anterior
+                // aún no haya terminado de procesarse en la BD cuando el alumno intenta entrar de nuevo.
+                // Resultado: segundosConsumidosHoy queda ligeramente por debajo del límite,
+                // calculando un tiempo restante ridículamente pequeño (ej: 10 minutos en vez de 3 horas).
+                //
+                // Regla: si el tiempo restante calculado es menos de 15 minutos Y ya existen
+                // sesiones cerradas hoy Y el admin lo tiene activo, es una reactivación con race condition.
+                // → Le damos 3 horas completas.
+                bool tieneSessionesPreviasHoy = sesionesHoy.Count > 0;
+                bool tiempoRestanteAnomalo = tiempoRestante < (15 * 60); // menos de 15 minutos
+
+                if (tiempoRestanteAnomalo && tieneSessionesPreviasHoy && alumno.Estado)
+                {
+                    segundosRestantes = segundosLimite; // Race condition detectada → 3 horas completas
+                }
+                else
+                {
+                    segundosRestantes = tiempoRestante > 0 ? tiempoRestante : segundosLimite;
+                }
             }
 
             var nuevaSesion = new Sesion
