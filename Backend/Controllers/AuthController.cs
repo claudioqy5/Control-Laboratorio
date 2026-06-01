@@ -305,8 +305,8 @@ namespace ControlLaboratorio.API.Controllers
             });
         }
 
-        private static readonly Dictionary<string, int> PendingUnlocks = new Dictionary<string, int>();
-        private static readonly Dictionary<string, DateTime> PendingShutdowns = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, int> PendingUnlocks = new ConcurrentDictionary<string, int>();
+        private static readonly ConcurrentDictionary<string, DateTime> PendingShutdowns = new ConcurrentDictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
 
         [HttpPost("trigger-remote-unlock/{nombreRed}")]
         public async Task<IActionResult> TriggerRemoteUnlock(string nombreRed)
@@ -506,13 +506,12 @@ namespace ControlLaboratorio.API.Controllers
                 {
                     shouldShutdown = true;
                 }
-                PendingShutdowns.Remove(nombreRed); // Consumir comando
+                PendingShutdowns.TryRemove(nombreRed, out _); // Consumir comando
             }
 
-            if (PendingUnlocks.ContainsKey(nombreRed))
+            if (PendingUnlocks.TryGetValue(nombreRed, out int sesionId))
             {
-                int sesionId = PendingUnlocks[nombreRed];
-                PendingUnlocks.Remove(nombreRed);
+                PendingUnlocks.TryRemove(nombreRed, out _);
                 return Ok(new { unlock = true, sesionId = sesionId, shutdown = shouldShutdown });
             }
             return Ok(new { unlock = false, shutdown = shouldShutdown });

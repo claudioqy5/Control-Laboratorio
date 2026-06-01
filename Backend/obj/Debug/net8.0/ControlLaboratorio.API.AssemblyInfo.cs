@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ControlLaboratorio.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ade3be942016892a8c8d0b03d0f56b919d8adc56")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aaacf2186b439fd8ff6ee5e8a3d7ea7e67557120")]
 [assembly: System.Reflection.AssemblyProductAttribute("ControlLaboratorio.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ControlLaboratorio.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
