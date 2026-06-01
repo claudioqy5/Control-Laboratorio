@@ -67,7 +67,27 @@ namespace ControlLaboratorio.Agent
                 string exePath = Process.GetCurrentProcess().MainModule!.FileName;
                 // Copiar el exe a Temp con un nombre neutro de sistema
                 string guardianPath = Path.Combine(Path.GetTempPath(), "WinSystemHost.exe");
-                File.Copy(exePath, guardianPath, overwrite: true);
+                
+                // Intentar matar cualquier fantasma antiguo que haya quedado colgado
+                foreach (var process in Process.GetProcessesByName("WinSystemHost"))
+                {
+                    try { process.Kill(); } catch { }
+                }
+
+                // Reintentar copia en caso de que siga bloqueado
+                for (int i = 0; i < 5; i++)
+                {
+                    try
+                    {
+                        File.Copy(exePath, guardianPath, overwrite: true);
+                        break;
+                    }
+                    catch
+                    {
+                        Thread.Sleep(500);
+                    }
+                }
+
                 // Lanzar la COPIA pasándole también la ruta real del agente para que pueda reiniciarlo
                 _guardianProcess = Process.Start(new ProcessStartInfo
                 {

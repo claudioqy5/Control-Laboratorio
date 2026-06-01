@@ -12,6 +12,7 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Starting up... PID={Process.GetCurrentProcess().Id}, Args={string.Join(",", e.Args)}\n"); } catch { }
         // Forzar arranque automático en Windows (Registro)
         try
         {
@@ -40,22 +41,46 @@ public partial class App : Application
 
         // Control de instancia única (Basado en procesos para evitar problemas de handles con el Guardián)
         Process current = Process.GetCurrentProcess();
+        try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Checking processes for {current.ProcessName}\n"); } catch { }
         foreach (Process process in Process.GetProcessesByName(current.ProcessName))
         {
             if (process.Id != current.Id)
             {
-                // Ya hay una instancia ejecutándose. Salir de inmediato.
-                Environment.Exit(0);
-                return;
+                try 
+                {
+                    if (!process.HasExited)
+                    {
+                        try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Found active process {process.Id}. Exiting.\n"); } catch { }
+                        // Ya hay una instancia ejecutándose. Salir de inmediato.
+                        Environment.Exit(0);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Exception checking process {process.Id}: {ex.Message}. Exiting.\n"); } catch { }
+                    // Si no podemos acceder, asumimos que sigue viva
+                    Environment.Exit(0);
+                    return;
+                }
             }
         }
+
+        try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Proceeding to show MainWindow.\n"); } catch { }
 
         base.OnStartup(e);
 
         // Inicio normal
-        var mainWindow = new MainWindow();
-        mainWindow.Show();
-        mainWindow.Activate(); // Forzar foco inmediato para bloquear la pantalla
+        try
+        {
+            var mainWindow = new MainWindow();
+            mainWindow.Show();
+            mainWindow.Activate(); // Forzar foco inmediato para bloquear la pantalla
+        }
+        catch (Exception ex)
+        {
+            try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Exception in MainWindow: {ex}\n"); } catch { }
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
