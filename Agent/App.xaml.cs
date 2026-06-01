@@ -8,9 +8,7 @@ namespace ControlLaboratorio.Agent;
 
 public partial class App : Application
 {
-    public const string AgentVersion = "1.0.3";
-
-    private static System.Threading.Mutex? _mutex;
+    public const string AgentVersion = "1.0.5";
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -40,17 +38,16 @@ public partial class App : Application
             }
         }
 
-        // Control de instancia única (Mutex del sistema)
-        const string mutexName = @"Global\BVE_ControlLaboratorioAgent_UniqueMutex";
-        _mutex = new System.Threading.Mutex(true, mutexName, out bool createdNew);
-
-        if (!createdNew)
+        // Control de instancia única (Basado en procesos para evitar problemas de handles con el Guardián)
+        Process current = Process.GetCurrentProcess();
+        foreach (Process process in Process.GetProcessesByName(current.ProcessName))
         {
-            // Ya hay una instancia ejecutándose. Salir de inmediato.
-            _mutex.Dispose();
-            _mutex = null;
-            Environment.Exit(0);
-            return;
+            if (process.Id != current.Id)
+            {
+                // Ya hay una instancia ejecutándose. Salir de inmediato.
+                Environment.Exit(0);
+                return;
+            }
         }
 
         base.OnStartup(e);
@@ -63,15 +60,6 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        if (_mutex != null)
-        {
-            try
-            {
-                _mutex.ReleaseMutex();
-            }
-            catch { }
-            _mutex.Dispose();
-        }
         base.OnExit(e);
     }
 

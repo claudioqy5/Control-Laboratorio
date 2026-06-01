@@ -150,6 +150,11 @@ namespace ControlLaboratorio.Agent
             ForceLogout();
         }
 
+        public void AllowCloseForUpdate()
+        {
+            _isLoggingOut = true;
+        }
+
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             // Bloquear el cierre de ventana desde la barra de tareas o Alt+F4

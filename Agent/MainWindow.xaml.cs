@@ -105,9 +105,7 @@ namespace ControlLaboratorio.Agent
 
         private async void UpdateCheckTimer_Tick(object sender, EventArgs e)
         {
-            // Solo actualizar si NO hay sesión activa (Opción A: no interrumpir al alumno)
-            if (this.Visibility != Visibility.Visible) return; // Hay sesión activa → esperar
-
+            // Ahora permitimos actualizar incluso si la sesión está activa
             try
             {
                 var response = await _httpClient.GetFromJsonAsync<UpdateCheckResponse>(
@@ -163,6 +161,15 @@ namespace ControlLaboratorio.Agent
                     WindowStyle = ProcessWindowStyle.Hidden,
                     CreateNoWindow = true
                 });
+
+                // Permitir cerrar la ventana del alumno para aplicar la actualización
+                foreach (Window window in Application.Current.Windows)
+                {
+                    if (window is SessionWindow sw)
+                    {
+                        sw.AllowCloseForUpdate();
+                    }
+                }
 
                 Application.Current.Shutdown();
             }
