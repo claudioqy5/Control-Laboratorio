@@ -8,12 +8,26 @@ namespace ControlLaboratorio.Agent;
 
 public partial class App : Application
 {
-    public const string AgentVersion = "1.0.2";
+    public const string AgentVersion = "1.0.3";
 
     private static System.Threading.Mutex? _mutex;
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Forzar arranque automático en Windows (Registro)
+        try
+        {
+            using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true))
+            {
+                if (key != null)
+                {
+                    string currentExe = Process.GetCurrentProcess().MainModule!.FileName;
+                    key.SetValue("ControlLaboratorioAgent", $"\"{currentExe}\"");
+                }
+            }
+        }
+        catch { }
+
         // Modo guardián: --guardian <PID> <RutaDelAgente>
         if (e.Args.Length >= 2 && e.Args[0] == "--guardian")
         {
