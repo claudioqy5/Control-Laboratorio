@@ -53,7 +53,7 @@ namespace ControlLaboratorio.Agent
             _countdownTimer.Start();
 
             _pollingTimer = new DispatcherTimer();
-            _pollingTimer.Interval = TimeSpan.FromSeconds(5); // Poll fast for remote locking
+            _pollingTimer.Interval = TimeSpan.FromSeconds(3); // Poll fast for remote locking
             _pollingTimer.Tick += PollingTimer_Tick;
             _pollingTimer.Start();
 

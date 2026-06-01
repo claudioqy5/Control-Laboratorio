@@ -11,8 +11,8 @@ namespace ControlLaboratorio.API.Services
         private readonly ILogger<SessionMonitorService> _logger;
 
         // Tolerancia de desconexión (Agent pings every 5 seconds)
-        // Usamos 25 segundos para evitar falsos positivos por lag de red
-        private readonly TimeSpan _timeoutThreshold = TimeSpan.FromSeconds(25);
+        // Usamos 8 segundos para evitar falsos positivos por lag de red
+        private readonly TimeSpan _timeoutThreshold = TimeSpan.FromSeconds(8);
 
         public SessionMonitorService(IServiceProvider serviceProvider, ILogger<SessionMonitorService> logger)
         {
@@ -35,8 +35,8 @@ namespace ControlLaboratorio.API.Services
                     _logger.LogError(ex, "Error en el servicio de monitoreo de sesiones.");
                 }
 
-                // Ejecutar cada 10 segundos para detectar rápidamente caídas
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                // Ejecutar cada 5 segundos para detectar rápidamente caídas
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
 
