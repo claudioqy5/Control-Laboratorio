@@ -8,7 +8,7 @@ namespace ControlLaboratorio.Agent;
 
 public partial class App : Application
 {
-    public const string AgentVersion = "1.0.0";
+    public const string AgentVersion = "1.0.1";
 
     private static System.Threading.Mutex? _mutex;
 

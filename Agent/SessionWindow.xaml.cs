@@ -15,6 +15,7 @@ namespace ControlLaboratorio.Agent
         private double _remainingSeconds;
         private DispatcherTimer _countdownTimer;
         private DispatcherTimer _pollingTimer;
+        private bool _isLoggingOut = false;
 
         public SessionWindow(int sesionId, string userName, double remainingSeconds, MainWindow lockWindow)
         {
@@ -127,6 +128,7 @@ namespace ControlLaboratorio.Agent
 
         private async void ForceLogout()
         {
+            _isLoggingOut = true;
             if (_sesionId != 0)
             {
                 try
@@ -146,6 +148,16 @@ namespace ControlLaboratorio.Agent
             _countdownTimer?.Stop();
             _pollingTimer?.Stop();
             ForceLogout();
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Bloquear el cierre de ventana desde la barra de tareas o Alt+F4
+            if (!_isLoggingOut)
+            {
+                e.Cancel = true;
+            }
+            base.OnClosing(e);
         }
 
         private void Current_SessionEnding(object sender, SessionEndingCancelEventArgs e)
