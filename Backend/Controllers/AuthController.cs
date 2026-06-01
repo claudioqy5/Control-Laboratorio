@@ -4,6 +4,7 @@ using ControlLaboratorio.API.Models;
 using ControlLaboratorio.API.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 
 namespace ControlLaboratorio.API.Controllers
 {
@@ -11,6 +12,8 @@ namespace ControlLaboratorio.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        public static readonly ConcurrentDictionary<int, DateTime> ActiveSessionPings = new ConcurrentDictionary<int, DateTime>();
+        
         private readonly ApplicationDbContext _context;
 
 
@@ -171,6 +174,8 @@ namespace ControlLaboratorio.API.Controllers
             _context.Sesiones.Add(nuevaSesion);
             await _context.SaveChangesAsync();
 
+            ActiveSessionPings[nuevaSesion.SesionID] = TimeHelper.GetPeruTime();
+
             return Ok(new
             {
                 sesionId = nuevaSesion.SesionID,
@@ -198,6 +203,8 @@ namespace ControlLaboratorio.API.Controllers
 
             sesion.HoraFin = TimeHelper.GetPeruTime();
             await _context.SaveChangesAsync();
+            
+            ActiveSessionPings.TryRemove(request.SesionId, out _);
 
             // Calcular el total consumido hoy
             if (sesion.Alumno != null)
@@ -240,6 +247,8 @@ namespace ControlLaboratorio.API.Controllers
         {
             var sesion = await _context.Sesiones.FindAsync(sesionId);
             if (sesion == null) return NotFound();
+            
+            ActiveSessionPings[sesionId] = TimeHelper.GetPeruTime();
             
             double remainingSeconds = 0;
             if (sesion.HoraLimite.HasValue)

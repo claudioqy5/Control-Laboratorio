@@ -703,3 +703,4 @@ C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\obj\Debug\net8
 C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\obj\Debug\net8.0\ControlLaboratorio.API.genruntimeconfig.cache
 C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\obj\Debug\net8.0\ref\ControlLaboratorio.API.dll
 C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\bin\Debug\net8.0\ControlLaboratorio.API.staticwebassets.runtime.json
+C:\Users\FAMHURP\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\bin\Debug\net8.0\ControlLaboratorio.API.staticwebassets.runtime.json

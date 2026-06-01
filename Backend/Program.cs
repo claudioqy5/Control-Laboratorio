@@ -10,8 +10,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Agregar el BackgroundService para la reactivación automática
+// Agregar el BackgroundService para la reactivación automática y monitoreo de sesiones
 builder.Services.AddHostedService<ReactivacionAlumnosService>();
+builder.Services.AddHostedService<SessionMonitorService>();
 
 // Database Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
