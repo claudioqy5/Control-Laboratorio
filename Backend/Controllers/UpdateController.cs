@@ -213,6 +213,20 @@ namespace ControlLaboratorio.API.Controllers
             var fileStream = new FileStream(exePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             return File(fileStream, "application/octet-stream", "ControlLaboratorio.Agent.exe");
         }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // DELETE /api/update/cancel/{nombreRed}
+        // Admin cancela la actualización pendiente
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpDelete("cancel/{nombreRed}")]
+        public IActionResult CancelUpdate(string nombreRed)
+        {
+            if (PendingUpdates.TryRemove(nombreRed, out _))
+            {
+                return Ok(new { message = $"Actualización cancelada para {nombreRed}." });
+            }
+            return NotFound(new { message = "El equipo no tenía una actualización pendiente." });
+        }
     }
 
     public class ReportVersionRequest
