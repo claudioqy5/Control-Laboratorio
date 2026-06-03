@@ -11,7 +11,9 @@ const currentEquipo = ref({
   nombreRed: '',
   ubicacion: '',
   estado: true,
-  posicionMapa: null
+  posicionMapa: null,
+  alias: '',
+  comentario: ''
 })
 
 const fetchEquipos = async () => {
@@ -28,6 +30,7 @@ const filteredEquipos = computed(() => {
   const query = searchQuery.value.toLowerCase()
   return equipos.value.filter(e => 
     (e.nombreRed && e.nombreRed.toLowerCase().includes(query)) ||
+    (e.alias && e.alias.toLowerCase().includes(query)) ||
     (e.ubicacion && e.ubicacion.toLowerCase().includes(query))
   )
 })
@@ -100,8 +103,10 @@ onMounted(fetchEquipos)
         <tr>
           <th>Nº</th>
           <th>Nombre de Red</th>
+          <th>Alias</th>
           <th>Ubicación</th>
           <th>Estado del Equipo</th>
+          <th>Comentario</th>
           <th>Asignación en Mapa</th>
           <th>Acciones</th>
         </tr>
@@ -115,11 +120,18 @@ onMounted(fetchEquipos)
               <strong style="color: #111827;">{{ e.nombreRed }}</strong>
             </div>
           </td>
+          <td style="color: #1e293b; font-weight: 600;">{{ e.alias || '-' }}</td>
           <td style="color: #475569;">{{ e.ubicacion || '-' }}</td>
           <td>
             <span :style="{ background: e.estado ? '#f0fdf4' : '#fef2f2', color: e.estado ? '#166534' : '#991b1b', padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: '600' }">
               {{ e.estado ? 'Operativo' : 'Inactivo / Mantenimiento' }}
             </span>
+          </td>
+          <td>
+            <span v-if="e.comentario" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; max-width: 180px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" :title="e.comentario">
+              ⚠️ {{ e.comentario }}
+            </span>
+            <span v-else style="color: #94a3b8; font-size: 0.85rem; font-style: italic;">-</span>
           </td>
           <td>
             <div v-if="e.posicionMapa !== null" style="display: inline-flex; align-items: center; gap: 6px; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
@@ -168,8 +180,16 @@ onMounted(fetchEquipos)
             <small style="color: #94a3b8; font-size: 0.75rem; display: block; margin-top: 4px;">El nombre de red es asignado automáticamente por el agente y no se puede editar.</small>
           </div>
           <div class="input-group" style="margin-top: 1rem;">
+            <label>Alias / Etiqueta</label>
+            <input type="text" v-model="currentEquipo.alias" class="input-field" placeholder="Ej: PC 01, Proyector...">
+          </div>
+          <div class="input-group" style="margin-top: 1rem;">
             <label>Ubicación</label>
             <input type="text" v-model="currentEquipo.ubicacion" class="input-field" placeholder="Ej: Laboratorio Central">
+          </div>
+          <div class="input-group" style="margin-top: 1rem;">
+            <label>Comentario / Observación</label>
+            <input type="text" v-model="currentEquipo.comentario" class="input-field" placeholder="Ej: Falla mouse, Sin internet...">
           </div>
         </div>
         
