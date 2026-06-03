@@ -64,6 +64,16 @@ using (var scope = app.Services.CreateScope())
                 ALTER TABLE Equipos ADD PosicionMapa INT NULL
             END
 
+            IF COL_LENGTH('Equipos', 'Alias') IS NULL
+            BEGIN
+                ALTER TABLE Equipos ADD Alias NVARCHAR(50) NULL
+            END
+
+            IF COL_LENGTH('Equipos', 'Comentario') IS NULL
+            BEGIN
+                ALTER TABLE Equipos ADD Comentario NVARCHAR(255) NULL
+            END
+
             IF COL_LENGTH('Equipos', 'AgentVersion') IS NULL
             BEGIN
                 ALTER TABLE Equipos ADD AgentVersion NVARCHAR(20) NULL

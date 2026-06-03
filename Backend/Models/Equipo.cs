@@ -18,6 +18,12 @@ namespace ControlLaboratorio.API.Models
 
         public int? PosicionMapa { get; set; }
 
+        [StringLength(50)]
+        public string? Alias { get; set; }
+
+        [StringLength(255)]
+        public string? Comentario { get; set; }
+
         public string? AgentVersion { get; set; }
 
         public DateTime? AgentVersionFecha { get; set; }

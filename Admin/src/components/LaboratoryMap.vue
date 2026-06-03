@@ -41,6 +41,28 @@ const requestAssignEquipo = (equipoId) => {
   passwordPromptOpen.value = true
 }
 
+const pendingAlias = ref('')
+const requestSetAlias = (equipoId, currentAlias) => {
+  const alias = prompt("Ingresa el nuevo alias para esta computadora:", currentAlias || "")
+  if (alias === null) return // Usuario canceló
+  pendingAction.value = 'setAlias'
+  pendingEquipoId.value = equipoId
+  pendingAlias.value = alias
+  passwordInput.value = ''
+  passwordPromptOpen.value = true
+}
+
+const pendingComentario = ref('')
+const requestSetComentario = (equipoId, currentComentario) => {
+  const comentario = prompt("Ingresa un comentario o nota para este equipo (ej: Malogrado, No tiene internet):", currentComentario || "")
+  if (comentario === null) return // Usuario canceló
+  pendingAction.value = 'setComentario'
+  pendingEquipoId.value = equipoId
+  pendingComentario.value = comentario
+  passwordInput.value = ''
+  passwordPromptOpen.value = true
+}
+
 const requestUnassignEquipo = (equipoId) => {
   if (!confirm("¿Seguro que deseas desvincular este equipo de esta posición?")) return
   pendingAction.value = 'unassign'
@@ -58,17 +80,30 @@ const submitPassword = async () => {
   const payload = {
     equipoId: pendingEquipoId.value,
     posicionMapa: pendingAction.value === 'assign' ? selectedSlotIndex.value : null,
+    alias: pendingAction.value === 'setAlias' ? pendingAlias.value : null,
+    comentario: pendingAction.value === 'setComentario' ? pendingComentario.value : null,
     password: passwordInput.value
   }
 
   try {
-    await axios.post(`${API_BASE_URL}/api/stats/assign-map-slot`, payload)
+    if (pendingAction.value === 'setAlias') {
+      await axios.post(`${API_BASE_URL}/api/stats/set-alias`, payload)
+    } else if (pendingAction.value === 'setComentario') {
+      await axios.post(`${API_BASE_URL}/api/stats/set-comentario`, payload)
+    } else {
+      await axios.post(`${API_BASE_URL}/api/stats/assign-map-slot`, payload)
+    }
     
     passwordPromptOpen.value = false
     if (pendingAction.value === 'assign') {
       assignModalOpen.value = false
     } else {
-      selectedPC.value = null
+      if (selectedPC.value && pendingAction.value === 'setAlias') {
+        selectedPC.value.alias = pendingAlias.value
+      }
+      if (selectedPC.value && pendingAction.value === 'setComentario') {
+        selectedPC.value.comentario = pendingComentario.value
+      }
     }
     fetchMap()
     
@@ -283,7 +318,8 @@ onUnmounted(() => {
           <!-- Si existe un equipo para este índice, lo mostramos -->
           <div v-if="getEquipoAtSlot(index)" 
                class="pc-card" :class="{ occupied: getEquipoAtSlot(index).sesionActiva }"
-               @click="openDetails(getEquipoAtSlot(index))">
+               @click="openDetails(getEquipoAtSlot(index))"
+               style="position: relative;">
             <div class="monitor">
               <div class="screen">
                 <span v-if="getEquipoAtSlot(index).sesionActiva" class="user-icon">👤</span>
@@ -291,7 +327,8 @@ onUnmounted(() => {
               </div>
               <div class="stand"></div>
             </div>
-            <span class="pc-name">{{ getEquipoAtSlot(index).nombreRed }}</span>
+            <div v-if="getEquipoAtSlot(index).comentario" style="position: absolute; top: -5px; right: 0px; background: #ef4444; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" title="Tiene un comentario">!</div>
+            <span class="pc-name">{{ getEquipoAtSlot(index).alias || getEquipoAtSlot(index).nombreRed }}</span>
           </div>
 
           <!-- Si no hay equipo aún en DB para esta posición, mostramos un placeholder -->
@@ -313,7 +350,11 @@ onUnmounted(() => {
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 20px;">
           <h3 style="margin: 0; color: rgb(17, 24, 39); font-weight: 700; font-size: 1.25rem; display: flex; align-items: center; gap: 10px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-            {{ selectedPC.nombreRed }}
+            {{ selectedPC.alias || selectedPC.nombreRed }}
+            <span v-if="selectedPC.alias" style="font-size: 0.8rem; font-weight: 500; color: #9ca3af;">({{ selectedPC.nombreRed }})</span>
+            <button @click="requestSetAlias(selectedPC.equipoID, selectedPC.alias)" style="background: none; border: none; cursor: pointer; color: #cbd5e1; padding: 0; display: flex; align-items: center;" title="Editar Alias">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+            </button>
           </h3>
           <span :style="{ 
             background: selectedPC.sesionActiva ? '#fff1f2' : '#f0fdf4', 
@@ -326,6 +367,17 @@ onUnmounted(() => {
           }">
             {{ selectedPC.sesionActiva ? 'OCUPADO' : 'LIBRE' }}
           </span>
+        </div>
+
+        <!-- Comentario Section -->
+        <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <span style="font-size: 0.75rem; color: #d97706; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px;">Nota / Comentario</span>
+            <span style="font-size: 0.9rem; color: #92400e;">{{ selectedPC.comentario || 'Sin comentarios.' }}</span>
+          </div>
+          <button @click="requestSetComentario(selectedPC.equipoID, selectedPC.comentario)" style="background: none; border: none; cursor: pointer; color: #d97706; padding: 0; display: flex; align-items: center;" title="Editar Comentario">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+          </button>
         </div>
         
         <!-- Contenido de Sesión Activa -->

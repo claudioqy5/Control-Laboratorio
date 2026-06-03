@@ -62,6 +62,8 @@ namespace ControlLaboratorio.API.Controllers
                 {
                     e.EquipoID,
                     e.NombreRed,
+                    e.Alias,
+                    e.Comentario,
                     e.Ubicacion,
                     e.Estado,
                     e.PosicionMapa,
@@ -220,12 +222,56 @@ namespace ControlLaboratorio.API.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Posición asignada correctamente" });
         }
+        [HttpPost("set-alias")]
+        public async Task<IActionResult> SetAlias([FromBody] SetAliasRequest request)
+        {
+            if (request.Password != "admin12345")
+            {
+                return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
+            }
+
+            var equipo = await _context.Equipos.FindAsync(request.EquipoID);
+            if (equipo == null) return NotFound(new { message = "Equipo no encontrado" });
+
+            equipo.Alias = string.IsNullOrWhiteSpace(request.Alias) ? null : request.Alias;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Alias actualizado correctamente" });
+        }
+        [HttpPost("set-comentario")]
+        public async Task<IActionResult> SetComentario([FromBody] SetComentarioRequest request)
+        {
+            if (request.Password != "admin12345")
+            {
+                return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
+            }
+
+            var equipo = await _context.Equipos.FindAsync(request.EquipoID);
+            if (equipo == null) return NotFound(new { message = "Equipo no encontrado" });
+
+            equipo.Comentario = string.IsNullOrWhiteSpace(request.Comentario) ? null : request.Comentario;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Comentario actualizado correctamente" });
+        }
     }
 
     public class AssignMapSlotRequest
     {
         public int EquipoID { get; set; }
         public int? PosicionMapa { get; set; }
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class SetAliasRequest
+    {
+        public int EquipoID { get; set; }
+        public string? Alias { get; set; }
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class SetComentarioRequest
+    {
+        public int EquipoID { get; set; }
+        public string? Comentario { get; set; }
         public string Password { get; set; } = string.Empty;
     }
 }
