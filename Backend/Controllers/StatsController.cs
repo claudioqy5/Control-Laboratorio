@@ -46,6 +46,7 @@ namespace ControlLaboratorio.API.Controllers
                     s.SesionID,
                     Alumno = $"{s.Alumno!.Nombres} {s.Alumno.ApellidoPaterno}",
                     Equipo = s.Equipo!.NombreRed,
+                    Alias = s.Equipo.Alias,
                     s.HoraInicio,
                     LimiteDiarioSegundos = s.Alumno.LimiteDiarioSegundos
                 })

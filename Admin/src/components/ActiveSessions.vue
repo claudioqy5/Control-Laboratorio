@@ -34,7 +34,9 @@ onMounted(() => {
     <table>
       <thead>
         <tr>
+          <th style="width: 50px;">#</th>
           <th>Equipo</th>
+          <th>Alias</th>
           <th>Estudiante</th>
           <th>Hora Ingreso</th>
           <th>Sesión Actual</th>
@@ -42,8 +44,15 @@ onMounted(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="s in activeSessions" :key="s.sesionID">
+        <tr v-for="(s, index) in activeSessions" :key="s.sesionID">
+          <td style="color: #94a3b8; font-weight: 600;">{{ index + 1 }}</td>
           <td><span style="background: #ccfbf1; color: #0f766e; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #5eead4;">{{ s.equipo }}</span></td>
+          <td>
+            <span v-if="s.alias" style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; border: 1px solid #cbd5e1;">
+              {{ s.alias }}
+            </span>
+            <span v-else style="color: #cbd5e1; font-style: italic;">—</span>
+          </td>
           <td>{{ s.alumno }}</td>
           <td>{{ formatTime12h(s.horaInicio) }}</td>
           <td>
@@ -54,7 +63,7 @@ onMounted(() => {
           <td><span style="color: #10b981; font-weight: bold;">● Conectado</span></td>
         </tr>
         <tr v-if="activeSessions.length === 0">
-          <td colspan="5" style="text-align: center; padding: 2rem; color: #64748b;">No hay sesiones activas en este momento.</td>
+          <td colspan="7" style="text-align: center; padding: 2rem; color: #64748b;">No hay sesiones activas en este momento.</td>
         </tr>
       </tbody>
     </table>
