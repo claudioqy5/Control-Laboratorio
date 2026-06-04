@@ -26,6 +26,15 @@ const currentAlumno = ref({
   estado: true 
 })
 
+const toast = ref({ show: false, message: '', type: 'success' })
+
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => {
+    toast.value.show = false
+  }, 4000)
+}
+
 const errors = ref({
   codigoUniversitario: false,
   dni: false,
@@ -137,16 +146,20 @@ const saveAlumno = async () => {
   }
 
   try {
+    const isNew = !currentAlumno.value.alumnoID;
     if (currentAlumno.value.alumnoID) {
       await axios.put(`${API_BASE_URL}/api/alumnos/${currentAlumno.value.alumnoID}`, currentAlumno.value)
     } else {
       await axios.post(`${API_BASE_URL}/api/alumnos`, currentAlumno.value)
     }
     showModal.value = false
+    showToast(isNew ? 'Alumno registrado exitosamente.' : 'Datos actualizados correctamente.', 'success')
     fetchAlumnos()
   } catch (error) {
     console.error("Error al guardar alumno:", error)
-    if (error.response && error.response.data && error.response.data.message) {
+    if (error.response && error.response.status === 409) {
+      showToast(error.response.data.message || 'El alumno ya se encuentra registrado.', 'error')
+    } else if (error.response && error.response.data && error.response.data.message) {
       validationError.value = `Error del servidor: ${error.response.data.message}`
     } else {
       validationError.value = "Ocurrió un error al guardar los datos en el servidor."
@@ -274,6 +287,15 @@ onMounted(fetchAlumnos)
 
 <template>
   <div>
+    <!-- Toast Notification -->
+    <div class="toast-container" :class="{ 'toast-show': toast.show, 'toast-success': toast.type === 'success', 'toast-error': toast.type === 'error' }">
+      <div class="toast-icon">
+        <svg v-if="toast.type === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <svg v-if="toast.type === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      </div>
+      <div class="toast-message">{{ toast.message }}</div>
+    </div>
+
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
       <div>        
         <h2 style="color: #111827; font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem;">Participantes</h2>
@@ -313,6 +335,7 @@ onMounted(fetchAlumnos)
           <th>Nombres Completos</th>
           <th>Estado</th>
           <th>Correo Institucional</th>
+          <th>Sesión Actual</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -328,6 +351,11 @@ onMounted(fetchAlumnos)
             </span>
           </td>
           <td style="color: #0ea5e9;">{{ a.correoInstitucional || '-' }}</td>
+          <td>
+            <span style="background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+              Sesión {{ Math.floor((a.limiteDiarioSegundos || 10800) / 10800) }} ({{ (a.limiteDiarioSegundos || 10800) / 3600 }}h)
+            </span>
+          </td>
           <td style="white-space: nowrap;">
             <button class="icon-btn" :class="a.estado ? 'suspend-btn' : 'activate-btn'" @click="toggleEstado(a)" :title="a.estado ? 'Desactivar' : 'Activar'">
               <svg v-if="a.estado" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
@@ -701,6 +729,63 @@ onMounted(fetchAlumnos)
   text-transform: uppercase;
   letter-spacing: 0.05em;
   text-align: left;
+}
+
+.f.import-status span {
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateY(150%);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  z-index: 10000;
+  border-left: 5px solid transparent;
+}
+
+.toast-show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast-success {
+  border-left-color: #10b981;
+}
+.toast-success .toast-icon {
+  color: #10b981;
+  background: #d1fae5;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+}
+
+.toast-error {
+  border-left-color: #ef4444;
+}
+.toast-error .toast-icon {
+  color: #ef4444;
+  background: #fee2e2;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+}
+
+.toast-message {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .premium-input {

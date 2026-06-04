@@ -37,6 +37,7 @@ onMounted(() => {
           <th>Equipo</th>
           <th>Estudiante</th>
           <th>Hora Ingreso</th>
+          <th>Sesión Actual</th>
           <th>Estado</th>
         </tr>
       </thead>
@@ -45,10 +46,15 @@ onMounted(() => {
           <td><span style="background: #ccfbf1; color: #0f766e; padding: 2px 8px; border-radius: 4px; font-weight: bold; border: 1px solid #5eead4;">{{ s.equipo }}</span></td>
           <td>{{ s.alumno }}</td>
           <td>{{ formatTime12h(s.horaInicio) }}</td>
+          <td>
+            <span style="background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+              Sesión {{ Math.floor((s.limiteDiarioSegundos || 10800) / 10800) }}
+            </span>
+          </td>
           <td><span style="color: #10b981; font-weight: bold;">● Conectado</span></td>
         </tr>
         <tr v-if="activeSessions.length === 0">
-          <td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">No hay sesiones activas en este momento.</td>
+          <td colspan="5" style="text-align: center; padding: 2rem; color: #64748b;">No hay sesiones activas en este momento.</td>
         </tr>
       </tbody>
     </table>

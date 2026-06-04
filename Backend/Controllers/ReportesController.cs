@@ -43,6 +43,7 @@ namespace ControlLaboratorio.API.Controllers
                     horaInicio = s.HoraInicio,
                     horaFin = s.HoraFin,
                     estado = s.HoraFin == null ? "En línea" : "Finalizado",
+                    limiteDiarioSegundos = s.Alumno != null ? s.Alumno.LimiteDiarioSegundos : 10800,
                     duracionMinutos = s.HoraFin != null 
                         ? Math.Round((s.HoraFin.Value - s.HoraInicio).TotalMinutes, 1)
                         : Math.Round((TimeHelper.GetPeruTime() - s.HoraInicio).TotalMinutes, 1)

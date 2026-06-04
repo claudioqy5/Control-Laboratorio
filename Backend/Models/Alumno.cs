@@ -42,6 +42,8 @@ namespace ControlLaboratorio.API.Models
 
         public bool Estado { get; set; } = true;
 
+        public int LimiteDiarioSegundos { get; set; } = 3 * 3600; // 3 horas por defecto
+
         public ICollection<Sesion> Sesiones { get; set; } = new List<Sesion>();
     }
 }

@@ -46,7 +46,8 @@ namespace ControlLaboratorio.API.Controllers
                     s.SesionID,
                     Alumno = $"{s.Alumno!.Nombres} {s.Alumno.ApellidoPaterno}",
                     Equipo = s.Equipo!.NombreRed,
-                    s.HoraInicio
+                    s.HoraInicio,
+                    LimiteDiarioSegundos = s.Alumno.LimiteDiarioSegundos
                 })
                 .ToListAsync();
 
