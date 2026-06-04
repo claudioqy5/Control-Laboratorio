@@ -64,6 +64,11 @@ using (var scope = app.Services.CreateScope())
                 ALTER TABLE Equipos ADD PosicionMapa INT NULL
             END
 
+            IF COL_LENGTH('Alumnos', 'LimiteDiarioSegundos') IS NULL
+            BEGIN
+                ALTER TABLE Alumnos ADD LimiteDiarioSegundos INT NOT NULL DEFAULT 10800
+            END
+
             IF COL_LENGTH('Equipos', 'Alias') IS NULL
             BEGIN
                 ALTER TABLE Equipos ADD Alias NVARCHAR(50) NULL
