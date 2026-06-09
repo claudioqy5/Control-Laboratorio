@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import axios from 'axios'
 import * as XLSX from 'xlsx'
 import { API_BASE_URL } from '../config'
@@ -282,7 +282,48 @@ const confirmImport = async () => {
   }
 }
 
-onMounted(fetchAlumnos)
+let barcodeBuffer = ''
+let lastKeyTime = 0
+
+const handleGlobalKeydown = (e) => {
+  // Evitar interferir si hay algún modal abierto
+  if (showModal.value || showImportModal.value) return
+
+  // Si el foco ya está en un campo de texto, dejar que el navegador actúe de manera predeterminada
+  if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+    return
+  }
+
+  const currentTime = Date.now()
+  
+  // Las lectoras de código de barras escriben a una velocidad muy rápida (menor a 50ms por caracter).
+  // Si transcurre más de 100ms entre pulsaciones, asumimos que es tipeo manual y reiniciamos el búfer.
+  if (currentTime - lastKeyTime > 100) {
+    barcodeBuffer = ''
+  }
+  
+  lastKeyTime = currentTime
+
+  if (e.key === 'Enter') {
+    if (barcodeBuffer.length >= 3) {
+      searchQuery.value = barcodeBuffer.trim()
+      currentPage.value = 1
+      barcodeBuffer = ''
+      e.preventDefault()
+    }
+  } else if (e.key.length === 1) {
+    barcodeBuffer += e.key
+  }
+}
+
+onMounted(() => {
+  fetchAlumnos()
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+})
 </script>
 
 <template>
