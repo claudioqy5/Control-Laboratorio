@@ -269,6 +269,28 @@ namespace ControlLaboratorio.API.Controllers
             return Ok(new { horaLimite = sesion.HoraLimite, isFinished = sesion.HoraFin != null, remainingSeconds = remainingSeconds });
         }
 
+        [HttpPost("extend-session")]
+        public async Task<IActionResult> ExtendSession([FromBody] ExtendSessionRequest request)
+        {
+            var sesion = await _context.Sesiones.Include(s => s.Alumno).FirstOrDefaultAsync(s => s.SesionID == request.SesionId);
+            if (sesion == null) return NotFound(new { message = "Sesión no encontrada." });
+            if (sesion.HoraFin != null) return BadRequest(new { message = "La sesión ya ha finalizado." });
+            if (sesion.Alumno == null) return BadRequest(new { message = "Alumno no encontrado." });
+
+            // Sumar 3 horas (10800 seg) al límite diario del alumno
+            sesion.Alumno.LimiteDiarioSegundos += 10800;
+
+            // Extender la hora límite de la sesión actual en 3 horas
+            sesion.HoraLimite = (sesion.HoraLimite ?? TimeHelper.GetPeruTime()).AddHours(3);
+
+            await _context.SaveChangesAsync();
+
+            double newRemaining = (sesion.HoraLimite.Value - TimeHelper.GetPeruTime()).TotalSeconds;
+            if (newRemaining < 0) newRemaining = 0;
+
+            return Ok(new { message = "Sesión extendida exitosamente.", remainingSeconds = newRemaining, horaLimite = sesion.HoraLimite });
+        }
+
         [HttpPost("set-limit")]
         public async Task<IActionResult> SetSessionLimit([FromBody] SetSessionLimitRequest request)
         {

@@ -1,0 +1,87 @@
+{
+  "Version": 1,
+  "Endpoints": [
+    {
+      "Route": "updates/.26rd9gpj9o.gitkeep",
+      "AssetFile": "updates/.gitkeep",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "202"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "application/octet-stream"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"Nvw01BzAvhCVeHI3zyEd089/fp1jHtIL2YkYIrDvfGE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 28 May 2026 15:05:00 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "26rd9gpj9o"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-Nvw01BzAvhCVeHI3zyEd089/fp1jHtIL2YkYIrDvfGE="
+        },
+        {
+          "Name": "label",
+          "Value": "updates/.gitkeep"
+        }
+      ]
+    },
+    {
+      "Route": "updates/.gitkeep",
+      "AssetFile": "updates/.gitkeep",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "202"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "application/octet-stream"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"Nvw01BzAvhCVeHI3zyEd089/fp1jHtIL2YkYIrDvfGE=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Thu, 28 May 2026 15:05:00 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-Nvw01BzAvhCVeHI3zyEd089/fp1jHtIL2YkYIrDvfGE="
+        }
+      ]
+    }
+  ]
+}

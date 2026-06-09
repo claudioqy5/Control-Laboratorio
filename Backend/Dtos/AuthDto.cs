@@ -28,4 +28,9 @@ namespace ControlLaboratorio.API.Dtos
     {
         public string NombreRed { get; set; } = string.Empty;
     }
+
+    public class ExtendSessionRequest
+    {
+        public int SesionId { get; set; }
+    }
 }
