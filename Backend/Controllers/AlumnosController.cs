@@ -53,6 +53,12 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Alumno>> PostAlumno(Alumno alumno)
         {
+            var existeAlumno = await _context.Alumnos.AnyAsync(a => a.CodigoUniversitario == alumno.CodigoUniversitario || a.DNI == alumno.DNI);
+            if (existeAlumno)
+            {
+                return Conflict(new { message = $"Ya existe un alumno registrado con el código {alumno.CodigoUniversitario} o DNI {alumno.DNI}." });
+            }
+
             _context.Alumnos.Add(alumno);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetAlumno), new { id = alumno.AlumnoID }, alumno);
@@ -62,6 +68,22 @@ namespace ControlLaboratorio.API.Controllers
         public async Task<IActionResult> PutAlumno(int id, Alumno alumno)
         {
             if (id != alumno.AlumnoID) return BadRequest();
+
+            var existeAlumno = await _context.Alumnos.AnyAsync(a => (a.CodigoUniversitario == alumno.CodigoUniversitario || a.DNI == alumno.DNI) && a.AlumnoID != id);
+            if (existeAlumno)
+            {
+                return Conflict(new { message = $"Ya existe otro alumno registrado con el código {alumno.CodigoUniversitario} o DNI {alumno.DNI}." });
+            }
+
+            var alumnoDb = await _context.Alumnos.AsNoTracking().FirstOrDefaultAsync(a => a.AlumnoID == id);
+            if (alumnoDb == null) return NotFound();
+
+            // Si pasa de inactivo (false) a activo (true), es una reactivación autorizada
+            if (!alumnoDb.Estado && alumno.Estado)
+            {
+                alumno.LimiteDiarioSegundos = (alumnoDb.LimiteDiarioSegundos < 10800 ? 10800 : alumnoDb.LimiteDiarioSegundos) + 10800;
+            }
+
             _context.Entry(alumno).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return NoContent();

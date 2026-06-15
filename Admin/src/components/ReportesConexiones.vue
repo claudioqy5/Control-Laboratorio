@@ -112,6 +112,7 @@ onMounted(() => {
           <th>Hora Inicio</th>
           <th>Hora Fin</th>
           <th>Uso (Mins)</th>
+          <th>Sesión Actual</th>
           <th>Estado</th>
         </tr>
       </thead>
@@ -157,6 +158,11 @@ onMounted(() => {
             {{ alumno.ultimaSesion.duracionMinutos }} min
           </td>
           <td>
+            <span style="background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+              Sesión {{ Math.floor((alumno.ultimaSesion.limiteDiarioSegundos || 10800) / 10800) }}
+            </span>
+          </td>
+          <td>
             <span v-if="alumno.ultimaSesion.estado === 'En línea'" style="background: #ecfdf5; color: #059669; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
               <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
               En línea
@@ -181,6 +187,7 @@ onMounted(() => {
                     <th>Hora Inicio</th>
                     <th>Hora Fin</th>
                     <th>Uso</th>
+                    <th>Sesión Actual</th>
                     <th>Estado</th>
                   </tr>
                 </thead>
@@ -196,6 +203,11 @@ onMounted(() => {
                     <td style="color: #64748b;">{{ formatTime(ses.horaFin) }}</td>
                     <td :style="{ color: ses.duracionMinutos > 180 ? '#e11d48' : '#64748b', fontWeight: '600' }">
                       {{ ses.duracionMinutos }} min
+                    </td>
+                    <td>
+                      <span style="background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">
+                        Sesión {{ Math.floor((ses.limiteDiarioSegundos || 10800) / 10800) }}
+                      </span>
                     </td>
                     <td>
                       <span v-if="ses.estado === 'En línea'" style="background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">

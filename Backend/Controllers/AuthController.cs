@@ -118,22 +118,36 @@ namespace ControlLaboratorio.API.Controllers
                 .Where(s => s.AlumnoID == alumno.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
                 .ToListAsync();
 
+            // Si es su primer inicio del día, restablecer el límite diario a 3 horas (10800 seg)
+            if (sesionesHoy.Count == 0 && alumno.LimiteDiarioSegundos != 10800)
+            {
+                alumno.LimiteDiarioSegundos = 10800;
+                await _context.SaveChangesAsync();
+            }
+
             double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
-            double segundosLimite = 3 * 3600; // 3 horas
+            double segundosLimite = alumno.LimiteDiarioSegundos;
             double segundosRestantes;
 
             if (segundosConsumidosHoy >= segundosLimite)
             {
-                // Alumno consumió el límite. Si Estado=true, el admin lo reactivó → 3 horas completas.
+                // Alumno consumió el límite. Si Estado=true, el admin lo reactivó.
                 if (alumno.Estado)
                 {
-                    segundosRestantes = segundosLimite;
+                    if (alumno.LimiteDiarioSegundos <= segundosConsumidosHoy)
+                    {
+                        alumno.LimiteDiarioSegundos = (int)segundosConsumidosHoy + 10800;
+                        await _context.SaveChangesAsync();
+                        segundosLimite = alumno.LimiteDiarioSegundos;
+                    }
+                    segundosRestantes = segundosLimite - segundosConsumidosHoy;
+                    if (segundosRestantes <= 0) segundosRestantes = 10800; // Por si acaso
                 }
                 else
                 {
                     alumno.Estado = false;
                     await _context.SaveChangesAsync();
-                    return Unauthorized(new { message = "Has consumido tu límite de 3 horas por el día de hoy." });
+                    return Unauthorized(new { message = $"Has consumido tu límite de {(alumno.LimiteDiarioSegundos / 3600)} horas por el día de hoy." });
                 }
             }
             else
@@ -141,20 +155,15 @@ namespace ControlLaboratorio.API.Controllers
                 double tiempoRestante = segundosLimite - segundosConsumidosHoy;
 
                 // CORRECCIÓN DE RACE CONDITION:
-                // En reactivaciones múltiples, puede ocurrir que el logout de la sesión anterior
-                // aún no haya terminado de procesarse en la BD cuando el alumno intenta entrar de nuevo.
-                // Resultado: segundosConsumidosHoy queda ligeramente por debajo del límite,
-                // calculando un tiempo restante ridículamente pequeño (ej: 10 minutos en vez de 3 horas).
-                //
-                // Regla: si el tiempo restante calculado es menos de 15 minutos Y ya existen
-                // sesiones cerradas hoy Y el admin lo tiene activo, es una reactivación con race condition.
-                // → Le damos 3 horas completas.
                 bool tieneSessionesPreviasHoy = sesionesHoy.Count > 0;
                 bool tiempoRestanteAnomalo = tiempoRestante < (15 * 60); // menos de 15 minutos
 
                 if (tiempoRestanteAnomalo && tieneSessionesPreviasHoy && alumno.Estado)
                 {
-                    segundosRestantes = segundosLimite; // Race condition detectada → 3 horas completas
+                    // Si se detecta un desfase (race condition), incrementamos el límite en 3 horas adicionales
+                    alumno.LimiteDiarioSegundos = (alumno.LimiteDiarioSegundos < 10800 ? 10800 : alumno.LimiteDiarioSegundos) + 10800;
+                    await _context.SaveChangesAsync();
+                    segundosRestantes = alumno.LimiteDiarioSegundos - segundosConsumidosHoy;
                 }
                 else
                 {
@@ -215,8 +224,8 @@ namespace ControlLaboratorio.API.Controllers
 
                 double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
                 
-                // Si consumió sus 3 horas (con un pequeño margen de 1 minuto por retrasos de red)
-                if (segundosConsumidosHoy >= (3 * 3600 - 60))
+                // Si consumió su límite diario (con un pequeño margen de 1 minuto por retrasos de red)
+                if (segundosConsumidosHoy >= (sesion.Alumno.LimiteDiarioSegundos - 60))
                 {
                     sesion.Alumno.Estado = false;
                 }
@@ -258,6 +267,28 @@ namespace ControlLaboratorio.API.Controllers
             }
 
             return Ok(new { horaLimite = sesion.HoraLimite, isFinished = sesion.HoraFin != null, remainingSeconds = remainingSeconds });
+        }
+
+        [HttpPost("extend-session")]
+        public async Task<IActionResult> ExtendSession([FromBody] ExtendSessionRequest request)
+        {
+            var sesion = await _context.Sesiones.Include(s => s.Alumno).FirstOrDefaultAsync(s => s.SesionID == request.SesionId);
+            if (sesion == null) return NotFound(new { message = "Sesión no encontrada." });
+            if (sesion.HoraFin != null) return BadRequest(new { message = "La sesión ya ha finalizado." });
+            if (sesion.Alumno == null) return BadRequest(new { message = "Alumno no encontrado." });
+
+            // Sumar 3 horas (10800 seg) al límite diario del alumno
+            sesion.Alumno.LimiteDiarioSegundos += 10800;
+
+            // Extender la hora límite de la sesión actual en 3 horas
+            sesion.HoraLimite = (sesion.HoraLimite ?? TimeHelper.GetPeruTime()).AddHours(3);
+
+            await _context.SaveChangesAsync();
+
+            double newRemaining = (sesion.HoraLimite.Value - TimeHelper.GetPeruTime()).TotalSeconds;
+            if (newRemaining < 0) newRemaining = 0;
+
+            return Ok(new { message = "Sesión extendida exitosamente.", remainingSeconds = newRemaining, horaLimite = sesion.HoraLimite });
         }
 
         [HttpPost("set-limit")]
@@ -395,7 +426,7 @@ namespace ControlLaboratorio.API.Controllers
                             .Where(s => s.AlumnoID == sesionActiva.AlumnoID && s.Fecha.Date == today && s.HoraFin != null)
                             .ToListAsync();
                         double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
-                        sesionActiva.Alumno.Estado = segundosConsumidosHoy < (3 * 3600 - 60);
+                        sesionActiva.Alumno.Estado = segundosConsumidosHoy < (sesionActiva.Alumno.LimiteDiarioSegundos - 60);
                     }
                 }
 
@@ -440,7 +471,7 @@ namespace ControlLaboratorio.API.Controllers
 
                     double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
                     
-                    if (segundosConsumidosHoy >= (3 * 3600 - 60))
+                    if (segundosConsumidosHoy >= (sesionActiva.Alumno.LimiteDiarioSegundos - 60))
                     {
                         sesionActiva.Alumno.Estado = false;
                     }
@@ -485,7 +516,7 @@ namespace ControlLaboratorio.API.Controllers
 
                         double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
 
-                        sesionActiva.Alumno.Estado = segundosConsumidosHoy < (3 * 3600 - 60);
+                        sesionActiva.Alumno.Estado = segundosConsumidosHoy < (sesionActiva.Alumno.LimiteDiarioSegundos - 60);
                     }
                 }
             }

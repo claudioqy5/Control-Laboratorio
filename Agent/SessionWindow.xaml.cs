@@ -16,6 +16,7 @@ namespace ControlLaboratorio.Agent
         private DispatcherTimer _countdownTimer;
         private DispatcherTimer _pollingTimer;
         private bool _isLoggingOut = false;
+        private bool _extendPromptShown = false;
 
         public SessionWindow(int sesionId, string userName, double remainingSeconds, MainWindow lockWindow)
         {
@@ -68,12 +69,45 @@ namespace ControlLaboratorio.Agent
             }
             
             UpdateTimerDisplay();
+
+            // Mostrar aviso de extensión cuando faltan 5 minutos (300 seg)
+            if (!_extendPromptShown && _remainingSeconds <= 300 && _remainingSeconds > 0 && _sesionId != 0)
+            {
+                _extendPromptShown = true;
+                ShowExtendPrompt();
+            }
             
             if (_remainingSeconds <= 0)
             {
                 _countdownTimer.Stop();
                 _pollingTimer.Stop();
                 ForceLogout();
+            }
+        }
+
+        private async void ShowExtendPrompt()
+        {
+            var dialog = new ExtendSessionWindow();
+            dialog.Owner = this;
+            dialog.ShowDialog();
+
+            if (dialog.Accepted)
+            {
+                try
+                {
+                    var response = await _httpClient.PostAsJsonAsync($"{MainWindow.ApiUrl}/extend-session", new { SesionId = _sesionId });
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var result = await response.Content.ReadFromJsonAsync<ExtendSessionResponse>();
+                        if (result != null)
+                        {
+                            _remainingSeconds = result.RemainingSeconds;
+                            _extendPromptShown = false; // Permitir otro aviso en la próxima sesión extendida
+                            UpdateTimerDisplay();
+                        }
+                    }
+                }
+                catch { /* Error de red, la sesión sigue su curso normal */ }
             }
         }
 
@@ -187,6 +221,12 @@ namespace ControlLaboratorio.Agent
         [System.Text.Json.Serialization.JsonPropertyName("isFinished")]
         public bool IsFinished { get; set; }
 
+        [System.Text.Json.Serialization.JsonPropertyName("remainingSeconds")]
+        public double RemainingSeconds { get; set; }
+    }
+
+    public class ExtendSessionResponse
+    {
         [System.Text.Json.Serialization.JsonPropertyName("remainingSeconds")]
         public double RemainingSeconds { get; set; }
     }

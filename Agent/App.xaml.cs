@@ -39,6 +39,13 @@ public partial class App : Application
             }
         }
 
+        // Verificar si fuimos reiniciados por el guardián
+        bool isRestartedByGuardian = e.Args.Length > 0 && e.Args[0] == "--restarted-by-guardian";
+        if (isRestartedByGuardian)
+        {
+            try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Restarted by Guardian. Aggressively cleaning up old zombie instances.\n"); } catch { }
+        }
+
         // Control de instancia única (Basado en procesos para evitar problemas de handles con el Guardián)
         Process current = Process.GetCurrentProcess();
         try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Checking processes for {current.ProcessName}\n"); } catch { }
@@ -50,18 +57,40 @@ public partial class App : Application
                 {
                     if (!process.HasExited)
                     {
-                        try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Found active process {process.Id}. Exiting.\n"); } catch { }
-                        // Ya hay una instancia ejecutándose. Salir de inmediato.
-                        Environment.Exit(0);
-                        return;
+                        if (isRestartedByGuardian)
+                        {
+                            // Si fuimos reiniciados por el guardián, asumimos que somos el legítimo sucesor
+                            // y que este otro proceso es un zombie. Lo matamos sin piedad.
+                            try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Killing zombie process {process.Id}.\n"); } catch { }
+                            try { process.Kill(); } catch { }
+                        }
+                        else
+                        {
+                            // Darle un tiempo de gracia a la otra instancia por si está en proceso de cerrarse/morir (ej. Task Manager kill)
+                            process.WaitForExit(2000);
+                            if (!process.HasExited)
+                            {
+                                try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Found active process {process.Id}. Exiting.\n"); } catch { }
+                                // Ya hay una instancia ejecutándose firmemente. Salir de inmediato.
+                                Environment.Exit(0);
+                                return;
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Exception checking process {process.Id}: {ex.Message}. Exiting.\n"); } catch { }
-                    // Si no podemos acceder, asumimos que sigue viva
-                    Environment.Exit(0);
-                    return;
+                    if (isRestartedByGuardian)
+                    {
+                        try { process.Kill(); } catch { }
+                    }
+                    else
+                    {
+                        try { File.AppendAllText(@"C:\BVE_Agent\startup_log.txt", $"{DateTime.Now}: Exception checking process {process.Id}: {ex.Message}. Exiting.\n"); } catch { }
+                        // Si no podemos acceder, asumimos que sigue viva
+                        Environment.Exit(0);
+                        return;
+                    }
                 }
             }
         }
@@ -114,6 +143,7 @@ public partial class App : Application
                         var startInfo = new ProcessStartInfo
                         {
                             FileName = agentExePath,
+                            Arguments = "--restarted-by-guardian",
                             UseShellExecute = true
                         };
                         Process.Start(startInfo);

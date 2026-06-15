@@ -66,6 +66,9 @@ namespace ControlLaboratorio.API.Migrations
                     b.Property<bool>("Estado")
                         .HasColumnType("bit");
 
+                    b.Property<int>("LimiteDiarioSegundos")
+                        .HasColumnType("int");
+
                     b.Property<string>("Nombres")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -100,6 +103,10 @@ namespace ControlLaboratorio.API.Migrations
                     b.Property<string>("Alias")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Comentario")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<bool>("Estado")
                         .HasColumnType("bit");
