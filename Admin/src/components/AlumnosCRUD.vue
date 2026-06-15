@@ -378,6 +378,8 @@ const handleGlobalKeydown = (e) => {
       currentPage.value = 1
       barcodeBuffer = ''
       e.preventDefault()
+      // Disparar la búsqueda/scraping igual que si el usuario presionara Enter en el input
+      buscarPorEscaneo()
     }
   } else if (e.key.length === 1) {
     barcodeBuffer += e.key
