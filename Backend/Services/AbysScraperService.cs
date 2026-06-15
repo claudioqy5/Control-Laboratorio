@@ -91,29 +91,29 @@ namespace ControlLaboratorio.API.Services
                 await menuFrame.WaitForLoadStateAsync(LoadState.NetworkIdle,
                     new FrameWaitForLoadStateOptions { Timeout = 10000 });
 
-                // Expandir "Lectores" y hacer click en "Gestión de lectores"
+                // Expandir y hacer click usando JavaScript para evitar problemas con acentos y elementos ocultos
                 try
                 {
-                    // Intentar hacer click en el link de gestión de lectores
-                    await menuFrame.ClickAsync("text=Gestión de lectores",
-                        new FrameClickOptions { Timeout = 5000 });
+                    // Ejecutar script en el frame del menú para encontrar y hacer click en "Gestión de lectores"
+                    await menuFrame.EvaluateAsync(@"() => {
+                        const links = Array.from(document.querySelectorAll('a'));
+                        
+                        // Encontrar el nodo principal 'Lectores' y hacerle click si tiene hijos
+                        const lectoresMain = links.find(a => a.textContent.trim() === 'Lectores');
+                        if (lectoresMain) lectoresMain.click();
+
+                        // Esperar un momento y encontrar 'Gestión de lectores'
+                        setTimeout(() => {
+                            const linkGestion = Array.from(document.querySelectorAll('a'))
+                                .find(a => a.textContent.includes('estión') && a.textContent.includes('lectores'));
+                            if (linkGestion) linkGestion.click();
+                        }, 500);
+                    }");
+                    await Task.Delay(2000); // Esperar que la acción tome efecto
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Si no está expandido, primero expandir "Lectores"
-                    try
-                    {
-                        await menuFrame.ClickAsync("text=Lectores",
-                            new FrameClickOptions { Timeout = 5000 });
-                        await Task.Delay(1000);
-                        await menuFrame.ClickAsync("text=Gestión de lectores",
-                            new FrameClickOptions { Timeout = 5000 });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning("AbysNet: No se pudo navegar a Gestión de lectores: {E}", ex.Message);
-                        return null;
-                    }
+                    _logger.LogWarning("AbysNet: Advertencia al ejecutar JS de navegación: {E}", ex.Message);
                 }
 
                 // Esperar que cargue el formulario de búsqueda en AbxMain
@@ -128,11 +128,27 @@ namespace ControlLaboratorio.API.Services
                     new FrameWaitForLoadStateOptions { Timeout = 10000 });
                 await Task.Delay(1500);
 
-                // ── PASO 3: Ingresar el código en el campo "Nº lector" ───────────────────
                 var lenlecInput = await mainFrame.QuerySelectorAsync("#lenlec");
+                
+                // Fallback: Si no se encuentra lenlec, forzar la navegación directa a la URL del formulario
                 if (lenlecInput == null)
                 {
-                    _logger.LogWarning("AbysNet: No se encontró el campo #lenlec en el formulario");
+                    _logger.LogInformation("AbysNet: Campo #lenlec no encontrado por click en menú. Forzando navegación directa.");
+                    var matchUrl = Regex.Match(page.Url, @"(/abnet/abnetcl\.exe/X\d+/ID\w+/)");
+                    if (matchUrl.Success)
+                    {
+                        string targetUrl = $"{BaseUrl}{matchUrl.Groups[1].Value}NT1?ACC=110&TB=29";
+                        await mainFrame.GotoAsync(targetUrl);
+                        await mainFrame.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                        await Task.Delay(1500);
+                        lenlecInput = await mainFrame.QuerySelectorAsync("#lenlec");
+                    }
+                }
+
+                // ── PASO 3: Ingresar el código en el campo "Nº lector" ───────────────────
+                if (lenlecInput == null)
+                {
+                    _logger.LogWarning("AbysNet: Definitivamente no se encontró el campo #lenlec en el formulario");
                     return null;
                 }
 
