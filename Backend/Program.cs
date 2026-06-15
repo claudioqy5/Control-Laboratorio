@@ -202,4 +202,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Asegurar que Playwright (Chromium) esté instalado en el servidor antes de arrancar
+try { Microsoft.Playwright.Program.Main(new[] { "install", "chromium" }); } catch { }
+
 app.Run();

@@ -44,21 +44,21 @@ namespace ControlLaboratorio.API.Services
 
             _logger.LogInformation("AbysNet: Iniciando búsqueda headless para código {C}", codigoUniversitario);
 
-            using var playwright = await Playwright.CreateAsync();
-            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-            {
-                Headless = true,
-                Args     = new[] { "--disable-dev-shm-usage", "--no-sandbox" }
-            });
-
-            var context = await browser.NewContextAsync(new BrowserNewContextOptions
-            {
-                IgnoreHTTPSErrors = true,
-            });
-            var page = await context.NewPageAsync();
-
             try
             {
+                using var playwright = await Playwright.CreateAsync();
+                await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+                {
+                    Headless = true,
+                    Args     = new[] { "--disable-dev-shm-usage", "--no-sandbox" }
+                });
+
+                var context = await browser.NewContextAsync(new BrowserNewContextOptions
+                {
+                    IgnoreHTTPSErrors = true,
+                });
+                var page = await context.NewPageAsync();
+
                 // ── PASO 1: Login ─────────────────────────────────────────────────────────
                 _logger.LogInformation("AbysNet: Navegando al login...");
                 await page.GotoAsync($"{BaseUrl}/abnet/inicio.htm",
@@ -154,10 +154,6 @@ namespace ControlLaboratorio.API.Services
             {
                 _logger.LogError(ex, "AbysNet: Error al consultar código {C}", codigoUniversitario);
                 return null;
-            }
-            finally
-            {
-                await browser.CloseAsync();
             }
         }
 
