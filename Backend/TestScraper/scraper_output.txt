@@ -1,0 +1,1710 @@
+﻿=== Probando scraping para c├│digo: 202512445 ===
+
+=== PASO 1: Login ===
+Status: OK
+URL final: https://biblioteca.urp.edu.pe/abnet/abnetcl.exe
+HTML (500 chars): <html><head><META http-equiv="Pragma" content="no-cache">
+<META http-equiv="Expires" content="0">
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<META http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
+<script type='text/javascript' src='/abnet/js/browser-functions.js'></script>
+<script>WpGetFrameset('/abnet/abnetcl.exe/X7433/UD22896271');</script>
+<script type="text/javascript"> window.location.replace("/abnet/abnetcl.exe/X7433/UD22896271?ACC=1111");
+ </script></he
+
+>>> UD Path: /X7433/UD22896271
+
+=== PASO 2: Sesi├│n definitiva ===
+Status: OK
+URL final: https://biblioteca.urp.edu.pe/abnet/abnetcl.exe/X7433/UD22896271?ACC=1111
+HTML (600 chars): <html><head><META http-equiv="Pragma" content="no-cache">
+<META http-equiv="Expires" content="0">
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<META http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
+<script type='text/javascript' src='/abnet/js/browser-functions.js'></script>
+<script>WpGetFrameset('/abnet/abnetcl.exe/X7433/ID001107d8/NT357');</script>
+<script type='text/javascript'>
+function IniApp ()
+{
+var t=this;
+/* Variables */
+t.m_oJS=window;
+t.selectNode='';
+t.selectNodeXml='';
+t.m_sTagEnEdicion='';
+t.checkAux=new Array ();
+t.m_sActiveElementId='';
+t.m_sAc
+
+>>> Session ID: /X7433/ID001107d8/
+
+=== PASO 3: Buscar lector ===
+URL: https://biblioteca.urp.edu.pe/abnet/abnetcl.exe/X7433/ID001107d8/NT119?ACC=110&NV=1&AV=1&TBV=2&SF=NUM_LECTOR&SFT=CLAVE_BARRAS&TQ=202512445
+Status: OK
+URL final: https://biblioteca.urp.edu.pe/abnet/abnetcl.exe/X7433/ID001107d8/NT119?ACC=110&NV=1&AV=1&TBV=2&SF=NUM_LECTOR&SFT=CLAVE_BARRAS&TQ=202512445
+HTML COMPLETO:
+<html><head><META http-equiv="Pragma" content="no-cache">
+<META http-equiv="Expires" content="0">
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<META http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
+<script type='text/javascript' src='/abnet/js/browser-functions.js'></script>
+<script>WpGetFrameset('/abnet/abnetcl.exe/X7433/ID001107d8/NT358');</script>
+
+</html>
+
+
+>>> NT Path: /X7433/ID001107d8/NT358
+
+=== PASO 4: Frameset ===
+Status: OK
+HTML COMPLETO:
+<html><head><META http-equiv="Pragma" content="no-cache">
+<META http-equiv="Expires" content="0">
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<META http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
+<script type='text/javascript' src='/abnet/js/browser-functions.js'></script>
+<script>WpGetFrameset('/abnet/abnetcl.exe/X7433/ID001107d8/NT359');</script>
+<script type='text/javascript'>
+function IniApp ()
+{
+var t=this;
+/* Variables */
+t.m_oJS=window;
+t.selectNode='';
+t.selectNodeXml='';
+t.m_sTagEnEdicion='';
+t.checkAux=new Array ();
+t.m_sActiveElementId='';
+t.m_sActiveElementIdHelp='';
+t.CgiWeb='';
+t.m_sFormato='';
+t.m_sCatCodSubField='';
+t.m_nWidthBrsList=600;
+
+t.m_sLang="es-ES";
+
+t.nFechaWinfmt = 1;
+t.sFechaFmtSep = '/';
+
+t.WP_ACC_INICIO=1111;
+t.WP_ACC_DESCONEXION=1;
+t.WP_ACC_INICIAR_BUSCAR=110;
+t.WP_ACC_ABRIR=105;
+t.WP_ACC_CERRAR=106;
+t.WP_ACC_MOSTRAR=104;
+t.WP_ACC_AYUDA=2;
+t.WP_ACC_INICIAR_ANADIR=130;
+t.WP_ACC_INICIAR_ANADIR_SECUNDAR=161;
+t.WP_ACC_INICIAR_ANADIR_SECUNDAR_BIS=166;
+t.WP_ACC_INICIAR_DUPLICAR_SECUNDAR=165;
+t.WP_ACC_INICIAR_MODIFICAR=122
+t.WP_ACC_INICIAR_MODIFICAR_SECUNDAR=162;
+t.WP_ACC_INICIAR_MODIFICAR_SECUNDAR_BIS=167;
+t.WP_ACC_INICIAR_ELIMINAR=140;
+t.WP_ACC_INICIAR_ELIMINAR_SECUNDAR=163;
+t.WP_ACC_INICIAR_ELIMINAR_SECUNDAR_BIS=168;
+t.WP_ACC_CONFIRMAR_ELIMINAR=141;
+t.WP_ACC_OK=100;
+t.WP_ACC_CANCELAR=101;
+t.WP_ACC_MODAL_THREAD=1115;
+t.WP_ACC_REC_MISMO=111;
+t.WP_ACC_REC_PRIMERO=112;
+t.WP_ACC_REC_ANTERIOR=113;
+t.WP_ACC_REC_SIGUIENTE=114;
+t.WP_ACC_REC_ULTIMO=116;
+t.WP_ACC_REC_NUMERO=117;
+t.WP_ACC_RELACIONAR=900;
+t.WP_ACC_RELACIONAR_DIRECTO=901;
+t.WP_ACC_RELACIONAR_SECUNDAR=164;
+t.WP_ACC_REC_TABLA=118;
+t.WP_ACC_REC_TABLA_MAS=119;
+t.WP_ACC_REC_TABLA_CERRAR=120;
+t.WP_ACC_REC_TABLA_CAPTURA=121;
+t.WP_ACC_SEL_CATA=133;
+t.WP_ACC_SEL_MODELO_CATA=134;
+t.WP_ACC_CATA_EXPERTA=135;
+t.WP_ACC_CATA_EXPERTA_MODIFICAR=136;
+t.WP_ACC_CATA_EXPERTA_MODIFICAR_REG_MARCADOS=137;
+t.WP_ACC_CAMBIAR_BASE=800;
+t.WP_ACC_OPCIONES=801;
+t.WP_ACC_OPCIONES_CAMPOS=803;
+t.WP_ACC_VER_REGISTRO=1000;
+t.WP_ACC_SEPERI_EXCEP_ANUALES=453;
+t.WP_ACC_HIDDEN_FRAME_LOAD=1011;
+t.WP_ACC_XMLHTTPREQ=1012;
+t.WP_ACC_CHECK_THREAD=1113;
+t.WP_ACC_CANCELAR_THREAD=1114;
+t.WP_ACC_MODIFI_MASIVAS=804;
+t.WP_ACC_MODIFI_MASIVAS_ACTION=805;
+t.WP_ACC_OPENSEC_MODIFI_MASIVAS=810;
+t.WP_ACC_SAVESEC_MODIFI_MASIVAS=809;
+t.WP_ACC_EXECACTION_MODIFI_MASIVAS=811;
+t.WP_ACC_OPENFILE_MODIFI_MASIVAS=812;
+t.WP_ACC_SAVEFILE_MODIFI_MASIVAS=813;
+t.WP_ACC_MODIFI_MASIVAS_GRABAR=816;
+t.WP_ACC_MODIFI_MASIVAS_DESBLOQUEO=817;
+t.WP_ACC_ESTADOS=814;
+t.WP_ACC_TRANSFERIR=455;
+t.WP_ACC_INICIAR_TRANSFERIR=457;
+t.WP_ACC_SELMOSPRE=821;
+t.WP_ACC_ADD_LECTOR=822;
+t.WP_ACC_MODIFY_LECTOR=823;
+t.WP_ACC_DELETE_LECTOR=824;
+t.WP_ACC_AUX_SUBMIT=131;
+t.WP_ACC_REC_CHANGE_STATE=146;
+t.WP_ACC_REC_ADD_NOTA=147;
+t.WP_ACC_EXPORTAR_CSV=2127;
+
+t.WP_ACC_DIALOG_NOTA=60;
+t.WP_ACC_DIALOG_NOTA_OK=61;
+t.WP_ACC_DIALOG_NOTA_CANCEL=62;
+
+t.WP_ACC_ANADIR_SERDIS=2022;
+t.WP_ACC_ANADIR_SERDIS_1=2023;
+t.WP_ACC_ANADIR_SERDIS_2=2024;
+t.WP_ACC_ANADIR_SERDIS_3=2025;
+t.WP_ACC_ANADIR_SERDIS_4=2026;
+t.WP_ACC_MODIFICAR_SERDIS=2031;
+t.WP_ACC_BORRAR_SERDIS=2030;
+t.WP_ACC_DESBLOQUEAR_GRUPMM=2032;
+t.WP_ACC_INICIAR_DESBLOQUEAR_GRUPMM=2033;
+t.WP_ACC_DESBLOQUEAR_OBJEMM=2034;
+t.WP_ACC_INICIAR_DESBLOQUEAR_OBJEMM=2035;
+t.WP_ACC_FILE=2021;
+t.WP_ACC_VER_NODO=2018;
+t.WP_ACC_VER_GRUPO=2015;
+t.WP_ACC_INICIAR_MULTIMEDIA=2000;
+t.WP_ACC_INICIAR_MULTIMEDIA_ACTUALIZAR=2013;
+t.WP_ACC_INICIAR_MULTIMEDIA_SECUNDAR=2016;
+t.WP_ACC_INICIAR_MULTIMEDIA_ACTUALIZAR_SECUNDAR=2017;
+t.WP_ACC_INICIAR_ANADIR_GRUPMM=2001;
+t.WP_ACC_INICIAR_MODIFICAR_GRUPMM=2002;
+t.WP_ACC_INICIAR_GRUPMM=2003;
+t.WP_ACC_INICIAR_ANADIR_OBJEMM=2004;
+t.WP_ACC_INICIAR_MODIFICAR_OBJEMM=2005;
+t.WP_ACC_INICIAR_OBJEMM=2006;
+t.WP_ACC_ACTUALIZA=2007;
+t.WP_ACC_INICIAR_MODIFICAR_OBJEMM_FICHERO=2008;
+t.WP_ACC_BORRAR_GRUPMM=2009;
+t.WP_ACC_MARCADEAGUA_OBJEMM_IMAG=2055;
+t.WP_ACC_INICIAR_ANADIR_MARCAAGUA=2056;
+t.WP_ACC_MARCADEAGUA_OBJEMM_BORRA=2057;
+t.WP_ACC_MARCADEAGUA_OCULTAR=2058;
+t.WP_ACC_EXPANDIR_OBJEMM_IMAG=2011;
+t.WP_ACC_AJUSTAR_OBJEMM_IMAG=2012;
+t.WP_ACC_ZOOM_OBJEMM_IMAG=2019;
+t.WP_ACC_NOZOOM_OBJEMM_IMAG=2020;
+t.WP_ACC_BORRAR_OBJEMM=2010;
+t.WP_ACC_OPCIONES_GUARDAR=802;
+t.WP_ACC_ESTADOS_GUARDAR=815;
+t.WP_ACC_INICIAR_ADD_METADATOS=2038;
+t.WP_ACC_INICIAR_METADATOS=2037;
+t.WP_ACC_VIEW_METADATOS=2039;
+t.WP_ACC_DOWNLOAD_OBJEMM=2040;
+t.WP_ACC_DOWNLOAD_FTEXT=2043;
+t.WP_ACC_DELETE_FTEXT=2044;
+t.WP_ACC_INICIAR_TWAIN=2036;
+t.WP_ACC_FICHERO_TWAIN=2042;
+t.WP_ACC_MULTIMEDIA_ANADIR_METS=2054;
+t.WP_ACC_MULTIMEDIA_TREE_METS=2052;
+t.WP_ACC_MULTIMEDIA_TREELIST_METS=2065;
+t.WP_ACC_MULTIMEDIA_XML_METS=2051;
+t.WP_ACC_MULTIMEDIA_IMPORT_XML_METS=2068;
+t.WP_ACC_MULTIMEDIA_IMPORT_CATA_METS=2070;
+t.WP_ACC_MULTIMEDIA_VERIFY_SECTIONS_METS=2064;
+t.WP_ACC_INICIAR_METS=2053;
+t.WP_ACC_MULTIMEDIA_SAVE_METS=2059;
+t.WP_ACC_MULTIMEDIA_BBDD_METS=2060;
+t.WP_ACC_INICIAR_ADD_METS=2061;
+t.WP_ACC_INICIAR_REFRESH_METS=2062;
+t.WP_ACC_INICIAR_CANCELAR_METS=2063;
+t.WP_ACC_MULTIMEDIA_DELETE_METS=2066;
+t.WP_ACC_EXPORT_PUBLIC_PRIVATE=2067;
+
+t.WP_ACC_FOTO_LECTOR_EXAMINAR=180;
+t.WP_ACC_FOTO_LECTOR_ESCANEAR=181;
+t.WP_ACC_FOTO_LECTOR_ELIMINAR=182;
+t.WP_ACC_FICHERO_TWAIN_LECTOR=2045;
+t.WP_ACC_INICIAR_COVERS=183;
+t.WP_ACC_CAMBIAR_VISUALIZACION=230;
+t.WP_ACC_DESBLOQUEAR=1020;
+t.WP_ACC_DIALOG_INTERVALO=30;
+t.WP_ACC_DIALOG_AGENDA=36;
+t.WP_ACC_DIALOG_ADD_AGENDA=37;
+t.WP_ACC_DIALOG_MOD_AGENDA=38;
+t.WP_ACC_DIALOG_DEL_AGENDA=39;
+t.WP_ACC_DIALOG_DATE=31;
+t.WP_ACC_DIALOG_DATEPICK=40;
+t.WP_ACC_DIALOG_HOURPICK=41;
+t.WP_ACC_DIALOG_PASSWORD=32;
+t.WP_ACC_CATAL_VER_TITULOS=210;
+t.WP_ACC_CATALO_VER_TITULOS_DE_AUTORIDAD=639;
+t.WP_ACC_CATAL_CANCELAR_COPIAS_TITN=316;
+t.WP_ACC_SELECCIONAR_RECIBO=295;
+t.WP_ACC_SELECCIONAR_IMPR=298;
+t.WP_ACC_SELECCIONAR_IMPR_SECUNDAR=300;
+t.WP_ACC_SELECCIONAR_ESTAD=302;
+t.WP_ACC_SELECCIONAR_ETIQ=304;
+t.WP_ACC_SELECCIONAR_CARTAS=296;
+t.WP_ACC_REC_VISUALIZA_DOC=124;
+t.WP_ACC_BUSCAR_ANADIR=123;
+t.WP_ACC_BUSCAR_ANADIR_RES=125;
+t.WP_ACC_BA_CATA=550;
+t.WP_ACC_BA_POOL=551;
+t.WP_ACC_BA_Z3950=552;
+t.WP_ACC_BA_AUTO=553;
+t.WP_ACC_INICIAR_FACTURAR = 445; 
+t.WP_ACC_RESPUESTA_OK= 102;
+t.WP_ACC_RESPUESTA_CANCEL= 103;
+t.WP_ACC_BUSCAR_TOTAL=126;
+t.WP_ACC_CATALO_MARCARDOC=617;
+t.WP_ACC_CATALO_CAMPOS=618;
+t.WP_ACC_CATALO_CATALOGO=619;
+t.WP_ACC_CATALO_DOC=620;
+t.WP_ACC_CATALO_FICH=621;
+t.WP_ACC_CATALO_INDI=622;
+t.WP_ACC_CATALO_INDI_BUSCAR=626;
+t.WP_ACC_CATALO_INDI_BUSCAR_MAS=641;
+t.WP_ACC_CATAL_ORDE=623;
+t.WP_ACC_CATALO_REDI=624;
+t.WP_ACC_CATALO_PINOLEO=634;
+t.WP_ACC_CATALO_VER_DOC=200;
+t.WP_ACC_CATALO_CHANGE_COVER=201;
+t.WP_ACC_COPIAS_ASIG_TITULO=403;
+t.WP_ACC_COPIAS_ASIG_TITULO_SEC_C=407;
+t.WP_ACC_COPIAS_ASIG_TITULO_SEC_T=408;
+t.WP_ACC_COPIAS_DES_ASIG_TITULO_SEC_C=409;
+t.WP_ACC_CATALO_RELACIONAR=635;
+t.WP_ACC_CATALO_RELACIONAR_HOLDIN=644;
+t.WP_ACC_COPIAS_ASIG_TITULO_RES=405;
+t.WP_ACC_TRANS_AUTO=404;
+t.WP_ACC_TRANS_AUTO_RES=406;
+t.WP_ACC_TRANS_TITULOS=410;
+t.WP_ACC_TRANS_TITULOS_RES=414;
+t.WP_ACC_ACTIVAR=170;
+t.WP_ACC_DLG_CHARTS=294;
+t.WP_ACC_IMPORTAR_PERMISOS=172;
+t.WP_ACC_IMPORTAR_PERMISOS_RES=173;
+t.WP_ACC_COPIAR_LECTORES=174;
+t.WP_ACC_COPIAR_LECTORES_RES=175;
+t.WP_ACC_COPIAR_POLITICA_PRESTAMO=176;
+t.WP_ACC_COPIAR_POLITICA_RECURSO=177;
+t.WP_ACC_COMPROBAR=145;
+t.WP_ACC_ETIQGESTION_ANADIR_BAD=50;
+t.WP_ACC_ETIQGESTION_ELIMINAR_BAD=51;
+t.WP_ACC_ETIQGESTION_VALIDAR=52;
+t.WP_ACC_PARTID_INICIAR_ANADIR_LECTOR=466;
+
+t.COD_BASE_CATA='C';
+t.COD_BASE_ADQT='A';
+t.COD_BASE_CANC='N';
+t.COD_BASE_AUTO='T';
+t.COD_BASE_HOLD='H';
+t.COD_BASE_POOL='P';
+t.COD_BASE_XXXX='X';
+t.COD_BASE_Z3950='Z';
+
+t.WP_ACC_FILL_DESC_FROM_CODE=540;
+t.WP_ACC_CATALO_EXPERTA=631;
+t.WP_ACC_CATALO_ASISTIDA=632;
+t.WP_ACC_CATALO_EJEMPLARES=633;
+t.WP_ACC_CATALO_DIGITAL=642;
+t.WP_ACC_CATALO_CDU=734;
+t.WP_ACC_CATALO_CDU_BUSCA = 735;
+t.WP_ACC_CATALO_MOSTRAR_DOC=630;
+t.WP_ACC_CATALO_SIGNATURA=637;
+t.WP_ACC_CATALO_MODIFICAR_EJEMPLAR=646;
+t.WP_ACC_CATALO_LIST_BUSQFACE=647;
+t.WP_ACC_CATALO_REG_MARCADOS=629;
+t.WP_ACC_CATALO_MODIFICAR_REG_MARCADOS=640;
+t.WP_ACC_CATALO_RESET_SELECT=616;
+t.WP_ACC_INICIAR_COPIAS2HOLDIN=650;
+t.WP_ACC_INICIAR_HOLDIN2COPIAS=651;
+t.WP_ACC_INICIAR_CAMBIARCOPIASHOLDIN=652;
+t.WP_ACC_CAMBIARCOPIASHOLDIN=653;
+t.WP_ACC_BORRARFONDO=654;
+t.WP_ACC_WBLKB_BUSCAR_GRUPOS=645;
+t.WP_ACC_ADQUIS_PRECATALOGACION=460;
+t.WP_ACC_ADQUIS_PRECATALOGACION_RES=461;
+t.WP_ACC_ADQUIS_PRECATALOGACION_ISBN=462;
+t.WP_ACC_ADQLEC_DETALLE_ANADIR=464;
+t.WP_ACC_ADQLEC_DETALLE_MODIFICAR=465;
+t.WP_ACC_ADQUIS_CONVERTIR_PROPUESTA_ELIMINAR=467;
+
+t.WP_ACC_CATAL_MI_SUCURSAL=312;
+t.WP_ACC_CATAL_MI_BIBLIOTECA=313;
+t.WP_ACC_CATAL_TODO=314;
+t.WP_ACC_CATAL_NUMERO=306;
+t.WP_ACC_CATAL_TRANSFERIR=307;
+t.WP_ACC_CATAL_ETIQUETA=308;
+t.WP_ACC_CATAL_TEJUELO=309;
+t.WP_ACC_CATAL_MOVERCATA=310;
+t.WP_ACC_CATAL_ORDE_RES=315;
+t.WP_ACC_TRANS_TITULO=311;
+t.WP_ACC_CATAL_ILINK=321;
+
+t.WP_ACC_COPIAR_PEDIDO=415;
+t.WP_ACC_COPIAR_CANCELADOS=416;
+t.WP_ACC_CANCELAR_PENDIENTES=417;
+t.WP_ACC_GENERAR_PEDIDO=418;
+t.WP_ACC_DETALLE_RELACIONAR=419;
+t.WP_ACC_DETALLE_MODIFICAR_CATA=420;
+t.WP_ACC_DETALLE_ANADIR=421;
+t.WP_ACC_ANADIR_REG_MARCADOS=422;
+t.WP_ACC_DETALLE_MODIFICAR=423;
+t.WP_ACC_DETALLE_ELIMINAR=424;
+t.WP_ACC_DETALLE_RECIBIR=425;
+t.WP_ACC_DETALLE_RECIBIR_SELECCIONADOS=438;
+t.WP_ACC_DETALLE_FACTURAR_TODOS=448;
+t.WP_ACC_DETALLE_RECIBIR_TODOS=439;
+t.WP_ACC_DETALLE_CANCELAR=426;
+t.WP_ACC_DETALLE_ANULAR_CANCELADOS=449;
+t.WP_ACC_DETALLE_ANULAR_RECIBIDOS=454;
+t.WP_ACC_DETALLE_FACTURAR=427;
+t.WP_ACC_DETALLE_FACTURAR_SELECCIONADOS=447;
+t.WP_ACC_DETALLE_RCF=428;
+t.WP_ACC_ANADIR_COPIAS=429
+t.WP_ACC_COBARC=698;
+t.WP_ACC_PEDIDO_VERIFICAR_TITN=401;
+t.WP_ACC_SELECT_APP=699;
+t.WP_ACC_INICIAR_ACTLISTA=2106;
+/* Acciones */
+t.CATAEXPERTA_ACC_CAPTURAR=701;
+t.CATAEXPERTA_ACC_CAPTURAR_BUSCAR=721
+t.CATAEXPERTA_ACC_CAPTURAR_BUSCAR_ISBN=726
+t.CATAEXPERTA_ACC_CAPTURAR_ENLAZAR=725;
+t.CATAEXPERTA_ACC_CONSULTA_AUTOR=700;
+t.CATAEXPERTA_ACC_CONSULTA_AUTOR_EXACTA=728;
+t.CATAEXPERTA_ACC_CONSULTA_AUTOR_BUSCAR=723;
+t.CATAEXPERTA_ACC_CONSULTA_AUTOR_BUSCAR_EXACTA=733;
+t.CATAEXPERTA_ACC_CONSULTA_THES = 702;
+t.CATAEXPERTA_ACC_CONSULTA_THES_BUSCA = 729;
+t.CATAEXPERTA_ACC_CONSULTA_INDICE = 738;
+t.CATAEXPERTA_ACC_CONSULTA_RELACIONADO=736;
+t.CATAEXPERTA_ACC_VER_DOC_BRS=732;
+t.CATAEXPERTA_ACC_VER_DOSDOC_BRS=737;
+/* Acciones */
+t.CATAASISTIDA_ACC_TAB=750;
+/* Acciones para Tablas de Catalogaci´┐¢n (CCPB) */
+t.WP_ACC_INICIAR_OPT_ANADIR=2107;
+t.WP_ACC_INICIAR_OPT_MODIFICAR=2108;
+t.WP_ACC_INICIAR_OPT_ELIMINAR=2109;
+t.WP_ACC_INICIAR_OPT_ACTIVAR=2110;
+t.WP_ACC_INICIAR_OPT_DESACTIVAR=2111;
+t.WP_ACC_INICIAR_OPT_WINOPEN=2121;
+t.WP_ACC_INICIAR_ELIMINAR_TABLA=2102;
+t.WP_ACC_INICIAR_RELACIONAR_MODIFICAR=2104;
+t.WP_ACC_INICIAR_RELACIONAR_ELIMINAR=2105;
+
+t.WP_ACC_IMPR_RAPIDA=2123;
+t.WP_ACC_IMPR_RAPIDA_EMAIL=2126;
+
+t.WP_ACC_MULTIMEDIA_INICIAR_IMPORT=2069;
+
+t.WP_ACC_CAMBIAR_ORDEN=980;
+t.WP_ACC_CAMBIAR_ORDEN_MODAL=981;
+
+t.WP_ACC_HTML5_CANVAS=2125;
+
+t.WP_ACC_CUENTATREE_ABRIR = 610;
+
+t.WP_ACC_ETIQUETAS_PENDIENTES=317;
+
+t.SCOLEC=43;
+t.PRESTA=38;
+t.SERIRECE=1041;
+t.TABLA_SERLEC=1037;
+t.TABLA_RELACIONES=3002;
+t.LECTOR=29;
+t.POSCOD=83;
+t.TITULO=56;
+t.PROVEE=40;
+t.ADQUIS=2;
+t.ADQDET=1;
+t.ADQLEC=76;
+t.LSETIP=60;
+t.COPIAS=13;
+t.HOLDIN=87;
+t.DIGITAL=135;
+t.VER_TITULO_COPIAS=1101;
+t.VER_COPIAS_TITULO=1102;
+t.CATA_EXPERTA=1100;
+t.CATA_ASISTIDA=1103;
+t.TABLA_XLINKS=1040;
+t.LECPRF=26;
+t.MESSAG=64;
+t.USUARI=58;
+t.USRNOT=62;
+t.CUENTA=17;
+t.SUCURS=42;
+t.FACTUR=19;
+t.FACDET=20;
+t.SEPERI=47;
+t.TABLA_ADMFILE=1814;
+t.WEBDOC=73;
+t.TABLA_ABSQL=1815;
+t.TABLA_DINSQL=1817;
+t.ETDESC=89;
+t.ETLETI=90;
+t.CATCOD=91;
+t.CATFLD=94;
+t.CATA_IMPORT=1104;
+t.POLPRE=36;
+t.PARTID=34;
+t.Z1BUSQ=103;
+t.Z2TERM=104;
+t.RECPRE=109;
+t.RECPOL=107;
+
+t.TABLA_MULTIMEDIA=5000;
+t.TB_ADMINISTRACION_MULTIMEDIA=1804;
+/* Mensajes */
+t.MSG_MX_COMFIRMAR_BORRAR_SERDIS="´┐¢Desea borrar el disco?";
+t.MSG_WP_DESEA_BORRAR_REGISTRO="´┐¢Desea borrar este registro?";
+t.MSG_WP_DESEA_BORRAR_FOTO_LECTOR="´┐¢Desea borrar la foto del lector?";
+t.MSG_WP_ACEPTAR="Aceptar"; 
+t.MSG_WP_CANCELAR="Cancelar"; 
+t.MSG_WP_SI="S´┐¢"; 
+t.MSG_WP_NO="No"; 
+t.MSG_WP_INDICADORUNO="INDICADOR 1"; 
+t.MSG_WP_INDICADORDOS="INDICADOR 2"; 
+t.MSG_WP_DESKTOP_MOSTRAR_MENU="Mostrar men´┐¢"; 
+t.MSG_WP_DESKTOP_OCULTAR_MENU="Ocultar men´┐¢"; 
+t.MSG_WP_DESKTOP_MOSTRAR="Mostrar"; 
+t.MSG_WP_DESKTOP_OCULTAR="Ocultar"; 
+t.MSG_WP_DESKTOP_VERSION="Versi´┐¢n 2.4"; 
+t.MSG_WP_DESKTOP_PASSWORD="Cambiar la contrase´┐¢a"; 
+t.MSG_WP_DESKTOP_MUESTRA_MENSAJES="Muestra todos los mensajes disponibles"; 
+t.MSG_WP_DESKTOP_OCULTA_MENSAJES="Oculta todos los mensajes disponibles"; 
+t.MSG_WP_DESKTOP_MUESTRA_NOTAS="Muestra todas las notas disponibles"; 
+t.MSG_WP_DESKTOP_OCULTA_NOTAS="Oculta todas las notas disponibles"; 
+t.MSG_WP_DESKTOP_MUESTRA_LINKS="Muestra todos los accesos disponibles"; 
+t.MSG_WP_DESKTOP_OCULTA_LINKS="Oculta todos los accesos disponibles"; 
+t.MSG_AC_NO_EXISTEN_DOCUMENTOS="No existen documentos";
+t.MSG_WP_MUESTRA_NUM_MAX_DOC="Se han encontrado demasiados documentos.\n S´┐¢lo se mostrar´┐¢n "; 
+t.MSG_WP_NUM_INCORRECTO="El n´┐¢mero introducido es incorrecto"; 
+t.MSG_AC_MESSAG_CONSERVAR_AUTOR="´┐¢Desea conservar la autoridad como no v´┐¢lida?"; 
+t.MSG_AC_MOVER_A_CATA="´┐¢Desea mover el registro a la base CATA?"; 
+t.MSG_AC_MESSAG_TRANSFERIR_EJEMPLAR="´┐¢Desea transferir este ejemplar?";
+t.MSG_AC_COPIAS_DES_ASIG_TITULO_SEC_C="Desea desvincular este t´┐¢tulo (secundario) de este ejemplar";
+t.MSG_AC_MESSAG_BORRAR_AUTOR="´┐¢Desea borrar la autoridad no v´┐¢lida?";
+t.MSG_AC_MESSAG_ERROR_ORDENACION="Error en la ordenaci´┐¢n";
+t.MSG_AC_CONFIRMAR_TRANSFERENCIA="´┐¢Desea transferir los titulos?";
+t.MSG_GN_ERROR_NO_REGISTROS="No hay ning´┐¢n registro";
+t.MSG_GN_ISBN="Campo ISBN incorrecto. ´┐¢Desea efectuar la b´┐¢squeda?";
+t.MSG_AD_MESSAG_ANADIR_EJEMPLARES="Le recomendamos a´┐¢adir los ejemplares en este momento.\n´┐¢Desea a´┐¢adirlos?";
+t.MSG_SE_SCRONU_DUPLICAR="Se va a duplicar la cronolog´┐¢a.\n´┐¢Desea borrar los n´┐¢meros generados posteriores a la fecha de cierre?";
+t.MSG_SE_SCRONU_CERRAR="Se va a cerrar la cronolog´┐¢a.\n´┐¢Desea borrar los n´┐¢meros creados posteriores a la fecha de cierre?";
+
+t.MSG_GN_ERROR_MODIFICAR_REGISTRO="Error al modificar el registro.";
+t.MSG_AC_DOCUMENTO_BLOQUEADO="Este registro est´┐¢ siendo modificado";
+
+t.MSG_CI_COSTAT_CUARENTENA="Ejemplar en cuarentena hasta ";
+
+t.MSG_WP_ALT_RELACIONAR="Relacionar";
+t.MSG_WP_ALT_MODIFICAR="Modificar";
+t.MSG_WP_ALT_ELIMINAR="Eliminar";
+t.MSG_WP_ALT_CAMBIAR_VIS="Visualizar detalle";
+t.MSG_WP_ALT_VALID_STAT="Validar estados";
+t.MSG_WP_ALT_VISUALIZAR_LECTOR="Visualizar lectores";
+/* Mensajes */
+t.MSG_WP_LECTOR_ORDER_LSETIP="´┐¢Desea cambiar el orden?";
+t.MSG_GN_ERROR_CAMPO_REQUERIDO="ERROR\nCampo REQUERIDO";
+t.MSG_GN_ERROR_CAMPO_FECHA_INCORRECTO="ERROR\nCampo fecha no valido:  (DD/MM/YYYY)";
+t.MSG_GN_ERROR_CAMPO_FECHAHORA_INCORRECTO="ERROR\nCampo fecha/hora no valido:  (DD/MM/YYYY HH:MM)";
+t.MSG_GN_ERROR_CAMPO_INCORRECTO="ERROR\nCampo con datos INCORRECTOS";
+t.MSG_GN_ERROR_CAMPO_POSITIVO="ERROR\nEl valor del campo debe de ser mayor que 0";
+t.MSG_GN_ERROR_CAMPO_MAXLENGTH="ERROR\nSe ha excedido la longitud del campo";
+t.MSG_GN_LISTA_ORIGINAL="Lista original";
+t.MSG_GN_ERROR="ERROR";
+t.MSG_GN_NO_RESULTADOS_BUSQUEDA="No existen resultados para la b´┐¢squeda realizada";
+t.MSG_GN_BUSQUEDA_CAMPO_VACIO="Introduzca un t´┐¢rmino de b´┐¢squeda";
+t.MSG_ML_ALT_AYUDA="Ayuda";
+t.MSG_ML_ALT_SALIR="Cerrar m´┐¢dulo";
+t.MSG_CA_CAPTURAR_MODIFICAR="Se sobreescribira el documento.\n´┐¢Desea proceder?";
+t.MSG_CA_CATA_ABIERTA="Debe de cerrar el m´┐¢dulo de catalogaci´┐¢n para poder realizar esta operacion";
+t.MSG_GN_GUARDAR_CAMBIOS="´┐¢Desea salir sin grabar?";
+/* Mensajes password usuario*/
+t.MSG_ES_DESKTOP_PASSWORD_NOTSURE="La contrase´┐¢a no es segura.\nTiene que contener 10 caracteres y uno debe ser un n´┐¢mero";
+t.MSG_ES_DESKTOP_PASSWORD_USER_IDEM="La contrase´┐¢a no es segura.\nNo puede coincidir con el ID de usuario";
+t.MSG_ES_DESKTOP_PASSWORD_NOTLENGTH="La contrase´┐¢a no es segura.\nLa longitud m´┐¢nima es: 0";
+t.MSG_ES_DESKTOP_PASSWORD_NOTLOWERCASE="La contrase´┐¢a no es segura.\nFalta un car´┐¢cter en min´┐¢sculas";
+t.MSG_ES_DESKTOP_PASSWORD_NOTUPPERCASE="La contrase´┐¢a no es segura.\nFalta un car´┐¢cter en may´┐¢sculas";
+t.MSG_ES_DESKTOP_PASSWORD_NOTNUMBERS="La contrase´┐¢a no es segura.\nFalta un car´┐¢cter num´┐¢rico";
+t.MSG_ES_DESKTOP_PASSWORD_NOTSPECIAL_C="La contrase´┐¢a no es segura.\nFalta un car´┐¢cter especial ";
+/* Mensajes password lector*/
+t.MSG_LE_DESKTOP_PASSWORD_NOTSURE="La contrase´┐¢a no es segura.\nTiene que contener 10 caracteres y uno debe ser un n´┐¢mero";
+t.MSG_LE_DESKTOP_PASSWORD_USER_IDEM="La contrase´┐¢a no es segura.\nNo puede coincidir con el ID de usuario";
+t.MSG_LE_DESKTOP_PASSWORD_NOTLENGTH="La contrase´┐¢a no es segura.\nLa longitud m´┐¢nima es: 0";
+t.MSG_LE_DESKTOP_PASSWORD_NOTLOWERCASE="La contrase´┐¢a no es segura.\nFalta un car´┐¢cter en min´┐¢sculas";
+t.MSG_LE_DESKTOP_PASSWORD_NOTUPPERCASE="La contrase´┐¢a no es segura.\nFalta un car´┐¢cter en may´┐¢sculas";
+t.MSG_LE_DESKTOP_PASSWORD_NOTNUMBERS="La contrase´┐¢a no es segura.\nFalta un car´┐¢cter num´┐¢rico";
+t.MSG_LE_DESKTOP_PASSWORD_NOTSPECIAL_C="La contrase´┐¢a no es segura.\nFalta un car´┐¢cter especial ";
+/* Mensajes multimedia */
+t.MSG_MU_MESSAG_EXTENSION="El fichero debe tener extensi´┐¢n";
+t.MSG_MU_BORRAR_GRUPO="´┐¢Desea borrar el grupo y sus objetos?";
+t.MSG_MU_BORRAR_OBJETO="´┐¢Desea borrar el objeto?";
+t.MSG_MU_ERROR_ALTA_DISCO="Debe seleccionar un disco que no est´┐¢ dado de alta";
+t.MSG_MU_BORRAR_WATERMARK="´┐¢Desea desvincular las marcas de agua para la entidad seleccionada?";
+t.MSG_MM_DELETE_CT_1="Va a eliminar el contenido digital para el fichero asociado. ´┐¢Desea continuar?";
+t.MSG_MM_DELETE_CT_2="Va a eliminar el contenido digital para el fichero asociado. Existen otros objetos que referencian este fichero. ´┐¢Desea continuar?";
+t.MSG_MM_MOD_WARNING="El fichero se modificar´┐¢ en todos los objetos que tengan el mismo ID.\n´┐¢Desea continuar la modificaci´┐¢n?";
+/* Mensajes mets */
+t.MSG_MT_METS_ERROR_EXPORTACION="No se puede exportar. Falta informaci´┐¢n";
+t.MSG_MT_METS_XML_DATABASE="Se mostrar´┐¢ la informaci´┐¢n almacenada en la Base de Datos.\n\nPor favor espere, la generaci´┐¢n y validaci´┐¢n del documento mets puede tardar unos segundos.";
+/* Definiciones */
+t.WP_ALERT_ERROR=1;
+t.WP_ALERT_MENSAJE=2;
+t.WP_ALERT_PREGUNTA=3;
+t.IMG_OFF=0;
+t.EXE_DOABSACC=1;
+t.MAXFIELDASIST=6;
+/* Definiciones estado copia */
+t.COPIA_PRESTADA_DOMICILIO=22;
+t.COPIA_PRESTADA_SALA=23;
+t.COPIA_EN_PETICION=24;
+t.COPIA_EN_PETICION_DIST_SUCURS=53;
+t.COPIA_RESERVADA=26;
+/* Mensajes cambio de ejemplar que esta prestado, reservado o en peticion */
+t.MSG_AC_PREG_COPIA_DESACTIVAR="Se va a desactivar el ejemplar eliminando todas sus reservas asociadas.\n ´┐¢Desea continuar?";
+t.MSG_AC_ERNO_COPIA_EN_PRESTAMO="El ejemplar est´┐¢ prestado.\nNo se puede modificar su situaci´┐¢n a expurgado";
+t.MSG_AC_ERNO_COPIA_EN_PETICION="El ejemplar est´┐¢ petici´┐¢n.\nNo se puede modificar su situaci´┐¢n a expurgado"
+t.MSG_AC_ERNO_COPIA_EN_RESERVA="El ejemplar est´┐¢ reservado.\nNo se puede modificar su situaci´┐¢n a expurgado";
+t.MSG_AC_PREG_COPIA_EN_PRESTAMO="El ejemplar est´┐¢ prestado.\n´┐¢desea continuar?";
+t.MSG_AC_PREG_COPIA_EN_PETICION="El ejemplar est´┐¢ en petici´┐¢n.\n´┐¢desea continuar?";
+t.MSG_AC_PREG_COPIA_EN_RESERVA="El ejemplar est´┐¢ en reservado.\n´┐¢desea continuar?";
+t.MSG_AC_ERNO_COPIA_EN_RESERVA_IDVO="El ejemplar est´┐¢ reservado.\nNo se puede modificar su identificador de volumen";
+/* Mensajes error en nombre de fichero */
+t.MSG_GN_ERROR_FILE_NAME="";
+t.comboXML=null;
+
+t.sDirHttp="/abnet";
+t.aomcli="/abnet/abnetcl.exe/X7433/ID001107d8";
+
+t.AF_ESPERAR='0';
+t.AF_BUSCAR='3';
+t.AF_ANADIR='12';
+t.AF_MODIFICAR='48';
+t.AF_RECORRIDO='49152';
+
+t.RPTYPE_HOURS='H';
+t.RPTYPE_DAYS='D';
+}
+
+theApp = new IniApp ();
+</script>
+<script>
+//function debugAlert( p_sTexto )
+//{
+//	debug(p_sTexto);
+//}
+theApp.m_oJS.debugAlert=window.alert;
+</script>
+<script type='text/javascript' src='/abnet/js/HMenu.js'>
+</script><link rel='stylesheet' href='/abnet/css/HMenu.css'>
+<script type='text/javascript' src='/abnet/js/dom.js'></script>
+<script type='text/javascript' src='/abnet/js/combo_obj.js'></script>
+<script>
+theApp.oXMLCATAHELP = theApp.m_oJS.createXMLDocument();
+theApp.oXMLCATCOD = theApp.m_oJS.createXMLDocument();
+theApp.oXMLCATAHELP.loadXML( '<?xml version="1.0" ?><catahelp></catahelp>' );
+theApp.oXMLCATCOD.loadXML( '<?xml version="1.0" ?><catcod></catcod>' );
+</script>
+
+<script type='text/javascript' src='/abnet/js/abvfy.js'></script>
+<script type='text/javascript' src='/abnet/js/wpcmd-functions.js'></script>
+<script>
+function WpLoadAbxSigned(){
+	if(window.showModalDialog)
+		return;
+	var sUrl='';
+	if (document.location.port!='')
+		sUrl=document.location.protocol+'//'+document.location.hostname+':'+document.location.port;
+	else
+		sUrl=document.location.protocol+'//'+document.location.hostname;
+	top.AbxSigned.location.replace('jar:'+sUrl+'/abnet/js/abnetsigned.jar!/signed.html');
+}
+function WpExitFailedCert(){
+	if(window.showModalDialog)
+		return;
+	alert("No se ha podido cargar el certificado o no se han otorgado permisos a absys.edu. absys.edu no puede continuar ");
+	theApp.m_oJS.document.location.replace(document.location.protocol+'//'+window.document.location.host+'/abnet/abnetcl.exe/X7433/ID001107d8/NT359?ACC=1');
+}
+function OnUuconf()
+{
+	if(theApp.m_oJS.WpGetBrowser())
+	{
+		if(!window.showModalDialog){
+			if(typeof(top.AbxSigned.open_dialog_moz)!='function')
+			{
+				this.setTimeout('OnUuconf()',1000);
+				return false;
+			}
+		}
+	}
+var resuuncof=theApp.m_oJS.WpMessageBox(2,"La ´┐¢ltima vez que iniciaste sesi´┐¢n de forma correcta con este usuario fue: 12/06/2026 14:38",-1,-1,-1,window);
+}
+</script> 
+<title>AbsysNet Universidad Ricardo Palma de Lima</title></head>
+<script>
+var url = '/abnet/abnetcl.exe/X7433/ID001107d8/NT359?ACC=10&PLAT=' + escape(window.navigator.platform) + '&AGENT=' + escape(window.navigator.userAgent);
+setTimeout( function() { window.AbxMenu.document.location.replace(url); } , 200);
+</script>
+<frameset name='mainFrameset' id='mainFrameset' cols='190,*' framespacing='3' frameborder='1' border='2' bordercolor='#F5F8FA' onload='OnUuconf();'>
+	<frame name='AbxMenu' frameborder='0' scrolling='no' src='/abnet/html/blank.html' marginwidth='0'>
+	<frameset rows='64,*,22,0,0' framespacing='3' frameborder='1' border='2' bordercolor='#F5F8FA'>
+		<frame name='AbxToolBar' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='/abnet/html/blank.html'>
+		<frame name='AbxMain' frameborder='0' scrolling='auto' marginheight='0'  marginwidth='0' src='/abnet/abnetcl.exe/X7433/ID001107d8/NT359?ACC=105&TB=3001' onreadystatechange='evento=event;'>
+		<frame name='AbxWin' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='/abnet/html/blank.html'>
+		<frame name='AbxNo' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src=''>
+		<frame name='AbxSigned' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='/abnet/html/blanksign.html'>
+	</frameset>
+</frameset>
+
+</html>
+
+>>> NT Ficha num: 359
+
+=== PASO 5: Ficha del lector ===
+URL: https://biblioteca.urp.edu.pe/abnet/abnetcl.exe/X7433/ID001107d8/NT359?ACC=104
+Status: OK
+HTML COMPLETO:
+<html><head><META http-equiv="Pragma" content="no-cache">
+<META http-equiv="Expires" content="0">
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<META http-equiv="X-UA-Compatible" content="IE=EmulateIE9"/>
+<script type='text/javascript' src='/abnet/js/browser-functions.js'></script>
+<script>WpGetFrameset('/abnet/abnetcl.exe/X7433/ID001107d8/NT360');</script>
+<title>AbsysNet Lectores</title><link rel=stylesheet href="/abnet/css/abnet.css" type="text/css">
+<link rel=stylesheet href="/abnet/css/abnEdit.css" type="text/css">
+<link rel='stylesheet' href='/abnet/css/HMenu.css'>
+
+<script type='text/javascript' src='/abnet/js/abvfy.js'></script>
+<script type='text/javascript' src='/abnet/js/wpcmd-functions.js'></script><script type="text/javascript">
+ var nVerif = 1; 
+
+window.document.onkeydown = theApp.m_oJS.document.onkeydown;
+window.document.onhelp = theApp.m_oJS.document.onhelp;
+</script>
+<link rel='stylesheet' href='/abnet/css/combo.css'>
+<script>
+try
+{
+	theApp.comboArray = null;
+	theApp.comboArray = new Array();
+	theApp.m_oJS.auxCombos( window );
+}
+catch( e )
+{
+	alert( 'wpcmd.c::WpImportCO(): ' + e.message );
+}
+</script>
+<script type="text/javascript">
+function checkMess()
+{
+	try {
+	}
+	catch ( e )
+	{
+		if (typeof e.message != 'undefined') { alert( 'wpmodales.c::WpCheckMensaje() ' + e.message ); } else { throw e; }
+	}
+}
+</script>
+<script type="text/javascript">
+function DoAbsAccPrev( acc, aux )
+{
+	try
+	{
+		if ( acc != 100 && acc != 126)
+			document.abwxp.target='AbxMain';
+		return false;
+	}
+	catch( e )
+	{
+		alert( 'wpgeneral.c::DoAbsAccPrev( ' + acc + ', ' + aux + ' ): ' + e.message );
+		return true;
+	}
+}
+</script>
+<script type="text/javascript">
+function VerifSubmit(){
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lenlec,1,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lecobi,15,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lecosu,15,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lecolp,15,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lecol1,15,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lecol2,15,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lecol3,15,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lecocf,15,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefult,3,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefubi,3,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefreg,3,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefcad,3,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.learpd,6,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.learps,6,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.learpt,6,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.learre,6,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lenpac,5,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lenpan,5,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefsus,3,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lediso,5,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lencar,6,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lepend,7,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lecart,15,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lemess,20,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.letext,20,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefnac,3,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefren,3,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lensus,6,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefuco,3,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lencof,6,false,self))
+	return false;
+if (theApp.m_oJS.vfyObjectAb(window.document.abwxp.lefblo,3,false,self))
+	return false;
+if ( typeof localVerifSubmit == 'function')
+	return localVerifSubmit();
+return true;
+}
+</script>
+<script> theApp.m_oJS.AbxMain.ab_is_search = true; </script><script type='text/javascript' src='/abnet/js/wpmodales.js'></script>
+<script>
+listener_create_if_necesary();
+  </script><script type='text/javascript' src='/abnet/js/wpwidgets.js'></script>
+<script>
+button_refresher_create_if_necesary();
+  </script></head>
+<body onload="checkMess();">
+<div id='IDMENUCONTAINER' class='menuContainer'>
+	<div id='IDMENUMAIN' class='menu'></div>
+</div><script>
+		if( theApp.m_oJS.AbxToolBar.ButtonRefresh ){ theApp.m_oJS.AbxToolBar.ButtonRefresh('0900:0|0110:0|0130:1|0122:0|0140:0|0000:0|0000:0|0112:0|0113:0|0114:0|0116:0|0118:0|0000:0|0455:0|0171:0|0174:0|0000:0|0298:0|0296:0|0304:0|0308:0|0302:0|0000:0|0126:1|2000:0|2013:0|0100:1|0101:1|','Buscar','','0'); }
+		if( theApp.m_oJS.AbxToolBar.MenuRefresh ){ theApp.m_oJS.AbxToolBar.MenuRefresh('0900:0|0110:0|0130:1|0122:0|0140:0|0000:0|0000:0|0112:0|0113:0|0114:0|0116:0|0118:0|0000:0|0455:0|0171:0|0174:0|0000:0|0298:0|0296:0|0304:0|0308:0|0302:0|0000:0|0126:1|2000:0|2013:0|0100:1|0101:1|'); }
+				</script>
+<form action="/abnet/abnetcl.exe/X7433/ID001107d8/NT360" method="POST" id="abwxp" name="abwxp" target="AbxNo" onSubmit="return(VerifSubmit())">
+<input type="hidden" name="NREC" value="0"/><input type="hidden" name="ACC" value="100"/><input type="hidden" name="TB" value="29" />
+<input type="hidden" name="CLV" value="0"/>
+<input type="hidden" name="ACC2" value="0"/> 
+ <input type="hidden" name="AUX" id="AUX"/>
+<input type="hidden" name="htwain" id="htwain" value="0"/>
+<input type="hidden" name="upfile" id="upfile" value="0"/>
+<input type='hidden' name="nmfile" id="nmfile" value="" />
+<style>
+@media screen and (-webkit-min-device-pixel-ratio:0){#scan{display:none}}
+@-moz-document url-prefix(){#scan{display:none}}
+</style>
+<script type="text/javascript" src="/abnet/js/uploadfile.js"></script>
+<div id="menuPhoto">
+<table cellspacing="0" cellpadding="2">
+<tr>
+<td>
+<a id="upload" href="#">Examinar</a>
+</td>
+</tr>
+<tr id="scan">
+<td>
+<a href="#" onclick="scanPhoto();return false;">Escanear</a>
+</td>
+</tr>
+<tr>
+<td>
+<a href="#" onclick="deletePhoto(this);return false;" class="">Eliminar</a>
+</td>
+</tr>
+<tr>
+<td class="separate">
+<a id="disableMenu" href="#">Deshabilitar men├║</a>
+</td>
+</tr>
+</table>
+</div>
+<script type="text/javascript">
+$3().colorModule("lector");
+addEvent(window,"load",function(){
+var cad = document.abwxp.lefcad;
+var tmp = "";
+if(cad && cad.value) {
+if(cad.value.length > 10)
+cad.value=cad.value.substr(0, 10);
+}else{
+if(tmp)
+cad.value = tmp;
+if(cad && cad.value) {
+if(cad.value.length > 10) {
+if(cad.value.indexOf("|") == 0) {
+cad.value=cad.value.substr(0, 10);
+}else{
+cad.maxLength = 21;
+cad.readOnly = true;
+}
+}
+}else{
+if(cad) {
+cad.maxLength = 16;
+cad.readOnly = false;
+}
+}
+}
+var state = parseInt("3",10), photo = $("photo");
+if(state == theApp.AF_MODIFICAR || state == theApp.AF_ANADIR) {
+initcontext(0,1);
+if(photo)
+uploadfile();
+}
+});
+</script>
+<br>
+<br>
+<table class="headBox" width="100%" cellspacing="0" cellpadding="0">
+<script type="text/javascript">$3().headTemplate(window, "Datos del Lector");</script>
+<tr>
+<td class="headContent">
+<table class="Content" cellspacing="4" cellpadding="0" width="95%" align="center">
+<col>
+<col width="40%">
+<col width="20%">
+<col width="40%">
+<tr>
+<td class="LabelR" width="10%">N┬║ lector</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="60%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lenlec" id="lenlec" value="" maxlength="15" size="15" /></td>									<td id='idBarc'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lenlec,1,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+</tr>
+</table>
+</td>
+<td class="LabelR">Password</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="60%">
+<tr>
+<td class="Inp1"><div width='100%' class="inp">&nbsp;</div></td>
+</tr>
+</table>
+</td>
+<td rowspan="7" valign="top">
+<div id="container"><a id="enableMenu" href="#">Habilitar men├║</a></div>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Tr./Inic./Nombre</td>
+<td colspan="2">
+<table cellspacing="1" cellpadding="0" width="100%" >
+<tr>
+<td width="13%" class="Inp1"><input type="text" name="letitu" id="letitu" value="" maxlength="4" size="4" /></td>
+<td width="13%" class="Inp1"><input type="text" name="leinic" id="leinic" value="" maxlength="4" size="4" /></td>
+<td width="74%" class="Inp1"><input type="text" name="lenomb" id="lenomb" value="" maxlength="80" size="75" /></td>
+</tr>
+</table>
+</td>
+<td></td>
+</tr>
+<tr>
+<td class="LabelR">Apellidos</td>
+<td class="Inp1" colspan="2"><input type="text" name="leapel" id="leapel" value="" maxlength="80" size="75" /></td>
+<td>
+<table cellspacing="1" cellpadding="0" width="100%" >
+<tr>
+<td class="LabelR" width="30%">Adulto&nbsp;</td>
+<td><a href='#' id='leadul0' class='clsLink' onmouseover="return window.status='';" 
+onClick="theApp.m_oJS.clickCheck('leadul','leadul1', window);if( window.localClickCheck != undefined ) window.localClickCheck( this ); " 
+onKeyDown='if( event.keyCode == 32 ) this.onclick();'><img id="leadul1" class='clsImgCheck' value='2' triestate=true src='/abnet/imag/checkall.gif' alt=""/> 
+</a> 
+<input type='hidden' style='width:0;height:0;' name='leadul' id='leadul' value='2'/> 
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Alias</td>
+<td colspan="2">
+<table cellspacing="1" cellpadding="0" width="100%" >
+<tr>
+<td width="25%" class="Inp1"><input type="text" name="lealia" id="lealia" value="" maxlength="20" size="20" /></td>
+<td width="75%" class="Inp1"><input type="text" name="leades" id="leades" value="" maxlength="255" size="75" /></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Asignado a la biblioteca</td>
+<td><a href='#' id='lebasi0' class='clsLink' onmouseover="return window.status='';" 
+onClick="theApp.m_oJS.clickCheck('lebasi','lebasi1', window);if( window.localClickCheck != undefined ) window.localClickCheck( this ); " 
+onKeyDown='if( event.keyCode == 32 ) this.onclick();'><img id="lebasi1" class='clsImgCheck' value='2' triestate=true src='/abnet/imag/checkall.gif' alt=""/> 
+</a> 
+<input type='hidden' style='width:0;height:0;' name='lebasi' id='lebasi' value='2'/> 
+</td>
+<td class="LabelR">DNI</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="80%">
+<tr>
+<td class="Inp1"><input type="text" name="leddni" id="leddni" value="" maxlength="20" size="20" /></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Biblioteca</td>
+<td class="Inp1"><div id='IDDIVCOMBOlecobi'></div><script>var oIDCOMBOlecobi = new theApp.m_oJS.comboObj( "lecobi", 126, "", 30, true, "lecosu", "", window.document, window, 0, 3, false );</script></td>
+<td class="LabelR">Nacimiento</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="80%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefnac" id="lefnac" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefnac,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefnac",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Sucursal</td>
+<td class="Inp1"><div id='IDDIVCOMBOlecosu'></div><script>var oIDCOMBOlecosu = new theApp.m_oJS.comboObj( "lecosu", 127, "", 30, true, "", "lecobi", window.document, window, 1, 3, false );</script></td>
+<td class="LabelR">N┬║ alternativo</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="80%">
+<tr>
+<td class="Inp1"><input type="text" name="leddnn" id="leddnn" value="" maxlength="50" size="50" /></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr style="display:none">
+<td class="LabelR">Acepta RGPD&nbsp;</td>
+<td><img border="0" src="/abnet/imag/checkoff.gif" alt=""/></td>
+</tr>
+<tr style="display:none">
+<td class="LabelR">N┬║ de conexiones err├│neas</td>
+<td>
+<table cellspacing="1" cellpadding="0" width="100%" >
+<colgroup>
+<col width="15%">
+<col width="15%">
+<col width="6%">
+<col width="25%">
+</colgroup>
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lencof" id="lencof" value="" maxlength="5" size="5" /></td><td><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lencof,6,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+<td class="LabelR">&nbsp;Bloqueado&nbsp;</td>
+<td><a href='#' id='lebloq0' class='clsLink' onmouseover="return window.status='';" 
+onClick="theApp.m_oJS.clickCheck('lebloq','lebloq1', window);if( window.localClickCheck != undefined ) window.localClickCheck( this ); " 
+onKeyDown='if( event.keyCode == 32 ) this.onclick();'><img id="lebloq1" class='clsImgCheck' value='2' triestate=true src='/abnet/imag/checkall.gif' alt=""/> 
+</a> 
+<input type='hidden' style='width:0;height:0;' name='lebloq' id='lebloq' value='2'/> 
+</td>
+<td class="LabelR">Fecha de fin bloqueo</td>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefblo" id="lefblo" value="" maxlength="16" size="16" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefblo,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefblo",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<br/>
+<table class="BoxTable" cellspacing="0">
+<tr>
+<td class="ButtabA" id="btL1" onClick="SelTab(this,'divL1')">Datos</td>
+<td class="Buttab" id="btL2" onClick="SelTab(this,'divL2')">Pr├®stamo</td>
+<td class="Buttab" id="btL3" onClick="SelTab(this,'divL3')">Direcciones</td>
+<td class="Buttab" id="btL4" onClick="SelTab(this,'divL4')">Otros</td>
+<td class="Buttab" id="btL5" onClick="SelTab(this,'divL5')">Listado Otros Tipos</td>
+<td width="100%" class="ButtabVacio">&nbsp;</td>
+</tr>
+</table>
+<div id="divL1" class="BoxTabs" width="100%">
+<br/>
+<table cellspacing="4" cellpadding="0" width="90%" align="center">
+<col width="10%">
+<col width="30%">
+<col width="15%">
+<col width="25%">
+<tr>
+<td class="LabelR">Tipo de lector</td>
+<td class="Inp1"><div id='IDDIVCOMBOlecolp'></div><script>var oIDCOMBOlecolp = new theApp.m_oJS.comboObj( "lecolp", 28, "", 30, true, "", "lecobi", window.document, window, 0, 3, false );</script> </td>
+<td class="LabelR">Fecha alta</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefreg" id="lefreg" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefreg,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefreg",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">C├│digo 1</td>
+<td class="Inp1"><div id='IDDIVCOMBOlecol1'></div><script>var oIDCOMBOlecol1 = new theApp.m_oJS.comboObj( "lecol1", 22, "", 30, true, "", "", window.document, window, 1, 3, false );</script> </td>
+<td class="LabelR">Fecha de renovaci├│n</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefren" id="lefren" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefren,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefren",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">C├│digo 2</td>
+<td class="Inp1"><div id='IDDIVCOMBOlecol2'></div><script>var oIDCOMBOlecol2 = new theApp.m_oJS.comboObj( "lecol2", 23, "", 30, true, "", "", window.document, window, 1, 3, false );</script> </td>
+<td class="LabelR">Fecha de caducidad</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefcad" id="lefcad" value="" maxlength="16" size="16" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefcad,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefcad",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">C├│digo 3</td>
+<td class="Inp1"><div id='IDDIVCOMBOlecol3'></div><script>var oIDCOMBOlecol3 = new theApp.m_oJS.comboObj( "lecol3", 24, "", 30, true, "", "", window.document, window, 1, 3, false );</script> </td>
+<td class="LabelR">Fecha de suspensi├│n</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefsus" id="lefsus" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefsus,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefsus",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Perfil</td>
+<td class="Inp1"><div id='IDDIVCOMBOlecocf'></div><script>var oIDCOMBOlecocf = new theApp.m_oJS.comboObj( "lecocf", 10, "", 30, true, "", "", window.document, window, 1, 3, false );</script> </td>
+<td class="LabelR">├Ültimo uso</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefult" id="lefult" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefult,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefult",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td colspan="2">&nbsp;</td>
+<td class="LabelR">├Ültimo uso biblioteca</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefubi" id="lefubi" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefubi,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefubi",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<br/>
+</div>
+<div id="divL2" class="BoxTabs" style="display: none;" width="100%">
+<br/>
+<table cellspacing="4" cellpadding="0" width="90%" align="center">
+<col width="15%">
+<col width="25%">
+<col width="10%">
+<col width="25%">
+<tr>
+<td class="LabelR">Art. prestados dom.</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="learpd" id="learpd" value="" maxlength="5" size="5" /></td><td><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.learpd,6,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+</tr>
+</table>
+</td>
+<td class="LabelR">Reservados</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="learre" id="learre" value="" maxlength="5" size="5" /></td><td><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.learre,6,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Art. prestados sala</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="learps" id="learps" value="" maxlength="5" size="5" /></td><td><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.learps,6,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+</tr>
+</table>
+</td>
+<td class="LabelR">Pr├®stamos a├▒o en curso</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="60%">
+<tr>
+<td class="InpN"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lenpac" id="lenpac" value="" maxlength="10" size="10" /></td><td><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lenpac,5,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Art. en petici├│n</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="learpt" id="learpt" value="" maxlength="5" size="5" /></td><td><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.learpt,6,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+</tr>
+</table>
+</td>
+<td class="LabelR">Pr├®stamos a├▒o anterior</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="60%">
+<tr>
+<td class="InpN"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lenpan" id="lenpan" value="" maxlength="10" size="10" /></td><td><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lenpan,5,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td align="center" colspan="4">
+<hr style="width: 80%; height:1; color: #75ADCD;">
+</td>
+</tr>
+<tr>
+<td class="LabelR">Deuda</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><div width='100%' class="inp">&nbsp;</div></td>
+</tr>
+</table>
+</td>
+<td class="LabelR">Devoluciones retrasadas</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><input type="text" name="lediso" id="lediso" value="" maxlength="10" size="10" /></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Pagado</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><div width='100%' class="inp">&nbsp;</div></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Pendiente</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lepend" id="lepend" value="" maxlength="16" size="16" /></td><td><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lepend,7,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td></tr></table>
+</td>
+</tr>
+</table>
+</td>
+<td class="LabelR">Veces suspendido</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><input type="text" name="lensus" id="lensus" value="" maxlength="5" size="5" /></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Modelo de carta</td>
+<td class="Inp1"><div id='IDDIVCOMBOlecart'></div><script>var oIDCOMBOlecart = new theApp.m_oJS.comboObj( "lecart", 130, "", 30, true, "", "", window.document, window, 1, 3, false );</script></td>		  
+<td class="LabelR">Cartas enviadas</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="40%">
+<tr>
+<td class="InpN"><input type="text" name="lencar" id="lencar" value="" maxlength="5" size="5" /></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<br/>
+</div>
+<div id="divL3" class="BoxTabs" style="display: none;" width="100%">
+<br/>
+<table cellspacing="4" cellpadding="0" width="98%" align="center">
+<col>
+<col width="40%">
+<col>
+<col width="40%">
+<tr>
+<td class="LabelR">1┬¬ l├¡nea direcci├│n 1</td>
+<td class="Inp1"><input type="text" name="ledi11" id="ledi11" value="" maxlength="50" size="50" /></td>
+<td class="LabelR">1┬¬ l├¡nea direcci├│n 2</td>
+<td class="Inp1"><input type="text" name="ledi21" id="ledi21" value="" maxlength="50" size="50" /></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td class="Inp1"><input type="text" name="ledi12" id="ledi12" value="" maxlength="50" size="50" /></td>
+<td></td>
+<td class="Inp1"><input type="text" name="ledi22" id="ledi22" value="" maxlength="50" size="50" /></td>
+</tr>
+<tr>
+<td>&nbsp;</td>
+<td class="Inp1"><input type="text" name="ledi13" id="ledi13" value="" maxlength="50" size="50" /></td>
+<td>&nbsp;</td>
+<td class="Inp1"><input type="text" name="ledi23" id="ledi23" value="" maxlength="50" size="50" /></td>
+</tr>
+<tr>
+<td class="LabelR">C├│digo postal 1</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="100%">
+<tr>
+<td class="Inp1" width="40%"><input type="text" name="lediz1" id="lediz1" value="" maxlength="8" size="8" /></td>
+<script type="text/javascript">
+var poscod_capturer = new WpPosCodCapturer(theApp.POSCOD, "lediz1", "ledi12");
+listener.add_listener( function() { poscod_capturer.set_onchange(poscod_capturer); } );
+</script>
+<td>
+<img id="p1" onmousedown="window.no_capt=true;" onclick="poscod_capturer.open_modal();window.no_capt=false;" title="Buscar" alt="Buscar" src="/abnet/imag/search.gif" style="cursor:pointer;vertical-align:middle;">
+</td>
+</tr>
+</table>
+</td>
+<td class="LabelR">C├│digo postal 2</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="100%">
+<tr>
+<td class="Inp1" width="40%"><input type="text" name="lediz2" id="lediz2" value="" maxlength="8" size="8" /></td>
+<script type="text/javascript">
+var poscod_capturer2 = new WpPosCodCapturer(theApp.POSCOD, 'lediz2', 'ledi22');
+listener.add_listener( function() { poscod_capturer2.set_onchange(poscod_capturer2); } );
+</script>
+<td>
+<img id="p2" onmousedown="window.no_capt=true;" onclick="poscod_capturer2.open_modal();window.no_capt=false;" title="Buscar" alt="Buscar" src="/abnet/imag/search.gif" style="cursor:pointer;vertical-align:middle;">
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Tel├®fono</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="60%">
+<tr>
+<td class="Inp1"><input type="text" name="letfn1" id="letfn1" value="" maxlength="15" size="15" /></td>
+</tr>
+</table>
+</td>
+<td class="LabelR">Tel├®fono 2</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="60%">
+<tr>
+<td class="Inp1"><input type="text" name="letfn2" id="letfn2" value="" maxlength="15" size="15" /></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Tel├®fono m├│vil</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="60%">
+<tr>
+<td class="Inp1"><input type="text" name="letmov" id="letmov" value="" maxlength="15" size="15" /></td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<hr style="width: 80%; height:1; color: #75ADCD;">
+<table cellspacing="4" cellpadding="0" width="90%" align="center">
+<col width="10%">
+<col width="5%">
+<col width="10%">
+<col width="45%">
+<tr>
+<td class="LabelR">Utilizar e-mail</td>
+<td><a href='#' id='leemac0' class='clsLink' onmouseover="return window.status='';" 
+onClick="theApp.m_oJS.clickCheck('leemac','leemac1', window);if( window.localClickCheck != undefined ) window.localClickCheck( this ); " 
+onKeyDown='if( event.keyCode == 32 ) this.onclick();'><img id="leemac1" class='clsImgCheck' value='2' triestate=true src='/abnet/imag/checkall.gif' alt=""/> 
+</a> 
+<input type='hidden' style='width:0;height:0;' name='leemac' id='leemac' value='2'/> 
+</td>
+<td class="LabelR">E-mail</td>
+<td class="Inp1"><input type="text" name="lemail" id="lemail" value="" maxlength="100" size="75" /></td>
+</tr>
+</table>
+<br/>
+</div>
+<div id="divL4" class="BoxTabs" style="display: none;" width="100%">
+<br/>
+<table cellspacing="4" cellpadding="0" width="80%" align="center">
+<col width="15%">
+<col width="85%">
+<tr>
+<td class="LabelR">N┬║ conexiones</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="100%">
+<col width="15%">
+<col width="55%">
+<col width="25%">
+<tr>
+<td class="Inp1"><div width='100%' class="inp">&nbsp;</div></td>
+<td class="LabelR">Fecha ├║ltima conexi├│n&nbsp;</td>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lefuco" id="lefuco" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lefuco,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lefuco",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td valign="top" class="LabelR">Mensaje</td>
+<td class="Inp1" style="white-space:normal;"><textarea name="lemess" id="lemess" rows="3" style="width:100%" wrap="soft" class="Inp1" onkeypress="if(event.keyCode==13){return false;}"  maxlength="255" ></textarea></td>
+</tr>
+<tr>
+<td valign="top" class="LabelR">Notas</td>
+<td class="Inp1" style="white-space:normal;"><textarea name="letext" id="letext" rows="3" style="width:100%" wrap="soft" class="Inp1" onkeypress="if(event.keyCode==13){return false;}"  maxlength="255" ></textarea></td>
+</tr>
+<tr>
+<td valign="top" class="LabelR">Mensaje circulaci├│n</td>
+<td class="Inp1" style="white-space:normal;"><input type="text" name="lemeci" id="lemeci" value="" maxlength="255" size="75" /></td>
+</tr>
+</table>
+<br/>
+</div>
+<div id="divL5" class="BoxTabs" style="display: none;" width="100%">
+<br/>
+
+<table width="90%" cellspacing="4" cellpadding="0" align="center">
+<col width="10%">
+<col width="25%">
+<col width="10%">
+<col width="25%">
+<tr>
+<td class="LabelR">Tipo Lector</td> 
+<td class="Inp1"><div id='IDDIVCOMBOlscolp'></div><script>var oIDCOMBOlscolp = new theApp.m_oJS.comboObj( "lscolp", 28, "", 30, true, "", "lscobi", window.document, window, 0, 3, false );</script></td>
+<td class="LabelR">Fecha registro</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lsfreg" id="lsfreg" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lsfreg,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lsfreg",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Fecha renovaci├│n</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lsfren" id="lsfren" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lsfren,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lsfren",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="LabelR">Fecha caducidad</td>
+<td>
+<table cellspacing="0" cellpadding="0" width="70%">
+<tr>
+<td class="Inp1"><table cellspacing="0" cellpadding="1" width="100%"><tr><td width="100%"><input type="text" name="lsfcad" id="lsfcad" value="" maxlength="10" size="10" /></td><td id='idDate'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogInter(document.abwxp.lsfcad,3,window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/btinter.gif" style="cursor:pointer;border:0;"></a></td>
+<td id='idDate1'><a href='javascript:' onclick='theApp.m_oJS.OpenDialogDate("lsfcad",window);'
+onKeyDown='theApp.m_oJS.WpVfyEvtDate(this,event);'><img src="/abnet/imag/calend.gif" style="cursor:pointer;border:0;"></a></td>
+</tr></table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<br/>
+</div>
+<script type="text/javascript">
+var dvO=$('divL1');
+var btO=$('btL1');
+function SelTab(btN,dvN){
+if(typeof(dvN)!="object")
+dvN = $(dvN);
+if(btO!=null)
+btO.className='Buttab';
+btN.className='ButtabA';
+btO=btN;
+if (dvO!=null)
+dvO.style.display='none';
+dvN.style.display='block';
+dvO=dvN;
+}
+var o_Div = new Array("lecolp", 150, "lecol1", 118, "lecol2", 95, "lecol3", 65, "lecocf", 45, "lscolp", 190, "lecart", 30);
+$3().comboHeight(o_Div, window);
+if(!$("lediz1")) { 
+$("p1").style.visibility = $("p2").style.visibility = "hidden";
+}
+function validatePass(obj){
+var vminim = parseInt("0",10);
+var vmaxim = parseInt("8",10);
+if(vminim >= 1){
+if((obj.value.length >= vminim) && (obj.value.length <= vmaxim)){
+}else{
+$3().WpMessageBoxSimplest(window,theApp.MSG_LE_DESKTOP_PASSWORD_NOTLENGTH,theApp.WP_ALERT_MENSAJE)
+return true;
+}
+}
+var vlower = parseInt("0",10);
+if(vlower == 1){
+var lowerCaseLetters = /[a-z]/g;
+if(obj.value.match(lowerCaseLetters)){
+}else{
+$3().WpMessageBoxSimplest(window,theApp.MSG_LE_DESKTOP_PASSWORD_NOTLOWERCASE,theApp.WP_ALERT_MENSAJE)
+return true;
+}
+}
+var vupper = parseInt("0",10);
+if(vupper == 1){
+var upperCaseLetters = /[A-Z]/g;
+if(obj.value.match(upperCaseLetters)){
+}else{
+$3().WpMessageBoxSimplest(window,theApp.MSG_LE_DESKTOP_PASSWORD_NOTUPPERCASE,theApp.WP_ALERT_MENSAJE)
+return true;
+}
+}
+var vdigit = parseInt("0",10);
+if(vdigit == 1){
+var numericCharacter = /[0-9]/g;
+if(obj.value.match(numericCharacter)){
+}else{
+$3().WpMessageBoxSimplest(window,theApp.MSG_LE_DESKTOP_PASSWORD_NOTNUMBERS,theApp.WP_ALERT_MENSAJE)
+return true;
+}
+}
+var vspecc = ""
+if(vspecc && vspecc != ""){
+var vspecc = "[" + vspecc.replace(/[^a-zA-Z0-9]/g,'\\$&') + "]";
+var regexp = new RegExp(vspecc,'g');
+if(obj.value.match(regexp)){
+}else{
+$3().WpMessageBoxSimplest(window,escape(theApp.MSG_LE_DESKTOP_PASSWORD_NOTSPECIAL_C));
+return true;
+}
+}
+return false;
+}
+function DoAbsAccModule(acc, aux){
+if(acc == theApp.WP_ACC_OK){
+var mail = $("lemail");
+var nlec = $("lenlec");
+var upload = parseInt(document.abwxp.upfile.value,10);
+var actmail = $("leemac");
+var state = parseInt("3",10);
+if(state == theApp.AF_MODIFICAR || state == theApp.AF_ANADIR) {
+var pass = $("lepass"), vpass = parseInt("0",10);
+if(pass && pass.value!="" && pass.value!="********"){
+if(vpass==1){
+if(validatePass(pass)) {
+pass.focus();
+return true;
+}
+}
+}
+if((mail && mail.value.length) && (nlec && nlec.value >= 0 && nlec.value.length)){ //Estoy anadiendo o transfiriendo.
+if(!isValidEmail(mail.value)){
+$3().WpMessageBoxSimplest(self, "La direcci├│n de correo electr├│nico no es v├ílida", theApp.WP_ALERT_MENSAJE, 0);
+return true;
+}
+}
+else if(mail && mail.value.length) //Estoy modificando no llega nlec.
+{
+if(!isValidEmail(mail.value)){
+$3().WpMessageBoxSimplest(self, "La direcci├│n de correo electr├│nico no es v├ílida", theApp.WP_ALERT_MENSAJE, 0);
+return true;
+}
+}
+else if(actmail && actmail.value == 1)
+{
+$3().WpMessageBoxSimplest(self, "El campo Utilizar e-mail est├í seleccionado, pero no hay un email asociado.\nDeseleccione el campo o introduzca un correo electr├│nico v├ílido", theApp.WP_ALERT_MENSAJE, 0);
+return true;
+}
+}
+if(upload){
+if(VerifSubmit()){
+var frm = document.formdata;
+frm.action = document.abwxp.action;
+var nform = document.forms["abwxp"], nele, name;
+for(var j=0; j<nform.elements.length; j++){
+nele = nform.elements[j];
+cn = nele.cloneNode(true);
+if(nele.type == "textarea" || nele.type == "select-one")
+cn.value = nele.value;
+frm.appendChild(cn);
+}frm.submit();
+}return true;
+}
+}else if(acc == theApp.WP_ACC_COPIAR_LECTORES){
+var bw = WpGetBrowser();
+var url = theApp.CgiWeb + "?ACC=" + acc + "&TB=" + theApp.LECTOR;
+$3().WpOpenWinModal(url,window,500,!bw?110:bw>0?135:135,window);
+return true;
+}
+}
+function isValidEmail(emailAddress) {
+var output = emailAddress;
+var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+var arr = output.split(";");
+if(arr.length){
+for(var i=0; i<arr.length; i++){
+if(!re.test(arr[i]))
+return false;
+}return true;
+}else{
+return re.test(output);
+}
+}
+function uploadfile(){
+upclick({
+element: "upload",
+dataname: "xifich",
+formname: "formdata",
+action: "about:blank",
+onstart:
+function(filename){
+document.abwxp.htwain.value = 0;
+document.abwxp.upfile.value = 1;
+setPhoto();
+},
+oncomplete:
+function(response){}
+});
+}
+function scanPhoto(){
+closeContext();
+var bw = WpGetBrowser();
+var url = theApp.CgiWeb + "?ACC=" + theApp.WP_ACC_INICIAR_TWAIN + "&TB=" + theApp.TABLA_MULTIMEDIA;
+var res = $3().WpOpenWinModal(url,window,900,!bw?650:bw>0?660:750,window);
+if(res != "undefined" && res != null){
+var abxmain = $3("AbxMain");
+abxmain.document.abwxp.htwain.value = 1;
+abxmain.document.abwxp.upfile.value = 0;
+abxmain.setPhoto();
+}
+}
+function deletePhoto(obj){
+if(obj){ if(obj.className.length) return; }
+closeContext();
+var res = $3().WpMessageBoxSimplest(self, theApp.MSG_WP_DESEA_BORRAR_FOTO_LECTOR, theApp.WP_ALERT_PREGUNTA);
+if(res == 1){
+var url = theApp.CgiWeb + '?ACC=' + theApp.WP_ACC_FOTO_LECTOR_ELIMINAR + '&TB=' + theApp.LECTOR;
+$3("AbxNo").location.replace(url);
+}
+}
+function setPhoto(){
+var imag = "photo.gif", photo = $("photo");
+if(!photo){
+var img = document.createElement('IMG');
+img.id = "photo";
+$("container").appendChild(img);
+photo = img;
+}photo.src = theApp.sDirHttp + "/imag/" + imag;
+}
+</script></form>
+
+<script type='text/javascript'>
+
+			theApp.screen_cobarc = false;
+			if (theApp && theApp.m_oJS && theApp.m_oJS.AbxMain.fieldFocus ) theApp.m_oJS.AbxMain.fieldFocus(); 
+
+</script>
+
+</body>
+
+</html>
+

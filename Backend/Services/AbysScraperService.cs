@@ -1,5 +1,4 @@
-using HtmlAgilityPack;
-using System.Text;
+using Microsoft.Playwright;
 using System.Text.RegularExpressions;
 
 namespace ControlLaboratorio.API.Services
@@ -10,18 +9,17 @@ namespace ControlLaboratorio.API.Services
     public class AbysLectorDto
     {
         public string CodigoUniversitario { get; set; } = "";
-        public string Nombres { get; set; } = "";
-        public string ApellidoPaterno { get; set; } = "";
-        public string ApellidoMaterno { get; set; } = "";
-        public string Dni { get; set; } = "";
-        public string Carrera { get; set; } = "";
+        public string Nombres             { get; set; } = "";
+        public string ApellidoPaterno     { get; set; } = "";
+        public string ApellidoMaterno     { get; set; } = "";
+        public string Dni                 { get; set; } = "";
+        public string Carrera             { get; set; } = "";
         public string CorreoInstitucional { get; set; } = "";
     }
 
     /// <summary>
-    /// Servicio que se conecta al sistema AbsysNet de la Biblioteca URP,
-    /// inicia sesión con las credenciales configuradas y busca los datos
-    /// de un alumno a partir del código de barras de su carnet universitario.
+    /// Servicio que usa Playwright (headless Chromium) para conectarse al sistema
+    /// AbsysNet de la Biblioteca URP y extraer datos del lector por código de barras.
     /// </summary>
     public class AbysScraperService
     {
@@ -41,87 +39,115 @@ namespace ControlLaboratorio.API.Services
         /// </summary>
         public async Task<AbysLectorDto?> BuscarPorCodigoAsync(string codigoUniversitario)
         {
-            // Handler que acepta cookies (necesario para mantener la sesión CGI)
-            var handler = new HttpClientHandler
-            {
-                AllowAutoRedirect = false,
-                UseCookies = true,
-                CookieContainer = new System.Net.CookieContainer()
-            };
+            var usuario  = _config["AbysNet:Usuario"]  ?? "medicina";
+            var password = _config["AbysNet:Password"] ?? "biblioteca1";
 
-            using var http = new HttpClient(handler);
-            http.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36");
-            http.Timeout = TimeSpan.FromSeconds(20);
+            _logger.LogInformation("AbysNet: Iniciando búsqueda headless para código {C}", codigoUniversitario);
+
+            using var playwright = await Playwright.CreateAsync();
+            await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            {
+                Headless = true,
+                Args     = new[] { "--disable-dev-shm-usage", "--no-sandbox" }
+            });
+
+            var context = await browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                IgnoreHTTPSErrors = true,
+            });
+            var page = await context.NewPageAsync();
 
             try
             {
-                var usuario = _config["AbysNet:Usuario"] ?? "medicina";
-                var password = _config["AbysNet:Password"] ?? "biblioteca1";
-
                 // ── PASO 1: Login ─────────────────────────────────────────────────────────
-                _logger.LogInformation("AbysNet: Iniciando sesión con usuario '{U}'", usuario);
-                var loginBody = new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    ["USER"] = usuario,
-                    ["PASS"] = password,
-                    ["DH"]   = "/abnet"
-                });
+                _logger.LogInformation("AbysNet: Navegando al login...");
+                await page.GotoAsync($"{BaseUrl}/abnet/inicio.htm",
+                    new PageGotoOptions { Timeout = 20000 });
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle,
+                    new PageWaitForLoadStateOptions { Timeout = 15000 });
 
-                var loginResp = await http.PostAsync($"{BaseUrl}/abnet/abnetcl.exe", loginBody);
-                var loginHtml = await loginResp.Content.ReadAsStringAsync();
+                // Completar el formulario de login
+                await page.FillAsync("input[name='USER']", usuario);
+                await page.FillAsync("input[name='PASS']", password);
+                await page.ClickAsync("input[type='submit']");
 
-                // Extraer el path UD (sesión temporal post-login)
-                var matchUD = Regex.Match(loginHtml, @"abnetcl\.exe(/X\d+/UD\w+)");
-                if (!matchUD.Success)
+                // Esperar que cargue el frameset principal
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle,
+                    new PageWaitForLoadStateOptions { Timeout = 15000 });
+                await Task.Delay(2000); // Dar tiempo extra para que los frames carguen
+
+                _logger.LogInformation("AbysNet: Login OK. URL: {U}", page.Url);
+
+                // ── PASO 2: Acceder al módulo de Gestión de Lectores ─────────────────────
+                // El menú está en el frame AbxMenu
+                var menuFrame = page.Frame("AbxMenu");
+                if (menuFrame == null)
                 {
-                    _logger.LogWarning("AbysNet: No se encontró UD path tras el login. HTML={H}", loginHtml[..Math.Min(300, loginHtml.Length)]);
+                    _logger.LogWarning("AbysNet: No se encontró el frame AbxMenu");
                     return null;
                 }
-                var udPath = matchUD.Groups[1].Value;
 
-                // ── PASO 2: Obtener el ID de sesión definitivo ────────────────────────────
-                var r2 = await http.GetAsync($"{BaseUrl}/abnet/abnetcl.exe{udPath}?ACC=1111");
-                var html2 = await r2.Content.ReadAsStringAsync();
+                // Esperar a que el menú cargue y hacer click en "Gestión de lectores"
+                await menuFrame.WaitForLoadStateAsync(LoadState.NetworkIdle,
+                    new FrameWaitForLoadStateOptions { Timeout = 10000 });
 
-                var matchID = Regex.Match(html2, @"abnetcl\.exe(/X\d+/ID\w+/)");
-                if (!matchID.Success)
+                // Expandir "Lectores" y hacer click en "Gestión de lectores"
+                try
                 {
-                    _logger.LogWarning("AbysNet: No se encontró ID de sesión definitivo.");
+                    // Intentar hacer click en el link de gestión de lectores
+                    await menuFrame.ClickAsync("text=Gestión de lectores",
+                        new FrameClickOptions { Timeout = 5000 });
+                }
+                catch
+                {
+                    // Si no está expandido, primero expandir "Lectores"
+                    try
+                    {
+                        await menuFrame.ClickAsync("text=Lectores",
+                            new FrameClickOptions { Timeout = 5000 });
+                        await Task.Delay(1000);
+                        await menuFrame.ClickAsync("text=Gestión de lectores",
+                            new FrameClickOptions { Timeout = 5000 });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("AbysNet: No se pudo navegar a Gestión de lectores: {E}", ex.Message);
+                        return null;
+                    }
+                }
+
+                // Esperar que cargue el formulario de búsqueda en AbxMain
+                var mainFrame = page.Frame("AbxMain");
+                if (mainFrame == null)
+                {
+                    _logger.LogWarning("AbysNet: No se encontró el frame AbxMain");
                     return null;
                 }
-                var sid = matchID.Groups[1].Value;
-                _logger.LogInformation("AbysNet: Sesión obtenida: {S}", sid);
 
-                // ── PASO 3: Buscar el lector por código de barras ─────────────────────────
-                var searchUrl = $"{BaseUrl}/abnet/abnetcl.exe{sid}NT119" +
-                                $"?ACC=110&NV=1&AV=1&TBV=2&SF=NUM_LECTOR&SFT=CLAVE_BARRAS&TQ={Uri.EscapeDataString(codigoUniversitario)}";
+                await mainFrame.WaitForLoadStateAsync(LoadState.NetworkIdle,
+                    new FrameWaitForLoadStateOptions { Timeout = 10000 });
+                await Task.Delay(1500);
 
-                var r3 = await http.GetAsync(searchUrl);
-                var html3 = await r3.Content.ReadAsStringAsync();
-
-                // AbsysNet devuelve un WpGetFrameset que apunta al NT con los resultados
-                var matchNT = Regex.Match(html3, @"abnetcl\.exe(/X\d+/ID\w+/NT\d+)");
-                if (!matchNT.Success)
+                // ── PASO 3: Ingresar el código en el campo "Nº lector" ───────────────────
+                var lenlecInput = await mainFrame.QuerySelectorAsync("#lenlec");
+                if (lenlecInput == null)
                 {
-                    _logger.LogWarning("AbysNet: No se encontró NT path en resultado de búsqueda para código {C}", codigoUniversitario);
+                    _logger.LogWarning("AbysNet: No se encontró el campo #lenlec en el formulario");
                     return null;
                 }
-                var ntPath = matchNT.Groups[1].Value;
 
-                // ── PASO 4: Obtener la ficha del lector directamente desde el NT de búsqueda ──
-                // ntPath es el NT que contiene el resultado (ej: NT358)
-                // ACC=104 = MOSTRAR la ficha del primer registro encontrado
-                var fichaUrl = $"{BaseUrl}/abnet/abnetcl.exe{ntPath}?ACC=104";
-                _logger.LogInformation("AbysNet: Obteniendo ficha: {U}", fichaUrl);
-                var r4 = await http.GetAsync(fichaUrl);
+                _logger.LogInformation("AbysNet: Ingresando código {C} en lenlec...", codigoUniversitario);
+                await lenlecInput.ClickAsync();
+                await lenlecInput.FillAsync(codigoUniversitario);
+                await lenlecInput.PressAsync("Tab"); // Tab activa la búsqueda por código
+                await Task.Delay(2000); // Esperar que cargue la ficha
 
-                // AbsysNet responde en ISO-8859-1; decodificar correctamente
-                var bytes = await r4.Content.ReadAsByteArrayAsync();
-                var fichaHtml = Encoding.Latin1.GetString(bytes);
-                
-                _logger.LogInformation("AbysNet: Ficha HTML (500 chars): {H}", fichaHtml[..Math.Min(500, fichaHtml.Length)]);
+                // ── PASO 4: Leer los datos del formulario ────────────────────────────────
+                // Obtener el HTML del frame principal con los datos del lector
+                var fichaHtml = await mainFrame.ContentAsync();
+                _logger.LogInformation("AbysNet: Ficha HTML ({L} chars)", fichaHtml.Length);
 
+                // Parsear los datos del lector
                 return ParsearFicha(fichaHtml, codigoUniversitario);
             }
             catch (Exception ex)
@@ -129,147 +155,84 @@ namespace ControlLaboratorio.API.Services
                 _logger.LogError(ex, "AbysNet: Error al consultar código {C}", codigoUniversitario);
                 return null;
             }
+            finally
+            {
+                await browser.CloseAsync();
+            }
         }
 
         // ── Extracción de datos del HTML de la ficha ──────────────────────────────────────
         private static AbysLectorDto? ParsearFicha(string html, string codigoBuscado)
         {
-            // Si AbsysNet devolvió 0 registros (NREC=0), no hay datos
-            if (Regex.IsMatch(html, @"name=""NREC""\s+value=""0""", RegexOptions.IgnoreCase))
+            // Si AbsysNet devolvió 0 registros (NREC=0) y el código no aparece, no hay datos
+            var nrecMatch = Regex.Match(html, @"name=""NREC""\s+value=""(\d+)""", RegexOptions.IgnoreCase);
+            var lenlecMatch = Regex.Match(html, @"name=""lenlec""\s+[^>]*value=""([^""]*)""", RegexOptions.IgnoreCase);
+            
+            // Si lenlec está vacío o no coincide con el código, no hay datos
+            if (!lenlecMatch.Success || string.IsNullOrEmpty(lenlecMatch.Groups[1].Value))
                 return null;
+
             // Extraer valor de un <input name="xxx" value="yyy">
             static string GetField(string h, string name)
             {
                 var m = Regex.Match(h,
                     $@"name=""{Regex.Escape(name)}""\s+[^>]*value=""([^""]*)""",
                     RegexOptions.IgnoreCase);
-                if (!m.Success)
-                    m = Regex.Match(h,
-                        $@"value=""([^""]*)""\s+[^>]*name=""{Regex.Escape(name)}""",
-                        RegexOptions.IgnoreCase);
-                return m.Groups[1].Value.Trim();
+                return m.Success ? m.Groups[1].Value.Trim() : "";
             }
 
-            var nroLector = GetField(html, "lenlec");
-
-            // Si AbsysNet devolvió un lector diferente al buscado, rechazar
-            if (!string.IsNullOrWhiteSpace(nroLector) &&
-                nroLector != codigoBuscado)
+            // Extraer texto de un <td class="..."> que sigue a otro TD con la etiqueta
+            static string GetTextAfterLabel(string h, string label)
             {
-                // Verificamos también que el DNI exista (registro válido)
-                var dniCheck = GetField(html, "leddni");
-                if (string.IsNullOrWhiteSpace(dniCheck)) return null;
+                // Buscar el texto después de una celda con la etiqueta
+                var m = Regex.Match(h,
+                    $@"{Regex.Escape(label)}\s*</td>\s*<td[^>]*>\s*([^<]+)",
+                    RegexOptions.IgnoreCase);
+                return m.Success ? m.Groups[1].Value.Trim() : "";
             }
 
-            var apellidos   = GetField(html, "leapel"); // "QUELLO YAPU"
-            var nombres     = GetField(html, "lenomb"); // "CLAUDIO FERNANDO"
-            var iniciales   = GetField(html, "leinic"); // "Q.Y."
-            var dni         = GetField(html, "leddni"); // "72493906"
-            var cod1        = GetField(html, "lecol1"); // Ej: "00001"
-            var cod2        = GetField(html, "lecol2"); // Ej: "06" o texto carrera
+            var lenlec  = GetField(html, "lenlec");
+            var lenomb  = GetField(html, "lenomb");  // Nombre
+            var leapel  = GetField(html, "leapel");  // Apellidos
+            var leinic  = GetField(html, "leinic");  // Iniciales
+            var leddni  = GetField(html, "leddni");  // DNI
+            var lemail  = GetField(html, "lemail");  // Email
 
-            if (string.IsNullOrWhiteSpace(nroLector) || string.IsNullOrWhiteSpace(nombres))
-                return null;
+            // Carrera: lecol2 suele tener el código de carrera con descripción en el combo
+            // Buscar el texto seleccionado en el combo lecol2
+            var carreraMatch = Regex.Match(html,
+                @"name=""lecol2""\s+[^>]*value=""(\d+)"".*?<option\s+value=""\1""\s+selected[^>]*>([^<]+)",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            var carrera = carreraMatch.Success
+                ? carreraMatch.Groups[2].Value.Trim()
+                : GetField(html, "lecol2");
 
-            // Separar apellidos: AbsysNet los guarda juntos (PATERNO MATERNO)
-            var (apPat, apMat) = SepararApellidos(apellidos, iniciales);
+            // Si no se encontró la carrera en el combo, buscar texto de la sucursal (lecosu)
+            if (string.IsNullOrEmpty(carrera))
+            {
+                // El campo lecol2 puede tener un número: buscar la descripción en el combo JS
+                var lecol2Val = GetField(html, "lecol2");
+                var sucursalMatch = Regex.Match(html,
+                    $@"comboObj\(""lecol2"".*?\[\s*""{Regex.Escape(lecol2Val)}""\s*,\s*""([^""]+)""",
+                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                carrera = sucursalMatch.Success ? sucursalMatch.Groups[1].Value.Trim() : lecol2Val;
+            }
 
-            // Mapear código de carrera al nombre legible
-            var carrera = MapearCarrera(cod2);
-
-            // Correo institucional estándar URP
-            var correo = string.IsNullOrWhiteSpace(nroLector)
-                ? ""
-                : $"{nroLector}@urp.edu.pe";
+            // Separar apellidos (en AbsysNet suelen venir como "APPATERNO APMATERNO")
+            var apellidos = leapel.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+            var apPaterno = apellidos.Length > 0 ? apellidos[0] : "";
+            var apMaterno = apellidos.Length > 1 ? apellidos[1] : "";
 
             return new AbysLectorDto
             {
-                CodigoUniversitario = nroLector,
-                Nombres             = ToTitleCase(nombres),
-                ApellidoPaterno     = ToTitleCase(apPat),
-                ApellidoMaterno     = ToTitleCase(apMat),
-                Dni                 = dni,
+                CodigoUniversitario = lenlec,
+                Nombres             = lenomb,
+                ApellidoPaterno     = apPaterno,
+                ApellidoMaterno     = apMaterno,
+                Dni                 = leddni,
                 Carrera             = carrera,
-                CorreoInstitucional = correo
+                CorreoInstitucional = lemail
             };
-        }
-
-        /// <summary>
-        /// Separa "QUELLO YAPU" en PaternO="QUELLO" y MaternO="YAPU"
-        /// usando las iniciales "Q.Y." como guía cuando hay ambigüedad.
-        /// </summary>
-        private static (string pat, string mat) SepararApellidos(string apellidos, string iniciales)
-        {
-            if (string.IsNullOrWhiteSpace(apellidos)) return ("", "");
-
-            var partes = apellidos.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (partes.Length == 1) return (partes[0], "");
-            if (partes.Length == 2) return (partes[0], partes[1]);
-
-            // 3+ palabras: usar las iniciales para determinar el corte
-            // Iniciales tienen formato "P.M." donde P=1ª letra paterno, M=1ª letra materno
-            if (!string.IsNullOrWhiteSpace(iniciales))
-            {
-                var letras = iniciales.Split('.', StringSplitOptions.RemoveEmptyEntries);
-                if (letras.Length >= 2)
-                {
-                    char inicialMaterno = letras[1][0];
-                    // Buscar desde la derecha la primera parte que empiece con la inicial materna
-                    for (int i = partes.Length - 1; i >= 1; i--)
-                    {
-                        if (char.ToUpper(partes[i][0]) == char.ToUpper(inicialMaterno))
-                        {
-                            var pat = string.Join(" ", partes[..i]);
-                            var mat = string.Join(" ", partes[i..]);
-                            return (pat, mat);
-                        }
-                    }
-                }
-            }
-
-            // Fallback: primera palabra = paterno, resto = materno
-            return (partes[0], string.Join(" ", partes[1..]));
-        }
-
-        /// <summary>
-        /// Mapea el código de carrera de AbsysNet al nombre legible.
-        /// Los códigos son configurados por la biblioteca URP en su sistema.
-        /// </summary>
-        private static string MapearCarrera(string codigo)
-        {
-            // Si el campo ya contiene texto (no solo número), devolverlo directamente
-            if (!string.IsNullOrWhiteSpace(codigo) && !Regex.IsMatch(codigo, @"^\d+$"))
-                return codigo;
-
-            return codigo switch
-            {
-                "01" or "1"  => "Ingeniería Civil",
-                "02" or "2"  => "Ingeniería Electrónica",
-                "03" or "3"  => "Ingeniería Industrial",
-                "04" or "4"  or "06" or "6" => "Ingeniería Informática",
-                "05" or "5"  => "Ingeniería Mecatrónica",
-                "07" or "7"  => "Administración y Gerencia",
-                "08" or "8"  => "Contabilidad y Finanzas",
-                "09" or "9"  => "Derecho y Ciencia Política",
-                "10"         => "Medicina Humana",
-                "11"         => "Psicología",
-                "12"         => "Arquitectura y Urbanismo",
-                "13"         => "Economía",
-                "14"         => "Turismo, Hotelería y Gastronomía",
-                "15"         => "Biología",
-                "16"         => "Medicina Veterinaria",
-                "17"         => "Traducción e Interpretación",
-                "18"         => "Marketing Global y Administración Comercial",
-                "19"         => "Administración de Negocios Globales",
-                _            => "" // Si no se reconoce, dejar en blanco para que el usuario seleccione
-            };
-        }
-
-        private static string ToTitleCase(string s)
-        {
-            if (string.IsNullOrWhiteSpace(s)) return s;
-            return System.Globalization.CultureInfo.InvariantCulture.TextInfo
-                .ToTitleCase(s.ToLower());
         }
     }
 }
