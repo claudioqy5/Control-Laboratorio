@@ -109,26 +109,18 @@ namespace ControlLaboratorio.API.Services
                 }
                 var ntPath = matchNT.Groups[1].Value;
 
-                // ── PASO 4: Acceder al frameset del resultado ─────────────────────────────
-                var r4 = await http.GetAsync($"{BaseUrl}/abnet/abnetcl.exe{ntPath}?ACC=1111");
-                var html4 = await r4.Content.ReadAsStringAsync();
-
-                // Extraer el NT del frameset de datos (NT148, NT149, etc.)
-                var matchNT2 = Regex.Match(html4, @"WpGetFrameset\('/abnet/abnetcl\.exe(/X\d+/ID\w+/NT(\d+))'\)");
-                if (!matchNT2.Success)
-                {
-                    _logger.LogWarning("AbysNet: No se encontró frameset de datos del lector.");
-                    return null;
-                }
-                var ntNum = matchNT2.Groups[2].Value;
-
-                // ── PASO 5: Obtener la ficha del lector (ACC=104 = MOSTRAR) ───────────────
-                var fichaUrl = $"{BaseUrl}/abnet/abnetcl.exe{sid}NT{ntNum}?ACC=104";
-                var r5 = await http.GetAsync(fichaUrl);
+                // ── PASO 4: Obtener la ficha del lector directamente desde el NT de búsqueda ──
+                // ntPath es el NT que contiene el resultado (ej: NT358)
+                // ACC=104 = MOSTRAR la ficha del primer registro encontrado
+                var fichaUrl = $"{BaseUrl}/abnet/abnetcl.exe{ntPath}?ACC=104";
+                _logger.LogInformation("AbysNet: Obteniendo ficha: {U}", fichaUrl);
+                var r4 = await http.GetAsync(fichaUrl);
 
                 // AbsysNet responde en ISO-8859-1; decodificar correctamente
-                var bytes = await r5.Content.ReadAsByteArrayAsync();
+                var bytes = await r4.Content.ReadAsByteArrayAsync();
                 var fichaHtml = Encoding.Latin1.GetString(bytes);
+                
+                _logger.LogInformation("AbysNet: Ficha HTML (500 chars): {H}", fichaHtml[..Math.Min(500, fichaHtml.Length)]);
 
                 return ParsearFicha(fichaHtml, codigoUniversitario);
             }
@@ -142,6 +134,9 @@ namespace ControlLaboratorio.API.Services
         // ── Extracción de datos del HTML de la ficha ──────────────────────────────────────
         private static AbysLectorDto? ParsearFicha(string html, string codigoBuscado)
         {
+            // Si AbsysNet devolvió 0 registros (NREC=0), no hay datos
+            if (Regex.IsMatch(html, @"name=""NREC""\s+value=""0""", RegexOptions.IgnoreCase))
+                return null;
             // Extraer valor de un <input name="xxx" value="yyy">
             static string GetField(string h, string name)
             {
