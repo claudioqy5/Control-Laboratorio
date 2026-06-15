@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "Y/YEiIG+WGI=",
+  "dgSpecHash": "S8LzCLlNK6o=",
   "success": true,
   "projectFilePath": "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\FAMHURP\\.nuget\\packages\\azure.core\\1.25.0\\azure.core.1.25.0.nupkg.sha512",
     "C:\\Users\\FAMHURP\\.nuget\\packages\\azure.identity\\1.7.0\\azure.identity.1.7.0.nupkg.sha512",
+    "C:\\Users\\FAMHURP\\.nuget\\packages\\htmlagilitypack\\1.11.61\\htmlagilitypack.1.11.61.nupkg.sha512",
     "C:\\Users\\FAMHURP\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\FAMHURP\\.nuget\\packages\\microsoft.aspnetcore.openapi\\8.0.0\\microsoft.aspnetcore.openapi.8.0.0.nupkg.sha512",
     "C:\\Users\\FAMHURP\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",

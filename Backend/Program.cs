@@ -14,6 +14,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHostedService<ReactivacionAlumnosService>();
 builder.Services.AddHostedService<SessionMonitorService>();
 
+// Servicio de scraping para la Biblioteca URP (AbsysNet) — solo lectura, no toca otros servicios
+builder.Services.AddSingleton<AbysScraperService>();
+
 // Database Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ControlLaboratorioConnection")));

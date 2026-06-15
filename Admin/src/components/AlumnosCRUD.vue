@@ -36,6 +36,74 @@ const errors = ref({
 })
 const validationError = ref('')
 
+// ── Lógica de escaneo de código de barras ─────────────────────────────────────────────
+const scanLoading = ref(false)
+const scanError = ref('')
+
+/**
+ * Se dispara cuando el usuario presiona Enter en el campo de búsqueda.
+ * Esto ocurre automáticamente cuando se escanea un código de barras
+ * (la lectora escribe el código y envía Enter al final).
+ *
+ * Flujo:
+ *   1. Busca el código en la base de datos local.
+ *   2. Si EXISTE → el filtro ya lo muestra; sale.
+ *   3. Si NO EXISTE → consulta AbsysNet y abre el modal pre-rellenado.
+ */
+const buscarPorEscaneo = async () => {
+  const codigo = searchQuery.value?.trim()
+  if (!codigo) return
+
+  // ¿Ya existe en el sistema local?
+  const existe = alumnos.value.some(
+    a => a.codigoUniversitario?.toLowerCase() === codigo.toLowerCase()
+  )
+  if (existe) {
+    // El filtro del buscador ya lo muestra → no hacer nada más
+    scanError.value = ''
+    return
+  }
+
+  // No existe → buscar en AbsysNet
+  scanLoading.value = true
+  scanError.value = ''
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/alumnos/buscar-biblioteca/${encodeURIComponent(codigo)}`)
+    const datos = res.data
+
+    // Pre-rellenar el modal con los datos obtenidos del scraper
+    currentAlumno.value = {
+      codigoUniversitario: datos.codigoUniversitario || codigo,
+      dni:                 datos.dni                 || '',
+      nombres:             datos.nombres             || '',
+      apellidoPaterno:     datos.apellidoPaterno     || '',
+      apellidoMaterno:     datos.apellidoMaterno     || '',
+      carrera:             datos.carrera             || '',
+      telefono:            '',
+      correoInstitucional: datos.correoInstitucional || '',
+      correoPersonal:      '',
+      estado:              true
+    }
+    showModal.value = true
+  } catch (err) {
+    if (err.response?.status === 404) {
+      // No está en la biblioteca tampoco → abrir modal vacío con el código
+      currentAlumno.value = {
+        codigoUniversitario: codigo,
+        dni: '', nombres: '', apellidoPaterno: '', apellidoMaterno: '',
+        carrera: '', telefono: '', correoInstitucional: '', correoPersonal: '',
+        estado: true
+      }
+      showModal.value = true
+    } else {
+      scanError.value = 'Error al consultar la biblioteca. Intente de nuevo.'
+    }
+  } finally {
+    scanLoading.value = false
+  }
+}
+// ──────────────────────────────────────────────────────────────────────────────────────
+
 watch(showModal, (newVal) => {
   if (!newVal) {
     errors.value = {
@@ -292,8 +360,27 @@ onMounted(fetchAlumnos)
         </div>
 
         <div style="position: relative;">
-          <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" v-model="searchQuery" @input="currentPage = 1" placeholder="Buscar por nombre, código o DNI..." style="padding: 0.5rem 1rem 0.5rem 2rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; width: 280px; font-size: 0.875rem; color: #111827; outline: none;">
+          <!-- Spinner de carga visible mientras se consulta AbsysNet -->
+          <svg v-if="scanLoading" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #6366f1; animation: spin 0.8s linear infinite;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          <svg v-else style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input
+            type="text"
+            v-model="searchQuery"
+            @input="currentPage = 1; scanError = ''"
+            @keyup.enter="buscarPorEscaneo"
+            placeholder="Buscar o escanear código de barras..."
+            :style="{
+              padding: '0.5rem 1rem 0.5rem 2rem',
+              borderRadius: '0.5rem',
+              border: scanError ? '1.5px solid #ef4444' : '1px solid #e5e7eb',
+              width: '280px',
+              fontSize: '0.875rem',
+              color: '#111827',
+              outline: 'none'
+            }"
+          >
+          <!-- Mensaje de error de escaneo -->
+          <div v-if="scanError" style="position: absolute; top: 110%; left: 0; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; white-space: nowrap; z-index: 10;">{{ scanError }}</div>
         </div>
         <input type="file" ref="fileInput" @change="handleExcelUpload" accept=".xlsx, .xls" style="display: none;">
         <button class="btn" style="background: #ffffff; color: #16a34a; border: 1px solid #16a34a; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="$refs.fileInput.click()">
@@ -777,6 +864,11 @@ onMounted(fetchAlumnos)
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes spin {
+  from { transform: translateY(-50%) rotate(0deg); }
+  to   { transform: translateY(-50%) rotate(360deg); }
 }
 
 .premium-input.invalid {
