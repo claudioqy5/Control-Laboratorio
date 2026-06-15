@@ -134,7 +134,7 @@ namespace ControlLaboratorio.API.Services
                 if (lenlecInput == null)
                 {
                     _logger.LogInformation("AbysNet: Campo #lenlec no encontrado por click en menú. Forzando navegación directa.");
-                    var matchUrl = Regex.Match(page.Url, @"(/abnet/abnetcl\.exe/X\d+/ID\w+/)");
+                    var matchUrl = Regex.Match(mainFrame.Url, @"(/abnet/abnetcl\.exe/X\d+/[IU]D\w+/)");
                     if (matchUrl.Success)
                     {
                         string targetUrl = $"{BaseUrl}{matchUrl.Groups[1].Value}NT1?ACC=110&TB=29";
@@ -152,13 +152,30 @@ namespace ControlLaboratorio.API.Services
                     return null;
                 }
 
-                _logger.LogInformation("AbysNet: Ingresando código {C} en lenlec...", codigoUniversitario);
-                await lenlecInput.ClickAsync();
-                await lenlecInput.FillAsync(codigoUniversitario);
-                await lenlecInput.PressAsync("Tab"); // Tab activa la búsqueda por código
-                await Task.Delay(2000); // Esperar que cargue la ficha
+                // Cerrar diálogo si estuviera abierto en la página padre para evitar intercepciones de clicks/eventos
+                try
+                {
+                    await page.EvaluateAsync(@"() => {
+                        const diag = document.querySelector('dialog');
+                        if (diag) {
+                            const closeBtn = document.querySelector('#dialog-close');
+                            if (closeBtn) closeBtn.click();
+                            diag.remove();
+                        }
+                    }");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("AbysNet: No se pudo cerrar el diálogo modal: {E}", ex.Message);
+                }
 
-                // ── PASO 4: Leer los datos del formulario ────────────────────────────────
+                _logger.LogInformation("AbysNet: Ingresando código {C} en lenlec...", codigoUniversitario);
+                await lenlecInput.FocusAsync();
+                await lenlecInput.FillAsync(codigoUniversitario);
+                await lenlecInput.PressAsync("Enter"); // Enter activa la búsqueda/submit
+                await Task.Delay(4000); // Esperar que cargue la ficha
+
+                // ── PASO 4: Leer los datos del formulario/resultado ──────────────────────
                 // Obtener el HTML del frame principal con los datos del lector
                 var fichaHtml = await mainFrame.ContentAsync();
                 _logger.LogInformation("AbysNet: Ficha HTML ({L} chars)", fichaHtml.Length);
@@ -176,59 +193,82 @@ namespace ControlLaboratorio.API.Services
         // ── Extracción de datos del HTML de la ficha ──────────────────────────────────────
         private static AbysLectorDto? ParsearFicha(string html, string codigoBuscado)
         {
-            // Si AbsysNet devolvió 0 registros (NREC=0) y el código no aparece, no hay datos
-            var nrecMatch = Regex.Match(html, @"name=""NREC""\s+value=""(\d+)""", RegexOptions.IgnoreCase);
-            var lenlecMatch = Regex.Match(html, @"name=""lenlec""\s+[^>]*value=""([^""]*)""", RegexOptions.IgnoreCase);
-            
-            // Si lenlec está vacío o no coincide con el código, no hay datos
-            if (!lenlecMatch.Success || string.IsNullOrEmpty(lenlecMatch.Groups[1].Value))
-                return null;
+            var doc = new HtmlAgilityPack.HtmlDocument();
+            doc.LoadHtml(html);
 
-            // Extraer valor de un <input name="xxx" value="yyy">
-            static string GetField(string h, string name)
+            // Helper para obtener el texto después de una celda con etiqueta (para el modo lectura ACC=104)
+            Func<string, string> getVal = (label) =>
             {
-                var m = Regex.Match(h,
-                    $@"name=""{Regex.Escape(name)}""\s+[^>]*value=""([^""]*)""",
-                    RegexOptions.IgnoreCase);
-                return m.Success ? m.Groups[1].Value.Trim() : "";
-            }
+                var lblNode = doc.DocumentNode.SelectSingleNode($"//td[contains(@class, 'LabelR') and (normalize-space(text())='{label}' or contains(text(), '{label}'))]");
+                if (lblNode == null) return "";
+                
+                var nextTd = lblNode.SelectSingleNode("following-sibling::td[1]");
+                if (nextTd != null)
+                {
+                    // Si contiene celdas de tabla Inp1 internas (útil para Tr./Inic./Nombre)
+                    var nestedInpNodes = nextTd.SelectNodes(".//td[contains(@class, 'Inp1')]");
+                    if (nestedInpNodes != null && nestedInpNodes.Count > 0)
+                    {
+                        for (int i = nestedInpNodes.Count - 1; i >= 0; i--)
+                        {
+                            var txt = nestedInpNodes[i].InnerText.Replace("&nbsp;", " ").Trim();
+                            if (!string.IsNullOrEmpty(txt)) return txt;
+                        }
+                    }
 
-            // Extraer texto de un <td class="..."> que sigue a otro TD con la etiqueta
-            static string GetTextAfterLabel(string h, string label)
+                    var valNode = nextTd.SelectSingleNode(".//span") ?? nextTd;
+                    var fontNode = valNode.SelectSingleNode(".//font");
+                    if (fontNode != null) return fontNode.InnerText.Trim();
+                    return valNode.InnerText.Replace("&nbsp;", " ").Trim();
+                }
+                return "";
+            };
+
+            // Intentar parsear usando el modo lectura (ACC=104)
+            var lenlec = getVal("Nº lector");
+            var lenomb = getVal("Tr./Inic./Nombre");
+            var leapel = getVal("Apellidos");
+            var leddni = getVal("DNI");
+            var carrera = getVal("Sucursal");
+            var lemail = getVal("Correo") ?? getVal("Email") ?? getVal("E-mail");
+
+            // Si los campos de lectura están vacíos, hacer fallback al modo edición (campos input tradicionales)
+            if (string.IsNullOrEmpty(lenlec))
             {
-                // Buscar el texto después de una celda con la etiqueta
-                var m = Regex.Match(h,
-                    $@"{Regex.Escape(label)}\s*</td>\s*<td[^>]*>\s*([^<]+)",
-                    RegexOptions.IgnoreCase);
-                return m.Success ? m.Groups[1].Value.Trim() : "";
-            }
+                static string GetField(string h, string name)
+                {
+                    var m = Regex.Match(h,
+                        $@"name=""{Regex.Escape(name)}""\s+[^>]*value=""([^""]*)""",
+                        RegexOptions.IgnoreCase);
+                    return m.Success ? m.Groups[1].Value.Trim() : "";
+                }
 
-            var lenlec  = GetField(html, "lenlec");
-            var lenomb  = GetField(html, "lenomb");  // Nombre
-            var leapel  = GetField(html, "leapel");  // Apellidos
-            var leinic  = GetField(html, "leinic");  // Iniciales
-            var leddni  = GetField(html, "leddni");  // DNI
-            var lemail  = GetField(html, "lemail");  // Email
+                lenlec = GetField(html, "lenlec");
+                lenomb = GetField(html, "lenomb");
+                leapel = GetField(html, "leapel");
+                leddni = GetField(html, "leddni");
+                lemail = GetField(html, "lemail");
 
-            // Carrera: lecol2 suele tener el código de carrera con descripción en el combo
-            // Buscar el texto seleccionado en el combo lecol2
-            var carreraMatch = Regex.Match(html,
-                @"name=""lecol2""\s+[^>]*value=""(\d+)"".*?<option\s+value=""\1""\s+selected[^>]*>([^<]+)",
-                RegexOptions.IgnoreCase | RegexOptions.Singleline);
-            var carrera = carreraMatch.Success
-                ? carreraMatch.Groups[2].Value.Trim()
-                : GetField(html, "lecol2");
-
-            // Si no se encontró la carrera en el combo, buscar texto de la sucursal (lecosu)
-            if (string.IsNullOrEmpty(carrera))
-            {
-                // El campo lecol2 puede tener un número: buscar la descripción en el combo JS
-                var lecol2Val = GetField(html, "lecol2");
-                var sucursalMatch = Regex.Match(html,
-                    $@"comboObj\(""lecol2"".*?\[\s*""{Regex.Escape(lecol2Val)}""\s*,\s*""([^""]+)""",
+                var carreraMatch = Regex.Match(html,
+                    @"name=""lecol2""\s+[^>]*value=""(\d+)"".*?<option\s+value=""\1""\s+selected[^>]*>([^<]+)",
                     RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                carrera = sucursalMatch.Success ? sucursalMatch.Groups[1].Value.Trim() : lecol2Val;
+                carrera = carreraMatch.Success
+                    ? carreraMatch.Groups[2].Value.Trim()
+                    : GetField(html, "lecol2");
+
+                if (string.IsNullOrEmpty(carrera))
+                {
+                    var lecol2Val = GetField(html, "lecol2");
+                    var sucursalMatch = Regex.Match(html,
+                        $@"comboObj\(""lecol2"".*?\[\s*""{Regex.Escape(lecol2Val)}""\s*,\s*""([^""]+)""",
+                        RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                    carrera = sucursalMatch.Success ? sucursalMatch.Groups[1].Value.Trim() : lecol2Val;
+                }
             }
+
+            // Si no se pudo obtener el código del lector, consideramos que no se encontró la ficha
+            if (string.IsNullOrEmpty(lenlec))
+                return null;
 
             // Separar apellidos (en AbsysNet suelen venir como "APPATERNO APMATERNO")
             var apellidos = leapel.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
