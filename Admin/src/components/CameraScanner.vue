@@ -43,7 +43,8 @@ const stopCamera = () => {
 };
 
 const extractData = (text) => {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  // Limpiamos la cadena para unificar saltos de línea y espacios extra
+  const cleanText = text.replace(/\n/g, ' ').replace(/\s+/g, ' ');
   
   const result = {
     codigoUniversitario: '',
@@ -53,60 +54,29 @@ const extractData = (text) => {
     carrera: ''
   };
 
-  // El OCR no es perfecto, así que buscamos líneas clave
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].toUpperCase();
-    
-    if (line.includes('CÓDIGO') || line.includes('CODIGO')) {
-      const parts = line.split(':');
-      if (parts.length > 1 && parts[1].trim()) {
-        result.codigoUniversitario = parts[1].trim().replace(/[^0-9A-Z]/g, '');
-      }
-    }
-    
-    if (line.includes('DNI')) {
-      const parts = line.split(':');
-      if (parts.length > 1 && parts[1].trim()) {
-        result.dni = parts[1].trim().replace(/[^0-9]/g, '');
-      }
-    }
-    
-    if (line.includes('APELLIDOS')) {
-      // Generalmente los apellidos están en la siguiente línea si no están en la misma
-      const parts = line.split(':');
-      if (parts.length > 1 && parts[1].trim()) {
-        result.apellidos = parts[1].trim();
-      } else if (i + 1 < lines.length) {
-        result.apellidos = lines[i+1].trim();
-        // A veces OCR divide apellidos en dos lineas
-        if (i + 2 < lines.length && !lines[i+2].includes(':') && !lines[i+2].includes('NOMBRES')) {
-          result.apellidos += ' ' + lines[i+2].trim();
-        }
-      }
-    }
-    
-    if (line.includes('NOMBRES')) {
-      const parts = line.split(':');
-      if (parts.length > 1 && parts[1].trim()) {
-        result.nombres = parts[1].trim();
-      } else if (i + 1 < lines.length) {
-        result.nombres = lines[i+1].trim();
-      }
-    }
-    
-    if (line.includes('CARRERA')) {
-      const parts = line.split(':');
-      if (parts.length > 1 && parts[1].trim()) {
-        result.carrera = parts[1].trim();
-      } else if (i + 1 < lines.length) {
-        result.carrera = lines[i+1].trim();
-      }
-    }
-  }
+  // 1. Extraer Código (Tolera errores comunes como CÓDIG0, C0DIGO, etc)
+  const codMatch = cleanText.match(/C[OÓ0]DIG[O0]\s*[:;]?\s*([A-Z0-9]{6,15})/i);
+  if (codMatch) result.codigoUniversitario = codMatch[1].replace(/[^A-Z0-9]/ig, '');
 
-  // Limpieza adicional de ruido OCR común
+  // 2. Extraer DNI (Busca "DNI" seguido de 8 dígitos)
+  const dniMatch = cleanText.match(/DNI\s*[:;]?\s*(\d{8})/i);
+  if (dniMatch) result.dni = dniMatch[1];
+
+  // 3. Extraer Apellidos (Busca "Apellidos:" y captura texto hasta la palabra "Nombres", "Facultad", etc)
+  const apellidosMatch = cleanText.match(/APELLIDOS\s*[:;]?\s*([A-ZÑÁÉÍÓÚ\s]+?)(?=\s+NOMBRES|\s+FACULTAD|\s+CARRERA|\s+DNI|\s+C[OÓ0]DIGO)/i);
+  if (apellidosMatch) result.apellidos = apellidosMatch[1].trim();
+
+  // 4. Extraer Nombres
+  const nombresMatch = cleanText.match(/NOMBRES\s*[:;]?\s*([A-ZÑÁÉÍÓÚ\s]+?)(?=\s+FACULTAD|\s+CARRERA|\s+DNI|\s+C[OÓ0]DIGO|\s+APELLIDOS)/i);
+  if (nombresMatch) result.nombres = nombresMatch[1].trim();
+
+  // 5. Extraer Carrera
+  const carreraMatch = cleanText.match(/CARRERA\s*[:;]?\s*([A-ZÑÁÉÍÓÚ\s]+?)(?=\s+CARN[EÉ]|\s+UNIVERSITARIO|\s*$|\d)/i);
+  if (carreraMatch) result.carrera = carreraMatch[1].trim();
+
+  // Limpieza adicional
   if (result.codigoUniversitario.length < 5) result.codigoUniversitario = '';
-  if (result.dni.length < 8) result.dni = '';
+  if (result.dni && result.dni.length !== 8) result.dni = '';
   
   return result;
 };
