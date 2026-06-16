@@ -83,30 +83,129 @@ class TestPlaywright
                 
                 // Buscar el campo Nº lector
                 var lenlecInput = await mainFrame.QuerySelectorAsync("#lenlec, input[name='lenlec']");
+                if (lenlecInput == null)
+                {
+                    Console.WriteLine("   Campo lenlec no encontrado. Intentando navegación directa...");
+                    var matchUrl = Regex.Match(mainFrame.Url, @"(/abnet/abnetcl\.exe/X\d+/[IU]D\w+/)");
+                    if (matchUrl.Success)
+                    {
+                        string targetUrl = $"https://biblioteca.urp.edu.pe{matchUrl.Groups[1].Value}NT1?ACC=110&TB=29";
+                        Console.WriteLine($"   Navegando directamente a: {targetUrl}");
+                        await mainFrame.GotoAsync(targetUrl);
+                        await mainFrame.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                        await Task.Delay(2000);
+                        lenlecInput = await mainFrame.QuerySelectorAsync("#lenlec, input[name='lenlec']");
+                    }
+                }
+
                 if (lenlecInput != null)
                 {
-                    Console.WriteLine("   Campo lenlec encontrado. Ingresando código...");
-                    await lenlecInput.ClickAsync();
+                    // Print details and close the dialog if present
+                    var dialogClosed = await page.EvaluateAsync<bool>(@"() => {
+                        const diag = document.querySelector('dialog');
+                        if (diag) {
+                            const closeBtn = document.querySelector('#dialog-close');
+                            if (closeBtn) closeBtn.click();
+                            diag.remove();
+                            return true;
+                        }
+                        return false;
+                    }");
+                    Console.WriteLine($"   Parent Dialog closed: {dialogClosed}");
+
+                    Console.WriteLine("   Campo lenlec encontrado. Ingresando código y presionando Enter...");
+                    await lenlecInput.FocusAsync();
                     await lenlecInput.FillAsync(codigo);
-                    await lenlecInput.PressAsync("Tab");
-                    await Task.Delay(2000);
                     
-                    // Obtener el HTML del mainFrame después de ingresar el código
+                    // We can also try pressing Enter to submit
+                    await lenlecInput.PressAsync("Enter");
+                    await Task.Delay(4000); // Wait for the submit/load to complete
+                    
+                    // See if the URL changed or if new content loaded
+                    var currentUrl = mainFrame.Url;
+                    Console.WriteLine($"   URL actual después de Enter: {currentUrl}");
+                    
                     var html = await mainFrame.ContentAsync();
-                    Console.WriteLine($"\nHTML del frame principal ({html.Length} chars):");
                     
-                    // Buscar campos con datos
-                    foreach (Match m in Regex.Matches(html, @"name=""(lenlec|lenomb|leapel|leddni|lecol2)""\s+[^>]*value=""([^""]*)""", RegexOptions.IgnoreCase))
-                        Console.WriteLine($"  {m.Groups[1].Value} = [{m.Groups[2].Value}]");
-                    
-                    if (html.Contains("CASTILLO", StringComparison.OrdinalIgnoreCase))
-                        Console.WriteLine("*** CASTILLO ENCONTRADO ***");
+                    // If it hasn't loaded the data, let's see if we need to navigate to ACC=112 (first reg) under the new URL
+                    if (!html.Contains("DYLAN") && !currentUrl.Contains("ACC=112"))
+                    {
+                        var matchAfter = Regex.Match(currentUrl, @"(/abnet/abnetcl\.exe/X\d+/[IU]D\w+/)NT(\d+)");
+                        if (matchAfter.Success)
+                        {
+                            string firstRegUrl = $"https://biblioteca.urp.edu.pe{matchAfter.Groups[1].Value}NT{matchAfter.Groups[2].Value}?ACC=112";
+                            Console.WriteLine($"   Navegando al primer registro: {firstRegUrl}");
+                            await mainFrame.GotoAsync(firstRegUrl);
+                            await mainFrame.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                            await Task.Delay(2000);
+                            html = await mainFrame.ContentAsync();
+                        }
+                    }
+
+                    html = await mainFrame.ContentAsync();
+                    Console.WriteLine($"\nHTML de búsqueda/resultado ({html.Length} chars):");
+                    var inputs = await mainFrame.EvaluateAsync<string[]>(@"() => {
+                        return Array.from(document.querySelectorAll('input, select, textarea'))
+                            .map(el => `${el.name || el.id || 'no-name'}: value=[${el.value}], type=[${el.type}]`);
+                    }");
+                    Console.WriteLine("   Form fields found:");
+                    foreach (var input in inputs)
+                        Console.WriteLine($"      {input}");
+
+                    if (html.Contains("DYLAN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("*** DYLAN/CASTILLO ENCONTRADO ***");
+                        
+                        var doc = new HtmlAgilityPack.HtmlDocument();
+                        doc.LoadHtml(html);
+
+                        // Helper to get text after a LabelR cell
+                        Func<string, string> getVal = (label) =>
+                        {
+                            var lblNode = doc.DocumentNode.SelectSingleNode($"//td[contains(@class, 'LabelR') and (normalize-space(text())='{label}' or contains(text(), '{label}'))]");
+                            if (lblNode == null) return "";
+                            
+                            // Get the immediate next TD sibling
+                            var nextTd = lblNode.SelectSingleNode("following-sibling::td[1]");
+                            if (nextTd != null)
+                            {
+                                // If there are nested Inp1 cells, find the last non-empty one (useful for Tr./Inic./Nombre)
+                                var nestedInpNodes = nextTd.SelectNodes(".//td[contains(@class, 'Inp1')]");
+                                if (nestedInpNodes != null && nestedInpNodes.Count > 0)
+                                {
+                                    for (int i = nestedInpNodes.Count - 1; i >= 0; i--)
+                                    {
+                                        var txt = nestedInpNodes[i].InnerText.Replace("&nbsp;", " ").Trim();
+                                        if (!string.IsNullOrEmpty(txt)) return txt;
+                                    }
+                                }
+
+                                // Otherwise, use nextTd itself
+                                var valNode = nextTd.SelectSingleNode(".//span") ?? nextTd;
+                                var fontNode = valNode.SelectSingleNode(".//font");
+                                if (fontNode != null) return fontNode.InnerText.Trim();
+                                return valNode.InnerText.Replace("&nbsp;", " ").Trim();
+                            }
+                            return "";
+                        };
+
+                        var parsedCodigo = getVal("Nº lector");
+                        var parsedNombre = getVal("Tr./Inic./Nombre");
+                        var parsedApellidos = getVal("Apellidos");
+                        var parsedDni = getVal("DNI");
+                        var parsedCarrera = getVal("Sucursal");
+
+                        Console.WriteLine($"   Parsed Datos:");
+                        Console.WriteLine($"      Código: [{parsedCodigo}]");
+                        Console.WriteLine($"      Nombre: [{parsedNombre}]");
+                        Console.WriteLine($"      Apellidos: [{parsedApellidos}]");
+                        Console.WriteLine($"      DNI: [{parsedDni}]");
+                        Console.WriteLine($"      Carrera/Sucursal: [{parsedCarrera}]");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("   No se encontró el campo lenlec");
-                    var mainHtml = await mainFrame.ContentAsync();
-                    Console.WriteLine($"   HTML del main ({mainHtml.Length} chars): {mainHtml[..Math.Min(500, mainHtml.Length)]}");
+                    Console.WriteLine("   No se encontró el campo lenlec ni con navegación directa.");
                 }
             }
             else

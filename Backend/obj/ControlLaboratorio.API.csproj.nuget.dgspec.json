@@ -1,27 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj": {}
+    "C:\\Users\\PC-37\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj": {
+    "C:\\Users\\PC-37\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj",
+        "projectUniqueName": "C:\\Users\\PC-37\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj",
         "projectName": "ControlLaboratorio.API",
-        "projectPath": "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj",
-        "packagesPath": "C:\\Users\\FAMHURP\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\FAMHURP\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\obj\\",
+        "projectPath": "C:\\Users\\PC-37\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\ControlLaboratorio.API.csproj",
+        "packagesPath": "C:\\Users\\PC-37\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\PC-37\\Desktop\\PROYECTOS CFQY\\Control-Laboratorio\\Backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\FAMHURP\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\PC-37\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -38,9 +36,9 @@
         "restoreAuditProperties": {
           "enableAudit": "true",
           "auditLevel": "low",
-          "auditMode": "direct"
+          "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -90,6 +88,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.8, 8.0.8]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.8, 8.0.8]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.8, 8.0.8]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.8, 8.0.8]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -98,7 +114,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.100-rc.1.24452.12/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
