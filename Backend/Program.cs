@@ -14,8 +14,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHostedService<ReactivacionAlumnosService>();
 builder.Services.AddHostedService<SessionMonitorService>();
 
-// Servicio de scraping para la Biblioteca URP (AbsysNet) — solo lectura, no toca otros servicios
-builder.Services.AddSingleton<AbysScraperService>();
 
 // Database Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -202,7 +200,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Asegurar que Playwright (Chromium) esté instalado en el servidor antes de arrancar
-try { Microsoft.Playwright.Program.Main(new[] { "install", "chromium" }); } catch { }
+
 
 app.Run();

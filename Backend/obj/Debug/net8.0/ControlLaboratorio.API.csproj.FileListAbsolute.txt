@@ -592,3 +592,9 @@ C:\Users\FAMHURP\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\obj\Debug\ne
 C:\Users\FAMHURP\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\obj\Debug\net8.0\ControlLaboratorio.API.pdb
 C:\Users\FAMHURP\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\obj\Debug\net8.0\ControlLaboratorio.API.genruntimeconfig.cache
 C:\Users\FAMHURP\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\obj\Debug\net8.0\ref\ControlLaboratorio.API.dll
+C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\bin\Debug\net8.0\publish_release\web.config
+C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\bin\Debug\net8.0\publish_release\appsettings.Development.json
+C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\bin\Debug\net8.0\publish_release\appsettings.json
+C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\bin\Debug\net8.0\publish_release\ControlLaboratorio.API.deps.json
+C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\bin\Debug\net8.0\publish_release\ControlLaboratorio.API.runtimeconfig.json
+C:\Users\PC-37\Desktop\PROYECTOS CFQY\Control-Laboratorio\Backend\bin\Debug\net8.0\publish_release\ControlLaboratorio.API.staticwebassets.endpoints.json

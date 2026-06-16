@@ -11,30 +11,11 @@ namespace ControlLaboratorio.API.Controllers
     public class AlumnosController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly AbysScraperService _abys;
 
-        public AlumnosController(ApplicationDbContext context, AbysScraperService abys)
+        public AlumnosController(ApplicationDbContext context)
         {
             _context = context;
-            _abys = abys;
         }
-
-        // ── NUEVO: Buscar alumno en AbsysNet por código de barras ─────────────────────────
-        /// <summary>
-        /// Busca los datos de un alumno en el sistema de la Biblioteca URP (AbsysNet)
-        /// a partir del código escaneado en su carnet universitario.
-        /// Se llama automáticamente cuando se escanea un carnet y el alumno NO existe aún
-        /// en el sistema de control de laboratorio.
-        /// </summary>
-        [HttpGet("buscar-biblioteca/{codigo}")]
-        public async Task<IActionResult> BuscarEnBiblioteca(string codigo)
-        {
-            var resultado = await _abys.BuscarPorCodigoAsync(codigo);
-            if (resultado == null)
-                return NotFound(new { mensaje = "Alumno no encontrado en el sistema de biblioteca." });
-            return Ok(resultado);
-        }
-        // ─────────────────────────────────────────────────────────────────────────────────
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Alumno>>> GetAlumnos()

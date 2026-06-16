@@ -1,0 +1,336 @@
+<script setup>
+import { ref, onMounted, onUnmounted, defineEmits } from 'vue';
+
+const emit = defineEmits(['scanned', 'close']);
+const videoRef = ref(null);
+const canvasRef = ref(null);
+const stream = ref(null);
+const scanning = ref(true);
+const statusMessage = ref('Inicializando cámara...');
+const tesseractWorker = ref(null);
+let scanInterval = null;
+
+const initCamera = async () => {
+  try {
+    stream.value = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+    });
+    if (videoRef.value) {
+      videoRef.value.srcObject = stream.value;
+    }
+    statusMessage.value = 'Enfoca el carnet universitario en la cámara...';
+    
+    // Cargar Tesseract dinámicamente
+    if (!window.Tesseract) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      script.onload = () => startAutoScanning();
+      document.head.appendChild(script);
+    } else {
+      startAutoScanning();
+    }
+  } catch (err) {
+    statusMessage.value = 'Error al acceder a la cámara: ' + err.message;
+    scanning.value = false;
+  }
+};
+
+const stopCamera = () => {
+  if (stream.value) {
+    stream.value.getTracks().forEach(track => track.stop());
+  }
+  if (scanInterval) clearInterval(scanInterval);
+};
+
+const extractData = (text) => {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  
+  const result = {
+    codigoUniversitario: '',
+    dni: '',
+    apellidos: '',
+    nombres: '',
+    carrera: ''
+  };
+
+  // El OCR no es perfecto, así que buscamos líneas clave
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toUpperCase();
+    
+    if (line.includes('CÓDIGO') || line.includes('CODIGO')) {
+      const parts = line.split(':');
+      if (parts.length > 1 && parts[1].trim()) {
+        result.codigoUniversitario = parts[1].trim().replace(/[^0-9A-Z]/g, '');
+      }
+    }
+    
+    if (line.includes('DNI')) {
+      const parts = line.split(':');
+      if (parts.length > 1 && parts[1].trim()) {
+        result.dni = parts[1].trim().replace(/[^0-9]/g, '');
+      }
+    }
+    
+    if (line.includes('APELLIDOS')) {
+      // Generalmente los apellidos están en la siguiente línea si no están en la misma
+      const parts = line.split(':');
+      if (parts.length > 1 && parts[1].trim()) {
+        result.apellidos = parts[1].trim();
+      } else if (i + 1 < lines.length) {
+        result.apellidos = lines[i+1].trim();
+        // A veces OCR divide apellidos en dos lineas
+        if (i + 2 < lines.length && !lines[i+2].includes(':') && !lines[i+2].includes('NOMBRES')) {
+          result.apellidos += ' ' + lines[i+2].trim();
+        }
+      }
+    }
+    
+    if (line.includes('NOMBRES')) {
+      const parts = line.split(':');
+      if (parts.length > 1 && parts[1].trim()) {
+        result.nombres = parts[1].trim();
+      } else if (i + 1 < lines.length) {
+        result.nombres = lines[i+1].trim();
+      }
+    }
+    
+    if (line.includes('CARRERA')) {
+      const parts = line.split(':');
+      if (parts.length > 1 && parts[1].trim()) {
+        result.carrera = parts[1].trim();
+      } else if (i + 1 < lines.length) {
+        result.carrera = lines[i+1].trim();
+      }
+    }
+  }
+
+  // Limpieza adicional de ruido OCR común
+  if (result.codigoUniversitario.length < 5) result.codigoUniversitario = '';
+  if (result.dni.length < 8) result.dni = '';
+  
+  return result;
+};
+
+const captureAndAnalyze = async () => {
+  if (!scanning.value || !videoRef.value || !canvasRef.value || !window.Tesseract) return;
+
+  const video = videoRef.value;
+  const canvas = canvasRef.value;
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  try {
+    statusMessage.value = 'Procesando imagen (OCR)...';
+    
+    const { data: { text } } = await window.Tesseract.recognize(canvas, 'spa', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          statusMessage.value = `Procesando: ${Math.round(m.progress * 100)}%`;
+        }
+      }
+    });
+
+    const extracted = extractData(text);
+    
+    if (extracted.codigoUniversitario && extracted.nombres && extracted.apellidos) {
+      scanning.value = false;
+      stopCamera();
+      emit('scanned', extracted);
+    } else {
+      statusMessage.value = 'No se detectaron datos completos. Acerca más el carnet...';
+    }
+  } catch (error) {
+    statusMessage.value = 'Error en OCR: ' + error.message;
+  }
+};
+
+const startAutoScanning = () => {
+  // Tomar una foto cada 3 segundos e intentar extraer
+  scanInterval = setInterval(() => {
+    if (scanning.value && videoRef.value?.readyState === 4) {
+      captureAndAnalyze();
+    }
+  }, 3000);
+};
+
+onMounted(() => {
+  initCamera();
+});
+
+onUnmounted(() => {
+  stopCamera();
+});
+</script>
+
+<template>
+  <div class="camera-scanner-wrapper">
+    <div class="scanner-card">
+      <div class="scanner-header">
+        <h3>Escanear Carnet Universitario</h3>
+        <button class="close-btn" @click="emit('close')">×</button>
+      </div>
+      
+      <div class="scanner-body">
+        <div class="video-container">
+          <video ref="videoRef" autoplay playsinline muted></video>
+          <canvas ref="canvasRef" style="display: none;"></canvas>
+          <div class="camera-overlay"></div>
+          <div class="scan-guideline">
+            <div class="corner top-left"></div>
+            <div class="corner top-right"></div>
+            <div class="corner bottom-left"></div>
+            <div class="corner bottom-right"></div>
+            <div class="scan-hint">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 8px; opacity: 0.8;"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>Alinea el carnet dentro de este recuadro</span>
+            </div>
+            <div class="scanning-laser"></div>
+          </div>
+        </div>
+        <p class="status-message">{{ statusMessage }}</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.camera-scanner-wrapper {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scanner-card {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scanner-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.scanner-header h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.scanner-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.video-container {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-guideline {
+  position: absolute;
+  top: 15%; left: 10%; right: 10%; bottom: 15%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Crea el overlay oscuro alrededor */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.scan-hint {
+  color: white;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+}
+
+.scanning-laser {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
+  animation: scanLaser 3s infinite linear;
+}
+
+@keyframes scanLaser {
+  0% { top: 0; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.corner {
+  position: absolute;
+  width: 30px; height: 30px;
+  border-color: #10b981;
+  border-style: solid;
+  z-index: 5;
+}
+
+.top-left { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 12px; }
+.top-right { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: 12px; }
+.bottom-left { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: 12px; }
+.bottom-right { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 12px; }
+
+.status-message {
+  margin: 0;
+  color: #475569;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+</style>

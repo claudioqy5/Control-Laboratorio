@@ -3,12 +3,14 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import axios from 'axios'
 import * as XLSX from 'xlsx'
 import { API_BASE_URL } from '../config'
+import CameraScanner from './CameraScanner.vue'
 
 const alumnos = ref([])
 const searchQuery = ref('')
 const statusFilter = ref('Todos')
 const showModal = ref(false)
 const showImportModal = ref(false)
+const showCameraScanner = ref(false)
 const importPreviewData = ref([])
 const currentFileName = ref('')
 const fileInput = ref(null)
@@ -46,9 +48,6 @@ const errors = ref({
 const validationError = ref('')
 
 // ── Lógica de escaneo de código de barras ─────────────────────────────────────────────
-const scanLoading = ref(false)
-const scanError = ref('')
-
 /**
  * Se dispara cuando el usuario presiona Enter en el campo de búsqueda.
  * Esto ocurre automáticamente cuando se escanea un código de barras
@@ -57,7 +56,7 @@ const scanError = ref('')
  * Flujo:
  *   1. Busca el código en la base de datos local.
  *   2. Si EXISTE → el filtro ya lo muestra; sale.
- *   3. Si NO EXISTE → consulta AbsysNet y abre el modal pre-rellenado.
+ *   3. Si NO EXISTE → abre el modal vacío pre-rellenado con el código.
  */
 const buscarPorEscaneo = async () => {
   const codigo = searchQuery.value?.trim()
@@ -69,47 +68,43 @@ const buscarPorEscaneo = async () => {
   )
   if (existe) {
     // El filtro del buscador ya lo muestra → no hacer nada más
-    scanError.value = ''
     return
   }
 
-  // No existe → buscar en AbsysNet
-  scanLoading.value = true
-  scanError.value = ''
-  try {
-    const res = await axios.get(`${API_BASE_URL}/api/alumnos/buscar-biblioteca/${encodeURIComponent(codigo)}`)
-    const datos = res.data
-
-    // Pre-rellenar el modal con los datos obtenidos del scraper
-    currentAlumno.value = {
-      codigoUniversitario: datos.codigoUniversitario || codigo,
-      dni:                 datos.dni                 || '',
-      nombres:             datos.nombres             || '',
-      apellidoPaterno:     datos.apellidoPaterno     || '',
-      apellidoMaterno:     datos.apellidoMaterno     || '',
-      carrera:             datos.carrera             || '',
-      telefono:            '',
-      correoInstitucional: datos.correoInstitucional || '',
-      correoPersonal:      '',
-      estado:              true
-    }
-    showModal.value = true
-  } catch (err) {
-    if (err.response?.status === 404) {
-      // No está en la biblioteca tampoco → abrir modal vacío con el código
-      currentAlumno.value = {
-        codigoUniversitario: codigo,
-        dni: '', nombres: '', apellidoPaterno: '', apellidoMaterno: '',
-        carrera: '', telefono: '', correoInstitucional: '', correoPersonal: '',
-        estado: true
-      }
-      showModal.value = true
-    } else {
-      scanError.value = 'Error al consultar la biblioteca. Intente de nuevo.'
-    }
-  } finally {
-    scanLoading.value = false
+  // No existe → abrir modal vacío con el código
+  currentAlumno.value = {
+    codigoUniversitario: codigo,
+    dni: '', nombres: '', apellidoPaterno: '', apellidoMaterno: '',
+    carrera: '', telefono: '', correoInstitucional: '', correoPersonal: '',
+    estado: true
   }
+  showModal.value = true
+}
+
+const handleCameraScan = async (data) => {
+  // Autogenerar correo si tenemos el código
+  let correoInst = '';
+  if (data.codigoUniversitario) {
+    correoInst = `${data.codigoUniversitario}@urp.edu.pe`;
+  }
+  
+  currentAlumno.value = {
+    codigoUniversitario: data.codigoUniversitario,
+    dni: data.dni || '-',
+    nombres: data.nombres || '-',
+    apellidoPaterno: data.apellidos || '-', // Se extrajo completo como apellidos
+    apellidoMaterno: '', // Lo dejamos en blanco si viene junto
+    carrera: data.carrera || 'Sin Especificar',
+    telefono: '',
+    correoInstitucional: correoInst,
+    correoPersonal: '',
+    estado: true
+  };
+  
+  showCameraScanner.value = false;
+  
+  // Abrir modal para confirmación
+  showModal.value = true;
 }
 // ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -425,28 +420,28 @@ onUnmounted(() => {
         </div>
 
         <div style="position: relative;">
-          <!-- Spinner de carga visible mientras se consulta AbsysNet -->
-          <svg v-if="scanLoading" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #6366f1; animation: spin 0.8s linear infinite;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-          <svg v-else style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input
             type="text"
             v-model="searchQuery"
-            @input="currentPage = 1; scanError = ''"
+            @input="currentPage = 1"
             @keyup.enter="buscarPorEscaneo"
             placeholder="Buscar o escanear código de barras..."
             :style="{
               padding: '0.5rem 1rem 0.5rem 2rem',
               borderRadius: '0.5rem',
-              border: scanError ? '1.5px solid #ef4444' : '1px solid #e5e7eb',
+              border: '1px solid #e5e7eb',
               width: '280px',
               fontSize: '0.875rem',
               color: '#111827',
               outline: 'none'
             }"
           >
-          <!-- Mensaje de error de escaneo -->
-          <div v-if="scanError" style="position: absolute; top: 110%; left: 0; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; white-space: nowrap; z-index: 10;">{{ scanError }}</div>
         </div>
+        <button class="btn" style="background: #ffffff; color: #6366f1; border: 1px solid #6366f1; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="showCameraScanner = true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          Usar Cámara
+        </button>
         <input type="file" ref="fileInput" @change="handleExcelUpload" accept=".xlsx, .xls" style="display: none;">
         <button class="btn" style="background: #ffffff; color: #16a34a; border: 1px solid #16a34a; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="$refs.fileInput.click()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg>
@@ -710,6 +705,13 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Escáner de Cámara -->
+    <CameraScanner 
+      v-if="showCameraScanner" 
+      @close="showCameraScanner = false"
+      @scanned="handleCameraScan"
+    />
   </div>
 </template>
 
