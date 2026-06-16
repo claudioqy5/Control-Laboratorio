@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, defineEmits } from 'vue';
+import { API_BASE_URL } from '../config.js';
 
 const emit = defineEmits(['scanned', 'close']);
 const videoRef = ref(null);
@@ -7,7 +8,6 @@ const canvasRef = ref(null);
 const stream = ref(null);
 const scanning = ref(true);
 const statusMessage = ref('Inicializando cámara...');
-const tesseractWorker = ref(null);
 let scanInterval = null;
 
 const initCamera = async () => {
@@ -19,16 +19,7 @@ const initCamera = async () => {
       videoRef.value.srcObject = stream.value;
     }
     statusMessage.value = 'Enfoca el carnet universitario en la cámara...';
-    
-    // Cargar Tesseract dinámicamente
-    if (!window.Tesseract) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-      script.onload = () => startAutoScanning();
-      document.head.appendChild(script);
-    } else {
-      startAutoScanning();
-    }
+    startAutoScanning();
   } catch (err) {
     statusMessage.value = 'Error al acceder a la cámara: ' + err.message;
     scanning.value = false;
@@ -42,53 +33,14 @@ const stopCamera = () => {
   if (scanInterval) clearInterval(scanInterval);
 };
 
-const extractData = (text) => {
-  // Limpiamos la cadena para unificar saltos de línea y espacios extra
-  const cleanText = text.replace(/\n/g, ' ').replace(/\s+/g, ' ');
-  
-  const result = {
-    codigoUniversitario: '',
-    dni: '',
-    apellidos: '',
-    nombres: '',
-    carrera: ''
-  };
-
-  // 1. Extraer Código (Tolera errores comunes como CÓDIG0, C0DIGO, etc)
-  const codMatch = cleanText.match(/C[OÓ0]DIG[O0]\s*[:;]?\s*([A-Z0-9]{6,15})/i);
-  if (codMatch) result.codigoUniversitario = codMatch[1].replace(/[^A-Z0-9]/ig, '');
-
-  // 2. Extraer DNI (Busca "DNI" seguido de 8 dígitos)
-  const dniMatch = cleanText.match(/DNI\s*[:;]?\s*(\d{8})/i);
-  if (dniMatch) result.dni = dniMatch[1];
-
-  // 3. Extraer Apellidos (Busca "Apellidos:" y captura texto hasta la palabra "Nombres", "Facultad", etc)
-  const apellidosMatch = cleanText.match(/APELLIDOS\s*[:;]?\s*([A-ZÑÁÉÍÓÚ\s]+?)(?=\s+NOMBRES|\s+FACULTAD|\s+CARRERA|\s+DNI|\s+C[OÓ0]DIGO)/i);
-  if (apellidosMatch) result.apellidos = apellidosMatch[1].trim();
-
-  // 4. Extraer Nombres
-  const nombresMatch = cleanText.match(/NOMBRES\s*[:;]?\s*([A-ZÑÁÉÍÓÚ\s]+?)(?=\s+FACULTAD|\s+CARRERA|\s+DNI|\s+C[OÓ0]DIGO|\s+APELLIDOS)/i);
-  if (nombresMatch) result.nombres = nombresMatch[1].trim();
-
-  // 5. Extraer Carrera
-  const carreraMatch = cleanText.match(/CARRERA\s*[:;]?\s*([A-ZÑÁÉÍÓÚ\s]+?)(?=\s+CARN[EÉ]|\s+UNIVERSITARIO|\s*$|\d)/i);
-  if (carreraMatch) result.carrera = carreraMatch[1].trim();
-
-  // Limpieza adicional
-  if (result.codigoUniversitario.length < 5) result.codigoUniversitario = '';
-  if (result.dni && result.dni.length !== 8) result.dni = '';
-  
-  return result;
-};
-
 const captureAndAnalyze = async () => {
-  if (!scanning.value || !videoRef.value || !canvasRef.value || !window.Tesseract) return;
+  if (!scanning.value || !videoRef.value || !canvasRef.value) return;
 
   const video = videoRef.value;
   const canvas = canvasRef.value;
   const ctx = canvas.getContext('2d');
 
-  // Calcular las coordenadas del rectángulo guía (10% de margen horizontal, 15% vertical)
+  // Calcular las coordenadas del rectángulo guía
   const vw = video.videoWidth;
   const vh = video.videoHeight;
   const sx = vw * 0.10;
@@ -96,49 +48,48 @@ const captureAndAnalyze = async () => {
   const sw = vw * 0.80;
   const sh = vh * 0.70;
 
-  // Ajustar el canvas solo al tamaño de la región de interés (ROI)
   canvas.width = sw;
   canvas.height = sh;
 
-  // Aplicar un filtro extremo para matar los colores de fondo, la foto del alumno
-  // y dejar solo el texto lo más negro posible sobre un fondo blanco puro.
-  ctx.filter = 'grayscale(100%) contrast(300%) brightness(150%)';
-  
-  // Dibujar solo la parte enfocada por el usuario (recorte)
   ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
 
   try {
-    statusMessage.value = 'Procesando imagen (Mejorada con IA)...';
+    statusMessage.value = 'Analizando imagen con Google Vision...';
     
-    const { data: { text } } = await window.Tesseract.recognize(canvas, 'spa', {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          statusMessage.value = `Procesando: ${Math.round(m.progress * 100)}%`;
-        }
-      }
+    const base64Image = canvas.toDataURL('image/jpeg', 0.9);
+
+    const response = await fetch(`${API_BASE_URL}/api/alumnos/scan-carnet`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: base64Image })
     });
 
-    const extracted = extractData(text);
-    
-    if (extracted.codigoUniversitario && extracted.nombres && extracted.apellidos) {
-      scanning.value = false;
-      stopCamera();
-      emit('scanned', extracted);
+    if (response.ok) {
+      const extracted = await response.json();
+      if (extracted && extracted.codigoUniversitario && extracted.nombres && extracted.apellidos) {
+        scanning.value = false;
+        stopCamera();
+        emit('scanned', extracted);
+        statusMessage.value = '¡Datos extraídos con éxito!';
+      } else {
+        statusMessage.value = 'Datos incompletos. Acerca más el carnet o mejora la iluminación...';
+      }
     } else {
-      statusMessage.value = 'No se detectaron datos completos. Acerca más el carnet...';
+       statusMessage.value = 'Buscando datos legibles. Mantén el enfoque...';
     }
   } catch (error) {
-    statusMessage.value = 'Error en OCR: ' + error.message;
+    console.error("Error OCR:", error);
+    statusMessage.value = 'Verificando conexión con el servidor...';
   }
 };
 
 const startAutoScanning = () => {
-  // Tomar una foto cada 3 segundos e intentar extraer
+  // Escanear cada 2.5 segundos para no saturar la API gratuita y dar tiempo de respuesta
   scanInterval = setInterval(() => {
     if (scanning.value && videoRef.value?.readyState === 4) {
       captureAndAnalyze();
     }
-  }, 3000);
+  }, 2500);
 };
 
 onMounted(() => {

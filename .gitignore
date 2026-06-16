@@ -1,4 +1,4 @@
-﻿# .NET folders
+# .NET folders
 [Bb]in/
 [Oo]bj/
 publish/
@@ -29,3 +29,6 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 Backend/wwwroot/updates/ControlLaboratorio.Agent.exe
+
+# Google Credentials
+Backend/google-credentials.json

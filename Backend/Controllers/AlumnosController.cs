@@ -11,10 +11,12 @@ namespace ControlLaboratorio.API.Controllers
     public class AlumnosController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly GoogleVisionService _visionService;
 
-        public AlumnosController(ApplicationDbContext context)
+        public AlumnosController(ApplicationDbContext context, GoogleVisionService visionService)
         {
             _context = context;
+            _visionService = visionService;
         }
 
         [HttpGet]
@@ -104,6 +106,34 @@ namespace ControlLaboratorio.API.Controllers
                 insertados = nuevosAlumnos.Count, 
                 omitidos = alumnos.Count - nuevosAlumnos.Count 
             });
+        }
+
+        [HttpPost("scan-carnet")]
+        public async Task<IActionResult> ScanCarnet([FromBody] ScanRequest request)
+        {
+            if (string.IsNullOrEmpty(request?.ImageBase64))
+            {
+                return BadRequest("La imagen base64 es requerida.");
+            }
+
+            try
+            {
+                var result = await _visionService.ScanCarnetAsync(request.ImageBase64);
+                if (result == null)
+                {
+                    return NotFound("No se pudo extraer texto del carnet.");
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Error al procesar el escaneo: {ex.Message}" });
+            }
+        }
+
+        public class ScanRequest
+        {
+            public string ImageBase64 { get; set; } = string.Empty;
         }
     }
 }

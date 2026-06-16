@@ -14,7 +14,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHostedService<ReactivacionAlumnosService>();
 builder.Services.AddHostedService<SessionMonitorService>();
 
-
+// Registrar el servicio de Google Vision API
+builder.Services.AddScoped<GoogleVisionService>();
 // Database Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ControlLaboratorioConnection")));
