@@ -63,56 +63,48 @@ namespace ControlLaboratorio.API.Services
         {
             string normalizedText = text.Replace("\r", "").Trim();
             string[] lines = normalizedText.Split('\n');
+            List<string> cleanLines = lines.Select(l => l.Trim()).Where(l => !string.IsNullOrEmpty(l)).ToList();
 
             var result = new ParsedStudentData();
 
             // Regex patterns
-            // Código Universitario: usually starts with 20... followed by digits (length 8-10)
             var codigoRegex = new Regex(@"\b(20\d{6,8})\b");
-            // DNI: exactly 8 digits
             var dniRegex = new Regex(@"\b(\d{8})\b");
 
-            foreach (var line in lines)
-            {
-                var cleanLine = line.Trim();
-                
-                // Try to match DNI
-                if (string.IsNullOrEmpty(result.DNI))
-                {
-                    var matchDni = dniRegex.Match(cleanLine);
-                    if (matchDni.Success)
-                    {
-                        string val = matchDni.Groups[1].Value;
-                        // Sunedu student code usually starts with 20, but DNI does not typically start with 20 in recent student IDs
-                        if (val.Length == 8 && !val.StartsWith("20"))
-                        {
-                            result.DNI = val;
-                        }
-                        else if (string.IsNullOrEmpty(result.CodigoUniversitario) && val.StartsWith("20"))
-                        {
-                            result.CodigoUniversitario = val;
-                        }
-                    }
-                }
+            // Words that are definitely NOT names/careers - used to filter noise
+            var noiseWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+                "expira", "expiración", "expiracion", "emision", "emisión", "valido", "validez",
+                "republica", "peru", "sunedu", "ministerio", "superintendencia", "nacional",
+                "educacion", "educación", "superior", "universitaria", "universitario",
+                "carnet", "carné", "firma", "codigo", "código", "libre"
+            };
 
-                // Try to match Code
+            // ─── Step 1: Extract Código and DNI ───────────────────────────────
+            foreach (var line in cleanLines)
+            {
                 if (string.IsNullOrEmpty(result.CodigoUniversitario))
                 {
-                    var matchCodigo = codigoRegex.Match(cleanLine);
-                    if (matchCodigo.Success)
+                    var m = codigoRegex.Match(line);
+                    if (m.Success) result.CodigoUniversitario = m.Groups[1].Value;
+                }
+                if (string.IsNullOrEmpty(result.DNI))
+                {
+                    var m = dniRegex.Match(line);
+                    if (m.Success)
                     {
-                        result.CodigoUniversitario = matchCodigo.Groups[1].Value;
+                        string val = m.Groups[1].Value;
+                        if (!val.StartsWith("20") || val == result.CodigoUniversitario)
+                            result.DNI = val;
                     }
                 }
             }
 
-            // Fallback for DNI: find any other 8-digit number that isn't the code
+            // Fallback DNI: any 8-digit number that isn't the code
             if (string.IsNullOrEmpty(result.DNI))
             {
-                foreach (var line in lines)
+                foreach (var line in cleanLines)
                 {
-                    var matches = dniRegex.Matches(line);
-                    foreach (Match m in matches)
+                    foreach (Match m in dniRegex.Matches(line))
                     {
                         if (m.Value != result.CodigoUniversitario)
                         {
@@ -124,59 +116,121 @@ namespace ControlLaboratorio.API.Services
                 }
             }
 
-            List<string> cleanLines = lines.Select(l => l.Trim()).Where(l => !string.IsNullOrEmpty(l)).ToList();
-
-            // Heuristics for Names, Surnames and Career
-            int apellidosIndex = -1;
-            int nombresIndex = -1;
-            int carreraIndex = -1;
+            // ─── Step 2: Find keyword line indices ────────────────────────────
+            int apellidosIndex = -1, nombresIndex = -1, carreraIndex = -1, facultadIndex = -1;
 
             for (int i = 0; i < cleanLines.Count; i++)
             {
                 string lower = cleanLines[i].ToLower();
                 if (lower.Contains("apellido")) apellidosIndex = i;
-                if (lower.Contains("nombre")) nombresIndex = i;
-                if (lower.Contains("carrera") || lower.Contains("escuela") || lower.Contains("especialidad") || lower.Contains("programa")) carreraIndex = i;
+                else if (lower.Contains("nombre")) nombresIndex = i;
+                else if (lower.Contains("carrera") || lower.Contains("escuela") || lower.Contains("especialidad") || lower.Contains("programa")) carreraIndex = i;
+                else if (lower.Contains("facultad")) facultadIndex = i;
             }
 
-            if (apellidosIndex != -1) result.Apellidos = GetValueFromLine(cleanLines, apellidosIndex);
-            if (nombresIndex != -1) result.Nombres = GetValueFromLine(cleanLines, nombresIndex);
-            if (carreraIndex != -1) result.Carrera = GetValueFromLine(cleanLines, carreraIndex);
-
-            // Fallback heuristics if fields are empty
-            if (string.IsNullOrEmpty(result.Apellidos) || string.IsNullOrEmpty(result.Nombres))
+            // ─── Step 3: Extract Apellidos (may span multiple lines) ──────────
+            if (apellidosIndex != -1)
             {
-                var ignoredKeywords = new List<string> { 
-                    "republica", "peru", "universidad", "sunedu", "ministerio", "carnet", "nacional", 
-                    "educacion", "valido", "caducidad", "emision", "firma", "codigo", "estudiante", "libre"
-                };
+                // Collect lines after the "Apellidos:" label until we hit another keyword or a noise line
+                var apellidoParts = new List<string>();
+                int start = apellidosIndex;
+                string firstVal = GetValueFromLine(cleanLines, start);
 
-                var potentialNameLines = cleanLines.Where(line => 
-                    !ignoredKeywords.Any(kw => line.ToLower().Contains(kw)) &&
-                    !codigoRegex.IsMatch(line) &&
-                    !dniRegex.IsMatch(line) &&
-                    line.Length > 2 &&
-                    line.All(c => char.IsLetter(c) || char.IsWhiteSpace(c) || c == ',' || c == 'ñ' || c == 'Ñ' || c == 'á' || c == 'é' || c == 'í' || c == 'ó' || c == 'ú' || c == 'Á' || c == 'É' || c == 'Í' || c == 'Ó' || c == 'Ú')
-                ).ToList();
+                // If the label itself has a value on the same line (e.g. "Apellidos: GARCIA")
+                if (!string.IsNullOrWhiteSpace(firstVal) && !IsNoiseOrKeyword(firstVal, noiseWords))
+                    apellidoParts.Add(firstVal.ToUpper());
 
-                if (potentialNameLines.Count >= 2)
+                // Look ahead for continuation lines (next lines that are all-caps names)
+                int nextKeyword = new[] { nombresIndex, carreraIndex, facultadIndex }
+                    .Where(x => x > apellidosIndex)
+                    .DefaultIfEmpty(cleanLines.Count)
+                    .Min();
+
+                // If the value was on the next line (GetValueFromLine returned lines[apellidosIndex+1])
+                int lookStart = (string.IsNullOrWhiteSpace(firstVal)) ? apellidosIndex + 1 : apellidosIndex + 2;
+
+                for (int i = lookStart; i < nextKeyword && i < cleanLines.Count; i++)
                 {
-                    if (string.IsNullOrEmpty(result.Apellidos)) result.Apellidos = potentialNameLines[0];
-                    if (string.IsNullOrEmpty(result.Nombres)) result.Nombres = potentialNameLines[1];
-                    if (string.IsNullOrEmpty(result.Carrera) && potentialNameLines.Count >= 3) result.Carrera = potentialNameLines[2];
+                    string candidate = cleanLines[i].Trim();
+                    if (IsNoiseOrKeyword(candidate, noiseWords)) break;
+                    if (codigoRegex.IsMatch(candidate) || dniRegex.IsMatch(candidate)) break;
+                    if (candidate.Any(char.IsDigit)) break;
+                    if (candidate.Length < 2) break;
+                    // Only all-uppercase words (typical of printed carnets)
+                    if (candidate == candidate.ToUpper() || candidate.All(c => char.IsLetter(c) || char.IsWhiteSpace(c) || "ÁÉÍÓÚÑ".Contains(char.ToUpper(c))))
+                        apellidoParts.Add(candidate.ToUpper());
+                    else
+                        break;
+                }
+
+                if (apellidoParts.Count > 0)
+                {
+                    result.Apellidos = string.Join(" ", apellidoParts);
+                    result.ApellidoPaterno = apellidoParts[0];
+                    result.ApellidoMaterno = apellidoParts.Count > 1 ? string.Join(" ", apellidoParts.Skip(1)) : "";
                 }
             }
 
-            // Split Apellidos into Paterno and Materno
-            if (!string.IsNullOrEmpty(result.Apellidos))
+            // ─── Step 4: Extract Nombres ──────────────────────────────────────
+            if (nombresIndex != -1)
             {
-                // Remove prefixing labels or clean up
-                string cleanApellidos = CleanLabel(result.Apellidos, "apellidos");
-                var parts = cleanApellidos.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                string val = GetValueFromLine(cleanLines, nombresIndex);
+                if (!string.IsNullOrWhiteSpace(val) && !IsNoiseOrKeyword(val, noiseWords))
+                    result.Nombres = val.ToUpper();
+                else
+                {
+                    // Try next line
+                    int nextIdx = nombresIndex + 1;
+                    // Skip the line that GetValueFromLine already consumed
+                    if (!val.Contains(":") && nextIdx < cleanLines.Count)
+                        nextIdx = nombresIndex + 2;
+
+                    for (int i = nombresIndex + 1; i < cleanLines.Count && i < nombresIndex + 4; i++)
+                    {
+                        string candidate = cleanLines[i].Trim();
+                        if (IsNoiseOrKeyword(candidate, noiseWords)) continue;
+                        if (codigoRegex.IsMatch(candidate) || dniRegex.IsMatch(candidate)) continue;
+                        if (candidate.Any(char.IsDigit)) continue;
+                        if (candidate.Length > 1 && !candidate.ToLower().Contains("apellido") && !candidate.ToLower().Contains("carrera") && !candidate.ToLower().Contains("facultad"))
+                        {
+                            result.Nombres = candidate.ToUpper();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // ─── Step 5: Extract Carrera ──────────────────────────────────────
+            // Prefer "Carrera:" over "Facultad:"
+            int carreraLookIndex = carreraIndex != -1 ? carreraIndex : facultadIndex;
+            if (carreraLookIndex != -1)
+            {
+                string val = GetValueFromLine(cleanLines, carreraLookIndex);
+                if (!string.IsNullOrWhiteSpace(val) && !IsNoiseOrKeyword(val, noiseWords))
+                    result.Carrera = val;
+                else if (carreraLookIndex + 1 < cleanLines.Count)
+                {
+                    for (int i = carreraLookIndex + 1; i < cleanLines.Count && i < carreraLookIndex + 3; i++)
+                    {
+                        string candidate = cleanLines[i].Trim();
+                        if (!IsNoiseOrKeyword(candidate, noiseWords) && !codigoRegex.IsMatch(candidate) && !dniRegex.IsMatch(candidate) && candidate.Length > 2)
+                        {
+                            result.Carrera = candidate;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // ─── Step 6: Split apellidos if still not split ───────────────────
+            if (!string.IsNullOrEmpty(result.Apellidos) && string.IsNullOrEmpty(result.ApellidoPaterno))
+            {
+                string cleaned = CleanLabel(result.Apellidos, "apellidos");
+                var parts = cleaned.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length >= 2)
                 {
                     result.ApellidoPaterno = parts[0];
-                    result.ApellidoMaterno = parts[1];
+                    result.ApellidoMaterno = string.Join(" ", parts.Skip(1));
                 }
                 else if (parts.Length == 1)
                 {
@@ -184,20 +238,30 @@ namespace ControlLaboratorio.API.Services
                 }
             }
 
-            if (!string.IsNullOrEmpty(result.Nombres))
-            {
-                result.Nombres = CleanLabel(result.Nombres, "nombres");
-            }
-
+            // Clean labels from all fields
+            if (!string.IsNullOrEmpty(result.Nombres)) result.Nombres = CleanLabel(result.Nombres, "nombres");
             if (!string.IsNullOrEmpty(result.Carrera))
             {
                 result.Carrera = CleanLabel(result.Carrera, "carrera");
                 result.Carrera = CleanLabel(result.Carrera, "escuela");
+                result.Carrera = CleanLabel(result.Carrera, "facultad");
                 result.Carrera = CleanLabel(result.Carrera, "programa");
             }
 
             return result;
         }
+
+        private bool IsNoiseOrKeyword(string text, HashSet<string> noiseWords)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return true;
+            string lower = text.ToLower().Trim();
+            // Check if the text is or starts with a noise word
+            if (noiseWords.Any(nw => lower == nw || lower.StartsWith(nw))) return true;
+            // Check if it looks like a date (contains digits and dashes/slashes)
+            if (Regex.IsMatch(lower, @"\d{2,4}[-/]\d{1,2}")) return true;
+            return false;
+        }
+
 
         private string CleanLabel(string value, string label)
         {
