@@ -166,8 +166,29 @@ namespace ControlLaboratorio.API.Services
                 if (apellidoParts.Count > 0)
                 {
                     result.Apellidos = string.Join(" ", apellidoParts);
-                    result.ApellidoPaterno = apellidoParts[0];
-                    result.ApellidoMaterno = apellidoParts.Count > 1 ? string.Join(" ", apellidoParts.Skip(1)) : "";
+
+                    if (apellidoParts.Count == 1)
+                    {
+                        // Both surnames on same line: "CASTILLO DIAZ" → split by first word
+                        var words = apellidoParts[0].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (words.Length >= 2)
+                        {
+                            result.ApellidoPaterno = words[0];
+                            result.ApellidoMaterno = string.Join(" ", words.Skip(1));
+                        }
+                        else
+                        {
+                            result.ApellidoPaterno = apellidoParts[0];
+                            result.ApellidoMaterno = "";
+                        }
+                    }
+                    else
+                    {
+                        // Each surname on its own line: apellidoParts[0] = paterno, rest = materno
+                        // e.g. ["CASTILLO", "DIAZ"] or ["CUEVA", "DEL AGUILA"]
+                        result.ApellidoPaterno = apellidoParts[0];
+                        result.ApellidoMaterno = string.Join(" ", apellidoParts.Skip(1));
+                    }
                 }
             }
 
