@@ -89,12 +89,12 @@ const handleCameraScan = async (data) => {
   }
   
   currentAlumno.value = {
-    codigoUniversitario: data.codigoUniversitario,
-    dni: data.dni || '-',
-    nombres: data.nombres || '-',
-    apellidoPaterno: data.apellidos || '-', // Se extrajo completo como apellidos
-    apellidoMaterno: '', // Lo dejamos en blanco si viene junto
-    carrera: data.carrera || 'Sin Especificar',
+    codigoUniversitario: data.codigoUniversitario || '',
+    dni: data.dni || '',
+    nombres: data.nombres || '',
+    apellidoPaterno: data.apellidoPaterno || '',   // ← usa el campo separado del backend
+    apellidoMaterno: data.apellidoMaterno || '',   // ← usa el campo separado del backend
+    carrera: data.carrera || 'Medicina Humana',    // ← por defecto Medicina Humana
     telefono: '',
     correoInstitucional: correoInst,
     correoPersonal: '',
