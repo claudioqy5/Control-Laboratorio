@@ -27,6 +27,8 @@ services:
       - TZ=America/Lima
     depends_on:
       - cl-db
+    volumes:
+      - ./Backend/google-credentials.json:/app/google-credentials.json
     networks:
       - cl-network
 
