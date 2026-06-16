@@ -88,12 +88,27 @@ const captureAndAnalyze = async () => {
   const canvas = canvasRef.value;
   const ctx = canvas.getContext('2d');
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  // Calcular las coordenadas del rectángulo guía (10% de margen horizontal, 15% vertical)
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  const sx = vw * 0.10;
+  const sy = vh * 0.15;
+  const sw = vw * 0.80;
+  const sh = vh * 0.70;
+
+  // Ajustar el canvas solo al tamaño de la región de interés (ROI)
+  canvas.width = sw;
+  canvas.height = sh;
+
+  // Aplicar un filtro extremo para matar los colores de fondo, la foto del alumno
+  // y dejar solo el texto lo más negro posible sobre un fondo blanco puro.
+  ctx.filter = 'grayscale(100%) contrast(300%) brightness(150%)';
+  
+  // Dibujar solo la parte enfocada por el usuario (recorte)
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
 
   try {
-    statusMessage.value = 'Procesando imagen (OCR)...';
+    statusMessage.value = 'Procesando imagen (Mejorada con IA)...';
     
     const { data: { text } } = await window.Tesseract.recognize(canvas, 'spa', {
       logger: m => {
