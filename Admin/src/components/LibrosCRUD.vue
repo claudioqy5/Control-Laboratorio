@@ -299,45 +299,67 @@ onMounted(() => {
     <table class="centered-table">
       <thead>
         <tr>
-          <th>Nº</th>
-          <th>Portada</th>
-          <th>N° Registro</th>
-          <th>Código de Barras</th>
-          <th>N° Clasificación</th>
-          <th>Título</th>
-          <th>Autor</th>
-          <th>Año</th>
-          <th>Detalles</th>
+          <th>Libro e Información</th>
+          <th>Códigos</th>
+          <th>Ubicación Fís.</th>
+          <th>Estado</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="paginatedLibros.length === 0">
-          <td colspan="10" style="text-align: center; color: #9ca3af; padding: 2rem;">No se encontraron libros registrados.</td>
+          <td colspan="5" style="text-align: center; color: #9ca3af; padding: 3rem;">No se encontraron libros registrados.</td>
         </tr>
-        <tr v-for="(l, index) in paginatedLibros" :key="l.libroID">
-          <td style="color: #6b7280; font-weight: 600;">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
+        <tr v-for="l in paginatedLibros" :key="l.libroID">
+          <!-- Columna 1: Libro e Info -->
           <td>
-            <div style="display: flex; justify-content: center; align-items: center;">
-              <div class="book-cover-thumbnail">
+            <div style="display: flex; gap: 1rem; align-items: center; text-align: left;">
+              <div class="book-cover-thumbnail" style="flex-shrink: 0; width: 45px; height: 60px;">
                 <img v-if="l.portada" :src="l.portada.startsWith('data:') ? l.portada : (l.portada.startsWith('/portadas') ? API_BASE_URL + '/api/static' + l.portada : API_BASE_URL + l.portada)" alt="Portada" />
                 <div v-else class="book-cover-placeholder">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                 </div>
               </div>
+              <div style="min-width: 0;">
+                <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">{{ l.titulo }}</div>
+                <div style="color: #64748b; font-size: 0.85rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">{{ l.autor }} &bull; {{ l.anio || 'S/A' }}</div>
+                <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">{{ l.editorial }} <span v-if="l.edicion">({{ l.edicion }})</span></div>
+              </div>
             </div>
           </td>
-          <td><strong style="color: #111827;">{{ l.nroRegistro }}</strong></td>
-          <td style="font-family: monospace; color: #475569;">{{ l.codigoBarras }}</td>
-          <td><span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">{{ l.nroClasificacion || '-' }}</span></td>
-          <td style="text-align: left; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ l.titulo }}</td>
-          <td style="text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ l.autor }}</td>
-          <td>{{ l.anio || '-' }}</td>
+
+          <!-- Columna 2: Códigos -->
           <td>
-            <div class="author-cell">
-              {{ l.editorial }} <span v-if="l.edicion">- Ed. {{ l.edicion }}</span>
+            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+              <strong style="color: #111827; font-size: 0.95rem;">{{ l.nroRegistro }}</strong>
+              <span style="background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-family: monospace; border: 1px solid #e2e8f0;">CL: {{ l.nroClasificacion || 'N/A' }}</span>
             </div>
           </td>
+
+          <!-- Columna 3: Ubicación Fís. -->
+          <td>
+             <div style="display: flex; flex-direction: column; gap: 2px; align-items: center;">
+                <span style="font-weight: 700; color: #334155; font-size: 0.9rem;">Estante {{ l.estante || '-' }}</span>
+                <span style="font-size: 0.8rem; color: #64748b;">Cara {{ l.cara || '-' }}, Piso {{ l.piso || '-' }}</span>
+             </div>
+          </td>
+
+          <!-- Columna 4: Estado -->
+          <td>
+            <span :style="{ 
+              background: l.estado === 'Disponible' ? '#dcfce7' : '#fee2e2', 
+              color: l.estado === 'Disponible' ? '#166534' : '#9f1239', 
+              padding: '4px 12px', 
+              borderRadius: '20px', 
+              fontSize: '0.8rem', 
+              fontWeight: '700',
+              border: l.estado === 'Disponible' ? '1px solid #bbf7d0' : '1px solid #fecdd3'
+            }">
+              {{ l.estado }}
+            </span>
+          </td>
+
+          <!-- Columna 5: Acciones -->
           <td style="white-space: nowrap;">
             <button class="icon-btn edit-btn" @click="editLibro(l)" title="Editar Libro">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
