@@ -36,27 +36,28 @@ const searchResults = computed(() => {
 
 const selectBook = (book) => {
   selectedBook.value = book
+  selectedShelfId.value = book.estante // Selecciona automáticamente el estante del libro
   searchQuery.value = ''
-  currentView.value = 'map' // Siempre muestra primero el mapa para ver la ubicación aérea
+  currentView.value = 'map' // Mantener siempre la vista del mapa aéreo
 }
 
-// 31 Estantes independientes (Estante 1 a la izquierda, luego 8 pasillos de hasta 4 estantes cada uno)
+// 31 Estantes independientes con cara única (Estante 1 a la izquierda, luego 8 pasillos de hasta 4 estantes cada uno)
 const estantesData = []
 estantesData.push({ id: 1, left: 60, top: 220, width: 40, height: 180, caras: ['A'], pisos: 6 })
 let currentId = 2
 const aislesLeft = [170, 280, 390, 500, 610, 720, 830, 940]
 for (const aisleX of aislesLeft) {
   if (currentId <= 31) {
-    estantesData.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+    estantesData.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })
   }
   if (currentId <= 31) {
-    estantesData.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+    estantesData.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })
   }
   if (currentId <= 31) {
-    estantesData.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+    estantesData.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170, caras: ['A'], pisos: 6 })
   }
   if (currentId <= 31) {
-    estantesData.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+    estantesData.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, caras: ['A'], pisos: 6 })
   }
 }
 const estantes = estantesData
@@ -66,19 +67,18 @@ const isBookInShelf = (estanteId) => {
 }
 
 const openShelfDetail = (estanteId) => {
-  selectedShelfId.value = estanteId
-  currentView.value = 'detail'
+  selectedShelfId.value = estanteId // Al hacer clic en un estante, se selecciona y se muestra en el panel lateral
 }
 
-const isBookHere = (cara, piso) => {
+const isBookHere = (piso) => {
   if (!selectedBook.value) return false
   return selectedBook.value.estante === selectedShelfId.value && 
-         selectedBook.value.cara === cara && 
          selectedBook.value.piso === piso
 }
 
 const clearSelection = () => {
   selectedBook.value = null
+  selectedShelfId.value = null
   currentView.value = 'map'
 }
 </script>
@@ -145,7 +145,49 @@ const clearSelection = () => {
           <div class="location-badge-vertical">
             <div class="badge-title">UBICACIÓN EXACTA</div>
             <div class="badge-value">Estante {{ selectedBook.estante }}</div>
-            <div class="badge-sub">Cara {{ selectedBook.cara }} • Piso {{ selectedBook.piso }}</div>
+            <div class="badge-sub">Piso {{ selectedBook.piso }}</div>
+          </div>
+        </div>
+      </transition>
+
+      <!-- Detalle del Estante en el Sidebar -->
+      <transition name="fade">
+        <div v-if="selectedShelfId" class="selected-shelf-sidebar-card">
+          <button class="clear-btn-sidebar" @click="selectedShelfId = null" title="Cerrar detalle de estante">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          
+          <div class="shelf-sidebar-header">
+            <h3>ESTANTE {{ selectedShelfId }}</h3>
+            <span class="shelf-subtitle">VISTA FRONTAL</span>
+          </div>
+
+          <div class="sidebar-bookshelf-container">
+            <div class="sidebar-bookshelf">
+              <div 
+                v-for="piso in 6" 
+                :key="piso" 
+                class="sidebar-floor"
+                :class="{ 'has-target-book-sidebar': isBookHere(7 - piso) }"
+              >
+                <div class="sidebar-bookshelf-shelf">
+                  <!-- Libros decorativos -->
+                  <div class="sidebar-book-spine" v-for="n in 7" :key="n" :style="{ height: 16 + Math.random() * 12 + 'px', background: `hsl(${Math.random() * 360}, 25%, 70%)` }"></div>
+                  
+                  <!-- El libro buscado -->
+                  <div v-if="isBookHere(7 - piso)" class="sidebar-target-book" title="¡Aquí está el libro!">
+                    <div class="sidebar-book-glow"></div>
+                    <div class="sidebar-book-label">LIBRO</div>
+                  </div>
+
+                  <!-- Más libros decorativos -->
+                  <div class="sidebar-book-spine" v-for="n in 6" :key="n+10" :style="{ height: 16 + Math.random() * 12 + 'px', background: `hsl(${Math.random() * 360}, 25%, 70%)` }"></div>
+                </div>
+                <div class="sidebar-floor-label" :class="{ 'has-target-text': isBookHere(7 - piso) }">
+                  PISO {{ 7 - piso }}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </transition>
@@ -155,14 +197,8 @@ const clearSelection = () => {
     <div class="right-panel">
       <!-- Escenario Principal -->
       <div class="scene-container">
-      <button v-if="currentView === 'detail'" class="back-btn" @click="currentView = 'map'">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-        Volver al Mapa Aéreo
-      </button>
-
-      <!-- VISTA MAPA (Isométrica 3D Estilo Mockup) -->
-      <transition name="fade">
-        <div v-if="currentView === 'map'" class="isometric-scene">
+        <!-- VISTA MAPA (Isométrica 3D Estilo Mockup) -->
+        <div class="isometric-scene">
           <div class="wood-floor">
             <!-- Textos en el piso (ajustados a los pasillos) -->
             <div class="floor-label-text" style="top: 420px; left: 100px; transform: translateZ(1px) rotateZ(-90deg);">ZONA MULTIDISCIPLINARIA</div>
@@ -171,7 +207,7 @@ const clearSelection = () => {
             
             <div class="entrance-marker">ENTRADA PRINCIPAL</div>
             
-            <!-- Renderizar los 25 estantes independientes -->
+            <!-- Renderizar los 31 estantes independientes -->
             <div 
               v-for="estante in estantes" 
               :key="estante.id"
@@ -208,52 +244,7 @@ const clearSelection = () => {
             </div>
           </div>
         </div>
-      </transition>
-
-      <!-- VISTA DETALLE DE ESTANTE (Frontal) -->
-      <transition name="fade">
-        <div v-if="currentView === 'detail'" class="detail-scene">
-          <div class="detail-header">
-            <h3>ESTANTE {{ selectedShelfId }}</h3>
-            <p>Selecciona una cara o visualiza el piso indicado.</p>
-          </div>
-          <div class="detail-faces">
-            <div 
-              v-for="cara in estantes.find(e => e.id === selectedShelfId).caras" 
-              :key="cara" 
-              class="detail-face"
-              :class="{ 'target-face': selectedBook?.cara === cara && selectedBook?.estante === selectedShelfId }"
-            >
-              <div class="face-header">CARA {{ cara }}</div>
-              <div class="detail-floors">
-                <div 
-                  v-for="piso in 6" 
-                  :key="piso" 
-                  class="detail-floor"
-                  :class="{ 'has-target-book': isBookHere(cara, 7 - piso) }"
-                >
-                  <div class="floor-bookshelf">
-                    <!-- Libros de relleno decorativos -->
-                    <div class="book-spine" v-for="n in 12" :key="n" :style="{ height: 35 + Math.random() * 25 + 'px', background: `hsl(${Math.random() * 360}, 20%, 70%)` }"></div>
-                    
-                    <!-- EL LIBRO OBJETIVO -->
-                    <div v-if="isBookHere(cara, 7 - piso)" class="target-book-spine" title="¡Aquí está el libro!">
-                      <div class="book-glow"></div>
-                      <div class="book-label">LIBRO</div>
-                    </div>
-
-                    <!-- Más libros de relleno -->
-                    <div class="book-spine" v-for="n in 8" :key="n+15" :style="{ height: 35 + Math.random() * 25 + 'px', background: `hsl(${Math.random() * 360}, 20%, 70%)` }"></div>
-                  </div>
-                  <div class="floor-label">PISO {{ 7 - piso }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </div>
-        </div>
-      </transition>
-    </div>
+      </div>
     </div>
   </div>
 </template>
@@ -888,6 +879,127 @@ const clearSelection = () => {
 }
 
 .has-target-book .floor-label {
+  color: #e11d48;
+}
+
+/* Estante Seleccionado en el Sidebar */
+.selected-shelf-sidebar-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.shelf-sidebar-header {
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 0.5rem;
+}
+
+.shelf-sidebar-header h3 {
+  color: #0f172a;
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.shelf-subtitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #9f1239;
+  letter-spacing: 0.05em;
+}
+
+.sidebar-bookshelf-container {
+  background: #f8fafc;
+  border: 4px solid #cbd5e1; /* Marco del estante */
+  border-radius: 8px;
+  padding: 0 0.5rem;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+}
+
+.sidebar-bookshelf {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-floor {
+  height: 52px;
+  border-bottom: 4px solid #cbd5e1; /* Madera del estante */
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding-left: 28px; /* Espacio para el label del piso */
+}
+
+.sidebar-floor:last-child {
+  border-bottom: none;
+}
+
+.sidebar-floor.has-target-book-sidebar {
+  background: rgba(254, 205, 211, 0.3);
+}
+
+.sidebar-bookshelf-shelf {
+  display: flex;
+  gap: 1.5px;
+  align-items: flex-end;
+  height: 100%;
+  width: 100%;
+  padding-bottom: 1px;
+}
+
+.sidebar-book-spine {
+  width: 6px;
+  border-radius: 1px 1px 0 0;
+  box-shadow: inset -1px 0 2px rgba(0,0,0,0.3);
+  border-left: 0.5px solid rgba(255,255,255,0.2);
+}
+
+.sidebar-target-book {
+  width: 15px;
+  height: 85%;
+  background: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 0 8px #f43f5e, inset -1px 0 5px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: targetPulseSidebar 1.5s infinite;
+}
+
+.sidebar-book-label {
+  color: white;
+  font-size: 0.45rem;
+  font-weight: 900;
+  transform: rotate(-90deg);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+@keyframes targetPulseSidebar {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 6px #f43f5e; }
+  50% { transform: scale(1.05); box-shadow: 0 0 12px #f43f5e, 0 0 4px white; }
+}
+
+.sidebar-floor-label {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.sidebar-floor-label.has-target-text {
   color: #e11d48;
 }
 
