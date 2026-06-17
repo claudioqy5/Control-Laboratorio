@@ -78,58 +78,76 @@ const clearSelection = () => {
 
 <template>
   <div class="library-map-container">
-    <div class="header">
-      <h2>Mapa Interactivo 3D</h2>
-      <p>Vista aérea de los estantes. Busca un libro o haz clic en un estante para inspeccionarlo.</p>
-    </div>
-
-    <!-- Buscador -->
-    <div class="search-section">
-      <div class="search-box">
-        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="Buscar libro por título, autor o registro..." 
-          class="search-input"
-        />
+    <!-- Panel Izquierdo -->
+    <div class="left-panel">
+      <div class="header">
+        <h2>Mapa Interactivo 3D</h2>
+        <p>Vista aérea de los estantes.</p>
       </div>
 
-      <div v-if="searchQuery && searchResults.length > 0" class="search-results">
-        <div 
-          v-for="book in searchResults" 
-          :key="book.libroID" 
-          class="result-item"
-          @click="selectBook(book)"
-        >
-          <div class="book-info">
-            <span class="book-title">{{ book.titulo }}</span>
-            <span class="book-author">{{ book.autor }} | {{ book.nroRegistro }}</span>
-          </div>
-          <div class="book-location">
-            Estante {{ book.estante }} - Cara {{ book.cara }} - Piso {{ book.piso }}
+      <!-- Buscador Mejorado -->
+      <div class="search-section">
+        <div class="search-box">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Buscar libro por título, autor o registro..." 
+            class="search-input"
+          />
+        </div>
+
+        <div v-if="searchQuery && searchResults.length > 0" class="search-results">
+          <div 
+            v-for="book in searchResults" 
+            :key="book.libroID" 
+            class="result-item"
+            @click="selectBook(book)"
+          >
+            <div class="book-info">
+              <span class="book-title">{{ book.titulo }}</span>
+              <span class="book-author">{{ book.autor }} | {{ book.nroRegistro }}</span>
+            </div>
+            <div class="book-location">
+              E{{ book.estante }} C{{ book.cara }} P{{ book.piso }}
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Información del libro seleccionado -->
+      <transition name="fade">
+        <div v-if="selectedBook" class="selected-book-sidebar-card">
+          <button class="clear-btn-sidebar" @click="clearSelection" title="Limpiar selección">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          
+          <div class="book-cover-large">
+            <img v-if="selectedBook.portada" :src="selectedBook.portada.startsWith('data:') ? selectedBook.portada : API_BASE_URL + selectedBook.portada" alt="Portada" />
+            <div v-else class="book-cover-placeholder">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+              <span>Sin Portada</span>
+            </div>
+          </div>
+
+          <div class="selected-info-vertical">
+            <h3>{{ selectedBook.titulo }}</h3>
+            <p class="author">{{ selectedBook.autor }}</p>
+          </div>
+
+          <div class="location-badge-vertical">
+            <div class="badge-title">UBICACIÓN EXACTA</div>
+            <div class="badge-value">Estante {{ selectedBook.estante }}</div>
+            <div class="badge-sub">Cara {{ selectedBook.cara }} • Piso {{ selectedBook.piso }}</div>
+          </div>
+        </div>
+      </transition>
     </div>
 
-    <!-- Información del libro seleccionado -->
-    <div v-if="selectedBook" class="selected-book-card">
-      <div class="selected-info">
-        <h3>{{ selectedBook.titulo }}</h3>
-        <p><strong>Autor:</strong> {{ selectedBook.autor }}</p>
-      </div>
-      <div class="location-badge">
-        <div class="badge-title">UBICACIÓN EXACTA</div>
-        <div class="badge-value">Estante {{ selectedBook.estante }} • Cara {{ selectedBook.cara }} • Piso {{ selectedBook.piso }}</div>
-      </div>
-      <button class="clear-btn" @click="clearSelection">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
-
-    <!-- Escenario Principal -->
-    <div class="scene-container">
+    <!-- Panel Derecho -->
+    <div class="right-panel">
+      <!-- Escenario Principal -->
+      <div class="scene-container">
       <button v-if="currentView === 'detail'" class="back-btn" @click="currentView = 'map'">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         Volver al Mapa Aéreo
@@ -225,21 +243,40 @@ const clearSelection = () => {
               </div>
             </div>
           </div>
+          </div>
         </div>
       </transition>
+    </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .library-map-container {
-  padding: 2rem;
+  padding: 1.5rem;
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .library-map-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.left-panel {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
+}
+
+.right-panel {
+  width: 100%;
 }
 
 .header h2 {
@@ -251,14 +288,12 @@ const clearSelection = () => {
 
 .header p {
   color: #64748b;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 /* Buscador */
 .search-section {
   position: relative;
-  max-width: 600px;
-  margin: 0 auto;
   width: 100%;
 }
 
@@ -271,7 +306,7 @@ const clearSelection = () => {
   left: 1.2rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #94a3b8;
+  color: #9f1239;
 }
 
 .search-input {
@@ -279,10 +314,11 @@ const clearSelection = () => {
   padding: 1rem 1rem 1rem 3.5rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   transition: all 0.2s;
   background: #f8fafc;
   color: #0f172a;
+  box-sizing: border-box;
 }
 
 .search-input:focus {
@@ -308,7 +344,7 @@ const clearSelection = () => {
 }
 
 .result-item {
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -325,92 +361,134 @@ const clearSelection = () => {
   display: block;
   font-weight: 700;
   color: #0f172a;
-  font-size: 1.05rem;
+  font-size: 1rem;
   margin-bottom: 4px;
 }
 
 .book-author {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #64748b;
 }
 
 .book-location {
   background: #ffe4e6;
   color: #9f1239;
-  padding: 0.4rem 0.8rem;
+  padding: 0.3rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
-/* Tarjeta Seleccionada */
-.selected-book-card {
+/* Tarjeta Seleccionada (Sidebar) */
+.selected-book-sidebar-card {
   background: linear-gradient(135deg, #fdf2f8 0%, #fff1f2 100%);
   border: 1px solid #fecdd3;
-  border-radius: 12px;
-  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   position: relative;
-  box-shadow: 0 4px 15px -3px rgba(159, 18, 57, 0.1);
-}
-
-.selected-info h3 {
-  color: #9f1239;
-  margin-bottom: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: 800;
-}
-
-.selected-info p {
-  color: #475569;
-  margin: 0.25rem 0;
-  font-size: 0.95rem;
-}
-
-.location-badge {
-  background: white;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 20px -5px rgba(159, 18, 57, 0.15);
   text-align: center;
-  border: 2px solid #fecdd3;
 }
 
-.badge-title {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: #9f1239;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.25rem;
-}
-
-.badge-value {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.clear-btn {
+.clear-btn-sidebar {
   position: absolute;
   top: 1rem;
   right: 1rem;
   background: white;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
+  border: 1px solid #fecdd3;
+  color: #9f1239;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.clear-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+.clear-btn-sidebar:hover {
+  background: #9f1239;
+  color: white;
   transform: scale(1.1);
+}
+
+.book-cover-large {
+  width: 140px;
+  height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-cover-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #94a3b8;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.selected-info-vertical h3 {
+  color: #9f1239;
+  margin-bottom: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.selected-info-vertical .author {
+  color: #475569;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.location-badge-vertical {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  border: 1px solid #fecdd3;
+}
+
+.location-badge-vertical .badge-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #9f1239;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.location-badge-vertical .badge-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+}
+
+.location-badge-vertical .badge-sub {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 600;
 }
 
 /* =========================================
@@ -546,6 +624,17 @@ const clearSelection = () => {
   font-weight: 800;
   font-size: 0.85rem;
   letter-spacing: 1px;
+}
+
+.top-label {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.iso-shelf:hover .top-label,
+.iso-shelf.is-target .top-label {
+  opacity: 1;
 }
 
 .iso-face.front { /* Frontal = Ancho, Extrusión Z=120 */
