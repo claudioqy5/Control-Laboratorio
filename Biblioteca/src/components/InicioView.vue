@@ -295,21 +295,32 @@ onUnmounted(() => {
           </div>
 
           <div class="acquisitions-grid">
-            <div v-for="libro in libros.slice(0, 4)" :key="libro.libroID" class="book-card" @click="emit('view-book', libro)">
-              <div class="book-card-cover-wrapper">
-                <img v-if="libro.portada" :src="libro.portada" alt="Portada">
-                <div v-else class="book-card-placeholder-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <div v-for="libro in libros.slice(0, 4)" :key="libro.libroID"
+                 class="book-wrapper" @click="emit('view-book', libro)">
+              <div class="book">
+                <!-- Back content (visible behind cover) -->
+                <div class="book-inner">
+                  <div class="book-inner-meta">{{ libro.categoria || 'Medicina' }}</div>
+                  <div class="book-inner-title">{{ libro.titulo }}</div>
+                  <div class="book-inner-author">{{ libro.autor }}</div>
+                  <div class="book-inner-year">{{ libro.anio || '' }}</div>
+                  <span class="book-inner-status" :class="libro.estado === 'Disponible' ? 'disponible' : 'prestado'">
+                    {{ libro.estado }}
+                  </span>
                 </div>
-                <span class="badge-status" :class="libro.estado === 'Disponible' ? 'disponible' : 'prestado'">
-                  {{ libro.estado }}
-                </span>
+                <!-- Cover (flips open on hover) -->
+                <div class="cover">
+                  <img v-if="libro.portada" :src="libro.portada" alt="Portada" class="cover-img">
+                  <div v-else class="cover-placeholder">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <p>{{ libro.titulo }}</p>
+                  </div>
+                </div>
               </div>
-              <div class="book-card-meta">{{ libro.categoria || 'Medicina' }}</div>
-              <h4 class="book-card-title">{{ libro.titulo }}</h4>
-              <div class="book-card-author">{{ libro.autor }}</div>
-              <div class="book-card-footer">
-                <span class="book-card-year">{{ libro.anio }}</span>
+              <div class="book-card-footer-3d">
                 <span class="book-card-action">
                   Detalles
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -408,3 +419,189 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.book-wrapper {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.book {
+  position: relative;
+  border-radius: 10px;
+  width: 140px;
+  height: 190px;
+  background-color: whitesmoke;
+  -webkit-box-shadow: 1px 1px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 1px 1px 12px rgba(0, 0, 0, 0.3);
+  -webkit-transform: preserve-3d;
+  -ms-transform: preserve-3d;
+  transform: preserve-3d;
+  -webkit-perspective: 2000px;
+  perspective: 2000px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  color: #000;
+}
+
+.cover {
+  top: 0;
+  position: absolute;
+  background-color: lightgray;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  cursor: pointer;
+  -webkit-transition: all 0.5s;
+  transition: all 0.5s;
+  -webkit-transform-origin: 0;
+  -ms-transform-origin: 0;
+  transform-origin: 0;
+  -webkit-box-shadow: 1px 1px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 1px 1px 12px rgba(0, 0, 0, 0.3);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+
+.book:hover .cover {
+  -webkit-transform: rotateY(-80deg);
+  -ms-transform: rotateY(-80deg);
+  transform: rotateY(-80deg);
+}
+
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  text-align: center;
+  background: linear-gradient(135deg, #1e3a8a, #0f172a);
+  color: white;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.cover-placeholder svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cover-placeholder p {
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-top: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.2;
+}
+
+.book-inner {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  justify-content: space-between;
+  box-sizing: border-box;
+  background-color: #f8fafc;
+  border-radius: 10px;
+}
+
+.book-inner-meta {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: var(--urp-red);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.book-inner-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--navy-dark);
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+
+.book-inner-author {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-inner-year {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+.book-inner-status {
+  font-size: 0.55rem;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  align-self: flex-start;
+  text-transform: uppercase;
+}
+
+.book-inner-status.disponible {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.book-inner-status.prestado {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.book-card-footer-3d {
+  margin-top: 0.5rem;
+  text-align: center;
+  width: 100%;
+}
+
+.book-card-action {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--navy-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.book-wrapper:hover .book-card-action {
+  color: var(--urp-red);
+}
+</style>
