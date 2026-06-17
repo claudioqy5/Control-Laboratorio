@@ -32,3 +32,9 @@ Backend/wwwroot/updates/ControlLaboratorio.Agent.exe
 
 # Google Credentials
 Backend/google-credentials.json
+
+# Conversation/chat export files (may contain secrets)
+Reviewing*.md
+Integración*.md
+*.credentials.txt
+base64.txt
