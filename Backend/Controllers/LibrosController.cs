@@ -132,8 +132,9 @@ namespace ControlLaboratorio.API.Controllers
             if (libro == null)
                 return NotFound(new { mensaje = "Libro no encontrado" });
 
-            // Ensure the directory exists
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "portadas", "biblioteca");
+            // Ensure the directory exists. Fallback to ContentRootPath/wwwroot if WebRootPath is null.
+            var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var uploadsFolder = Path.Combine(webRoot, "portadas", "biblioteca");
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
@@ -150,8 +151,8 @@ namespace ControlLaboratorio.API.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            // Update the DB with the relative URL
-            var relativeUrl = $"/portadas/biblioteca/{uniqueFileName}";
+            // Update the DB with the relative URL using the new /api/static prefix
+            var relativeUrl = $"/api/static/portadas/biblioteca/{uniqueFileName}";
             libro.Portada = relativeUrl;
 
             await _context.SaveChangesAsync();

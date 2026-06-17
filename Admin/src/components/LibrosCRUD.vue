@@ -320,7 +320,7 @@ onMounted(() => {
           <td>
             <div style="display: flex; justify-content: center; align-items: center;">
               <div class="book-cover-thumbnail">
-                <img v-if="l.portada" :src="l.portada.startsWith('data:') ? l.portada : API_BASE_URL + l.portada" alt="Portada" />
+                <img v-if="l.portada" :src="l.portada.startsWith('data:') ? l.portada : (l.portada.startsWith('/portadas') ? API_BASE_URL + '/api/static' + l.portada : API_BASE_URL + l.portada)" alt="Portada" />
                 <div v-else class="book-cover-placeholder">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                 </div>

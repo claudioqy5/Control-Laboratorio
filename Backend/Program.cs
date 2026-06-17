@@ -2,6 +2,7 @@ using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Models;
 using ControlLaboratorio.API.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -191,7 +192,21 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseStaticFiles();
+app.UseStaticFiles(); // Mantener ruta por defecto
+
+// Asegurar que exista la carpeta wwwroot
+var wwwrootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+if (!Directory.Exists(wwwrootPath))
+{
+    Directory.CreateDirectory(wwwrootPath);
+}
+
+// Servir archivos estáticos bajo la ruta /api/static para que Nginx la enrute al backend
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(wwwrootPath),
+    RequestPath = "/api/static"
+});
 
 app.UseHttpsRedirection();
 
