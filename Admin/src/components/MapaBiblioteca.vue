@@ -40,17 +40,24 @@ const selectBook = (book) => {
   currentView.value = 'map' // Siempre muestra primero el mapa para ver la ubicación aérea
 }
 
-// 25 Estantes independientes (Estante 1 a la izquierda, luego 6 pasillos de 4 estantes cada uno)
+// 31 Estantes independientes (Estante 1 a la izquierda, luego 8 pasillos de hasta 4 estantes cada uno)
 const estantesData = []
 estantesData.push({ id: 1, left: 60, top: 220, width: 40, height: 180, caras: ['A'], pisos: 6 })
 let currentId = 2
-const aislesLeft = [170, 280, 390, 500, 610, 720]
+const aislesLeft = [170, 280, 390, 500, 610, 720, 830, 940]
 for (const aisleX of aislesLeft) {
-  // Cuadrante de 4 estantes independientes por pasillo
-  estantesData.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
-  estantesData.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
-  estantesData.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
-  estantesData.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+  if (currentId <= 31) {
+    estantesData.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+  }
+  if (currentId <= 31) {
+    estantesData.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+  }
+  if (currentId <= 31) {
+    estantesData.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+  }
+  if (currentId <= 31) {
+    estantesData.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+  }
 }
 const estantes = estantesData
 
@@ -546,7 +553,7 @@ const clearSelection = () => {
 }
 
 .wood-floor {
-  width: 850px;
+  width: 1060px;
   height: 600px;
   background-color: #d1bfae;
   background-image: 
