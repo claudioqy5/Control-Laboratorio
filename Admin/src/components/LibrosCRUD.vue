@@ -248,6 +248,14 @@ const removePortada = () => {
   portadaFile.value = null
 }
 
+const showImageModal = ref(false)
+const selectedImage = ref('')
+
+const viewImage = (url) => {
+  selectedImage.value = url.startsWith('data:') ? url : (url.startsWith('/portadas') ? API_BASE_URL + '/api/static' + url : API_BASE_URL + url)
+  showImageModal.value = true
+}
+
 onMounted(() => {
   loadLibros()
 })
@@ -315,7 +323,7 @@ onMounted(() => {
           <td>
             <div style="display: flex; gap: 1rem; align-items: center; text-align: left;">
               <div class="book-cover-thumbnail" style="flex-shrink: 0; width: 45px; height: 60px;">
-                <img v-if="l.portada" :src="l.portada.startsWith('data:') ? l.portada : (l.portada.startsWith('/portadas') ? API_BASE_URL + '/api/static' + l.portada : API_BASE_URL + l.portada)" alt="Portada" />
+                <img v-if="l.portada" :src="l.portada.startsWith('data:') ? l.portada : (l.portada.startsWith('/portadas') ? API_BASE_URL + '/api/static' + l.portada : API_BASE_URL + l.portada)" alt="Portada" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; cursor: zoom-in; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" @click="viewImage(l.portada)" />
                 <div v-else class="book-cover-placeholder">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                 </div>
@@ -572,6 +580,14 @@ onMounted(() => {
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div v-if="showImageModal" class="image-viewer-backdrop" @click="showImageModal = false">
+      <button class="close-viewer-btn" @click="showImageModal = false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <img :src="selectedImage" class="viewer-img" @click.stop />
     </div>
   </div>
 </template>

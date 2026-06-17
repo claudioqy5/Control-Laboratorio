@@ -128,25 +128,44 @@ const clearSelection = () => {
         Volver al Mapa Aéreo
       </button>
 
-      <!-- VISTA MAPA (2D Top-Down Blueprint) -->
+      <!-- VISTA MAPA (Isométrica 3D Estilo Mockup) -->
       <transition name="fade">
-        <div v-if="currentView === 'map'" class="topdown-scene">
-          <div class="topdown-floor">
-            <!-- Etiqueta de la puerta/entrada -->
-            <div class="topdown-entrance">PUERTA PRINCIPAL</div>
+        <div v-if="currentView === 'map'" class="isometric-scene">
+          <div class="wood-floor">
+            <!-- Textos en el piso (ajustados a los pasillos) -->
+            <div class="floor-label-text" style="top: 420px; left: 100px; transform: translateZ(1px) rotateZ(-90deg);">ZONA MULTIDISCIPLINARIA</div>
+            <div class="floor-label-text" style="top: 420px; left: 330px; transform: translateZ(1px) rotateZ(-90deg);">ZONA DE LITERATURA</div>
+            <div class="floor-label-text" style="top: 420px; left: 550px; transform: translateZ(1px) rotateZ(-90deg);">ZONA DE CIENCIAS</div>
             
+            <div class="entrance-marker">ENTRADA PRINCIPAL</div>
+            
+            <!-- Renderizar los 7 estantes según la radiografía -->
             <div 
               v-for="estante in estantes" 
               :key="estante.id"
-              class="topdown-shelf"
-              :class="[ 'td-shelf-' + estante.id, { 'is-target': isBookInShelf(estante.id) } ]"
+              class="iso-shelf"
+              :class="[ 'shelf-pos-' + estante.id, { 'is-target': isBookInShelf(estante.id) } ]"
               @click="openShelfDetail(estante.id)"
             >
-              <div class="shelf-label">ESTANTE {{ estante.id }}</div>
+              <!-- Cara Superior (Techo) -->
+              <div class="iso-face top">
+                <span>{{ estante.id }}</span>
+              </div>
               
-              <!-- Indicador animado si el libro está aquí -->
-              <div v-if="isBookInShelf(estante.id)" class="target-indicator">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="#ef4444" stroke="white" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3" fill="white"></circle></svg>
+              <!-- Caras Delantera y Trasera (cortas) -->
+              <div class="iso-face front"></div>
+              <div class="iso-face back"></div>
+              
+              <!-- Caras Laterales (Largas, muestran los libros) -->
+              <div class="iso-face left">
+                 <div class="fake-book-col" style="background: linear-gradient(180deg, #9ca3af 10%, #6b7280 15%, #cbd5e1 20%, #e2e8f0 30%, #ef4444 35%, #9ca3af 45%, #f59e0b 60%, #3b82f6 80%, #6b7280 90%);"></div>
+                 <div class="fake-book-col" style="background: linear-gradient(180deg, #10b981 10%, #cbd5e1 20%, #6b7280 25%, #9ca3af 45%, #ef4444 50%, #f59e0b 60%, #e2e8f0 80%, #3b82f6 90%);"></div>
+                 <div class="fake-book-col" style="background: linear-gradient(180deg, #3b82f6 5%, #6b7280 15%, #ef4444 30%, #e2e8f0 40%, #cbd5e1 55%, #f59e0b 60%, #10b981 80%, #9ca3af 95%);"></div>
+              </div>
+              <div class="iso-face right">
+                 <div class="fake-book-col" style="background: linear-gradient(180deg, #9ca3af 10%, #6b7280 15%, #cbd5e1 20%, #e2e8f0 30%, #ef4444 35%, #9ca3af 45%, #f59e0b 60%, #3b82f6 80%, #6b7280 90%);"></div>
+                 <div class="fake-book-col" style="background: linear-gradient(180deg, #10b981 10%, #cbd5e1 20%, #6b7280 25%, #9ca3af 45%, #ef4444 50%, #f59e0b 60%, #e2e8f0 80%, #3b82f6 90%);"></div>
+                 <div class="fake-book-col" style="background: linear-gradient(180deg, #3b82f6 5%, #6b7280 15%, #ef4444 30%, #e2e8f0 40%, #cbd5e1 55%, #f59e0b 60%, #10b981 80%, #9ca3af 95%);"></div>
               </div>
             </div>
           </div>
@@ -423,115 +442,173 @@ const clearSelection = () => {
 }
 
 /* =========================================
-   VISTA MAPA PLANO 2D (TOP-DOWN)
+   VISTA MAPA (ISOMÉTRICA 3D - ESTILO MOCKUP)
    ========================================= */
-.topdown-scene {
+.isometric-scene {
   width: 100%;
   height: 100%;
+  perspective: 2500px;
   display: flex;
   justify-content: center;
   align-items: center;
+  background: #ffffff; /* Fondo blanco limpio */
 }
 
-.topdown-floor {
-  width: 800px;
-  height: 550px;
-  background: white;
-  border: 3px solid #cbd5e1;
-  border-radius: 16px;
-  position: relative;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-  /* Blueprint Grid */
+.wood-floor {
+  width: 850px;
+  height: 600px;
+  background-color: #d1bfae;
   background-image: 
-    linear-gradient(#f1f5f9 1px, transparent 1px), 
-    linear-gradient(90deg, #f1f5f9 1px, transparent 1px);
-  background-size: 20px 20px;
+    repeating-linear-gradient(45deg, #c3b09e 25%, transparent 25%, transparent 75%, #c3b09e 75%, #c3b09e), 
+    repeating-linear-gradient(45deg, #c3b09e 25%, #d1bfae 25%, #d1bfae 75%, #c3b09e 75%, #c3b09e);
+  background-position: 0 0, 15px 15px;
+  background-size: 30px 30px;
+  
+  transform: rotateX(60deg) rotateZ(-35deg);
+  transform-style: preserve-3d;
+  position: relative;
+  
+  /* Grosor del piso negro estilo bloque 3D */
+  box-shadow: 
+    -2px 2px 0 #111,
+    -4px 4px 0 #111,
+    -6px 6px 0 #111,
+    -8px 8px 15px rgba(0,0,0,0.5);
+  border: 1px solid #111;
 }
 
-.topdown-entrance {
+.floor-label-text {
   position: absolute;
-  bottom: -3px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  padding: 10px 40px;
-  border: 3px solid #cbd5e1;
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
-  color: #64748b;
+  color: #f1f5f9;
   font-weight: 800;
-  font-size: 1rem;
-  letter-spacing: 2px;
-  box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  transform: translateZ(1px);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
-/* Rectángulo del Estante */
-.topdown-shelf {
+.entrance-marker {
   position: absolute;
-  width: 60px;
-  height: 200px;
+  bottom: 0px;
+  right: 0px;
+  background: #111;
+  color: #fff;
+  padding: 8px 40px;
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  transform: translateZ(1px) translateX(25px) translateY(10px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  border-radius: 2px;
+}
+
+/* Prisma Rectangular del Estante (Vertical) */
+.iso-shelf {
+  position: absolute;
+  width: 40px; /* Ancho X */
+  height: 350px; /* Largo Y */
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.iso-shelf:hover {
+  transform: translateZ(10px);
+}
+
+.iso-face {
+  position: absolute;
   background: #e2e8f0;
-  border: 2px solid #94a3b8;
-  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  backface-visibility: hidden;
+}
+
+/* Z Extrusion: 120px */
+.iso-face.top {
+  width: 100%; height: 100%;
+  transform: translateZ(120px);
+  background: #f8fafc;
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-
-.topdown-shelf:hover {
-  background: #cbd5e1;
-  transform: scale(1.05) translateY(-2px);
-  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-  border-color: #64748b;
-}
-
-.shelf-label {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-  color: #475569;
+  color: #94a3b8;
   font-weight: 800;
-  letter-spacing: 3px;
-  font-size: 0.95rem;
+  font-size: 1.2rem;
 }
 
-/* Layout de los estantes en el piso 2D */
-.td-shelf-1 { top: 60px; left: 80px; } 
-.td-shelf-2 { top: 60px; left: 240px; }
-.td-shelf-3 { top: 60px; left: 440px; }
-.td-shelf-4 { top: 60px; left: 640px; }
-.td-shelf-5 { top: 300px; left: 240px; }
-.td-shelf-6 { top: 300px; left: 440px; }
-.td-shelf-7 { top: 300px; left: 640px; }
-
-/* Estante Objetivo (Efecto Destacado Carmesí) */
-.topdown-shelf.is-target {
-  background: #fee2e2;
-  border-color: #ef4444;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2), 0 10px 15px rgba(239, 68, 68, 0.2);
-  z-index: 10;
-  transform: scale(1.05);
+.iso-face.front { /* Frontal = Ancho (X=40), Extrusión Z=120 */
+  bottom: 0; left: 0;
+  width: 100%; height: 120px;
+  transform-origin: bottom;
+  transform: rotateX(-90deg);
+  background: #cbd5e1;
 }
 
-.topdown-shelf.is-target .shelf-label {
-  color: #9f1239;
+.iso-face.back {
+  top: 0; left: 0;
+  width: 100%; height: 120px;
+  transform-origin: top;
+  transform: rotateX(90deg);
+  background: #cbd5e1;
 }
 
-/* Pin Marcador */
-.target-indicator {
-  position: absolute;
-  top: -20px;
-  animation: mapBounce 1s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 4px 6px rgba(239, 68, 68, 0.4));
+.iso-face.left { /* Largo (Y), Extrusión Z=120 */
+  top: 0; left: 0;
+  width: 120px; height: 100%;
+  transform-origin: left;
+  transform: rotateY(-90deg);
+  background: #94a3b8;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 5px 0;
+  box-sizing: border-box;
 }
 
-@keyframes mapBounce {
-  from { transform: translateY(0) scale(1); }
-  to { transform: translateY(-15px) scale(1.1); }
+.iso-face.right { /* Largo (Y), Extrusión Z=120 */
+  top: 0; right: 0;
+  width: 120px; height: 100%;
+  transform-origin: right;
+  transform: rotateY(90deg);
+  background: #e2e8f0;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 5px 0;
+  box-sizing: border-box;
 }
+
+.fake-book-col {
+  width: 25px; /* Altura de repisa en 3D (eje Z) */
+  height: 95%; /* Largo de libros en el estante (eje Y) */
+  border-radius: 2px;
+  opacity: 0.8;
+  box-shadow: inset 2px 0 4px rgba(0,0,0,0.1);
+}
+
+/* TARGET SHELF (Resaltado Rojo Brillante) */
+.iso-shelf.is-target .iso-face {
+  background: #ef4444 !important;
+  border-color: #dc2626 !important;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+}
+.iso-shelf.is-target .iso-face.top {
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255,255,255,0.5);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.7); /* Resplandor rojo */
+}
+.iso-shelf.is-target .fake-book-col {
+  opacity: 1;
+}
+
+/* Layout de los 7 estantes en fila */
+.shelf-pos-1 { top: 220px; left: 60px; height: 180px; } 
+.shelf-pos-2 { top: 50px; left: 170px; }
+.shelf-pos-3 { top: 50px; left: 280px; }
+.shelf-pos-4 { top: 50px; left: 390px; }
+.shelf-pos-5 { top: 50px; left: 500px; }
+.shelf-pos-6 { top: 50px; left: 610px; }
+.shelf-pos-7 { top: 50px; left: 720px; }
 
 
 /* =========================================
