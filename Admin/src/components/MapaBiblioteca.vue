@@ -40,12 +40,19 @@ const selectBook = (book) => {
   currentView.value = 'map' // Siempre muestra primero el mapa para ver la ubicación aérea
 }
 
-// 7 Estantes: El 1 es de una cara (A), 2-7 de dos caras (A y B)
-const estantes = Array.from({ length: 7 }, (_, i) => ({
-  id: i + 1,
-  caras: i === 0 ? ['A'] : ['A', 'B'],
-  pisos: 6
-}))
+// 25 Estantes independientes (Estante 1 a la izquierda, luego 6 pasillos de 4 estantes cada uno)
+const estantesData = []
+estantesData.push({ id: 1, left: 60, top: 220, width: 40, height: 180, caras: ['A'], pisos: 6 })
+let currentId = 2
+const aislesLeft = [170, 280, 390, 500, 610, 720]
+for (const aisleX of aislesLeft) {
+  // Cuadrante de 4 estantes independientes por pasillo
+  estantesData.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+  estantesData.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+  estantesData.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+  estantesData.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, caras: ['A', 'B'], pisos: 6 })
+}
+const estantes = estantesData
 
 const isBookInShelf = (estanteId) => {
   return selectedBook.value && selectedBook.value.estante === estanteId
@@ -139,48 +146,39 @@ const clearSelection = () => {
             
             <div class="entrance-marker">ENTRADA PRINCIPAL</div>
             
-            <!-- Renderizar los 7 estantes según la radiografía -->
+            <!-- Renderizar los 25 estantes independientes -->
             <div 
               v-for="estante in estantes" 
               :key="estante.id"
-              class="iso-shelf-group"
-              :class="[ 'shelf-pos-' + estante.id, { 'is-target': isBookInShelf(estante.id) } ]"
+              class="iso-shelf"
+              :class="{ 'is-target': isBookInShelf(estante.id) }"
+              :style="{ left: estante.left + 'px', top: estante.top + 'px', width: estante.width + 'px', height: estante.height + 'px' }"
               @click="openShelfDetail(estante.id)"
             >
-              <!-- Etiqueta central flotante para todo el bloque -->
-              <div class="group-top-label">
-                <span style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-                  ESTANTE
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-                  {{ estante.id }}
+              <!-- Cara Superior (Techo) -->
+              <div class="iso-face top">
+                <span 
+                  class="top-label" 
+                  :style="estante.width < 30 ? 'transform: rotate(-90deg) scale(0.85); white-space: nowrap;' : 'transform: scale(0.95); white-space: nowrap;'"
+                >
+                  EST. {{ estante.id }}
                 </span>
               </div>
               
-              <!-- Sub-partes del estante (4 para estantes grandes, 1 para el estante 1) -->
-              <div 
-                v-for="part in (estante.id === 1 ? ['single'] : ['tl', 'tr', 'bl', 'br'])"
-                :key="part"
-                class="iso-shelf-part"
-                :class="'part-' + part"
-              >
-                <!-- Cara Superior (Techo) -->
-                <div class="iso-face top"></div>
-                
-                <!-- Caras Delantera y Trasera (cortas) -->
-                <div class="iso-face front"></div>
-                <div class="iso-face back"></div>
-                
-                <!-- Caras Laterales (Largas, muestran los libros) -->
-                <div class="iso-face left">
-                   <div class="fake-book-col left-face"></div>
-                   <div class="fake-book-col left-face alt-pattern"></div>
-                   <div class="fake-book-col left-face"></div>
-                </div>
-                <div class="iso-face right">
-                   <div class="fake-book-col right-face alt-pattern"></div>
-                   <div class="fake-book-col right-face"></div>
-                   <div class="fake-book-col right-face alt-pattern"></div>
-                </div>
+              <!-- Caras Delantera y Trasera (cortas) -->
+              <div class="iso-face front"></div>
+              <div class="iso-face back"></div>
+              
+              <!-- Caras Laterales (Largas, muestran los libros) -->
+              <div class="iso-face left">
+                 <div class="fake-book-col left-face"></div>
+                 <div class="fake-book-col left-face alt-pattern"></div>
+                 <div class="fake-book-col left-face"></div>
+              </div>
+              <div class="iso-face right">
+                 <div class="fake-book-col right-face alt-pattern"></div>
+                 <div class="fake-book-col right-face"></div>
+                 <div class="fake-book-col right-face alt-pattern"></div>
               </div>
             </div>
           </div>
@@ -517,54 +515,22 @@ const clearSelection = () => {
   border-radius: 2px;
 }
 
-/* Bloque contenedor del estante */
-.iso-shelf-group {
+/* Prisma Rectangular del Estante (Independiente) */
+.iso-shelf {
   position: absolute;
-  width: 40px; /* Ancho total X */
-  height: 350px; /* Largo total Y */
   transform-style: preserve-3d;
   cursor: pointer;
   transition: transform 0.3s;
 }
 
-.iso-shelf-group:hover {
+.iso-shelf:hover {
   transform: translateZ(10px);
 }
 
-.group-top-label {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  transform: translateZ(121px); /* Flotando justo encima del techo */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #a1a1aa;
-  font-weight: 800;
-  font-size: 0.85rem;
-  letter-spacing: 2px;
-  pointer-events: none; /* No bloquear clics */
-}
-
-/* Partes individuales (cuartos) */
-.iso-shelf-part {
-  position: absolute;
-  transform-style: preserve-3d;
-}
-
-/* El estante 1 no se divide */
-.part-single { top: 0; left: 0; width: 100%; height: 100%; }
-
-/* Los otros estantes se dividen en 4 piezas (Gap de 4px en X, 10px en Y) */
-.part-tl { top: 0; left: 0; width: 18px; height: 170px; }
-.part-tr { top: 0; right: 0; width: 18px; height: 170px; }
-.part-bl { bottom: 0; left: 0; width: 18px; height: 170px; }
-.part-br { bottom: 0; right: 0; width: 18px; height: 170px; }
-
 .iso-face {
   position: absolute;
-  background: #f4f4f5; /* Very light grey */
-  border: 1px solid #d4d4d8;
+  background: #8B5A2B; /* Base de madera rica */
+  border: 1px solid #5C3A21;
   backface-visibility: hidden;
 }
 
@@ -572,7 +538,14 @@ const clearSelection = () => {
 .iso-face.top {
   width: 100%; height: 100%;
   transform: translateZ(120px);
-  background: #fafafa;
+  background: #A06E3D; /* Madera más clara para el techo */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #3E2723;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
 }
 
 .iso-face.front { /* Frontal = Ancho, Extrusión Z=120 */
@@ -580,7 +553,7 @@ const clearSelection = () => {
   width: 100%; height: 120px;
   transform-origin: bottom;
   transform: rotateX(-90deg);
-  background: #e4e4e7;
+  background: #794D24; /* Madera un poco más oscura */
 }
 
 .iso-face.back {
@@ -588,7 +561,7 @@ const clearSelection = () => {
   width: 100%; height: 120px;
   transform-origin: top;
   transform: rotateX(90deg);
-  background: #e4e4e7;
+  background: #794D24;
 }
 
 .iso-face.left { /* Largo, Extrusión Z=120 */
@@ -596,7 +569,7 @@ const clearSelection = () => {
   width: 120px; height: 100%;
   transform-origin: left;
   transform: rotateY(-90deg);
-  background: #27272a; /* Dark interior */
+  background: #2E1B10; /* Interior de madera muy oscuro para dar profundidad */
   display: flex;
   justify-content: space-evenly;
   align-items: center;
@@ -609,7 +582,7 @@ const clearSelection = () => {
   width: 120px; height: 100%;
   transform-origin: right;
   transform: rotateY(90deg);
-  background: #27272a; /* Dark interior */
+  background: #2E1B10; /* Interior de madera muy oscuro */
   display: flex;
   flex-direction: row-reverse;
   justify-content: space-evenly;
@@ -648,41 +621,32 @@ const clearSelection = () => {
     #b91c1c 70px, #b91c1c 84px
   );
 }
-.fake-book-col.left-face { border-left: 4px solid #a1a1aa; }
-.fake-book-col.right-face { border-right: 4px solid #a1a1aa; }
+
+/* Repisas de madera horizontales que sostienen los libros */
+.fake-book-col.left-face { border-left: 4px solid #A06E3D; }
+.fake-book-col.right-face { border-right: 4px solid #A06E3D; }
 
 /* TARGET SHELF (Resaltado Rojo Brillante) */
-.iso-shelf-group.is-target .iso-face {
-  background: rgba(239, 68, 68, 0.8) !important;
+.iso-shelf.is-target .iso-face {
+  background: rgba(239, 68, 68, 0.9) !important;
   border-color: #f87171 !important;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
 }
-.iso-shelf-group.is-target .iso-face.top {
+.iso-shelf.is-target .iso-face.top {
   background: #ef4444 !important;
-}
-.iso-shelf-group.is-target .group-top-label {
   color: white !important;
   text-shadow: 0 0 5px rgba(255,255,255,0.8);
 }
-.iso-shelf-group.is-target .iso-face.left,
-.iso-shelf-group.is-target .iso-face.right {
+.iso-shelf.is-target .iso-face.left,
+.iso-shelf.is-target .iso-face.right {
   background: #7f1d1d !important; /* Oscuro adentro para contraste */
 }
-.iso-shelf-group.is-target .fake-book-col {
+.iso-shelf.is-target .fake-book-col {
   /* Overlay rojizo semitransparente sobre los libros */
-  box-shadow: inset 0 0 0 100px rgba(239, 68, 68, 0.5), inset 4px 0 8px rgba(0,0,0,0.6) !important;
+  box-shadow: inset 0 0 0 100px rgba(239, 68, 68, 0.6), inset 4px 0 8px rgba(0,0,0,0.6) !important;
 }
-.iso-shelf-group.is-target .fake-book-col.left-face { border-left-color: #fca5a5 !important; }
-.iso-shelf-group.is-target .fake-book-col.right-face { border-right-color: #fca5a5 !important; }
-
-/* Layout de los 7 estantes en fila */
-.shelf-pos-1 { top: 220px; left: 60px; height: 180px; } 
-.shelf-pos-2 { top: 50px; left: 170px; }
-.shelf-pos-3 { top: 50px; left: 280px; }
-.shelf-pos-4 { top: 50px; left: 390px; }
-.shelf-pos-5 { top: 50px; left: 500px; }
-.shelf-pos-6 { top: 50px; left: 610px; }
-.shelf-pos-7 { top: 50px; left: 720px; }
+.iso-shelf.is-target .fake-book-col.left-face { border-left-color: #fca5a5 !important; }
+.iso-shelf.is-target .fake-book-col.right-face { border-right-color: #fca5a5 !important; }
 
 
 /* =========================================
