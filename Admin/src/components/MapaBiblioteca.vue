@@ -128,33 +128,25 @@ const clearSelection = () => {
         Volver al Mapa Aéreo
       </button>
 
-      <!-- VISTA MAPA (Isométrica 3D) -->
+      <!-- VISTA MAPA (2D Top-Down Blueprint) -->
       <transition name="fade">
-        <div v-if="currentView === 'map'" class="isometric-scene">
-          <div class="floor-plane">
+        <div v-if="currentView === 'map'" class="topdown-scene">
+          <div class="topdown-floor">
             <!-- Etiqueta de la puerta/entrada -->
-            <div class="entrance-marker">ENTRADA PRINCIPAL</div>
+            <div class="topdown-entrance">PUERTA PRINCIPAL</div>
             
             <div 
               v-for="estante in estantes" 
               :key="estante.id"
-              class="iso-shelf"
-              :class="[ 'shelf-' + estante.id, { 'is-target': isBookInShelf(estante.id) } ]"
+              class="topdown-shelf"
+              :class="[ 'td-shelf-' + estante.id, { 'is-target': isBookInShelf(estante.id) } ]"
               @click="openShelfDetail(estante.id)"
             >
-              <!-- Las 5 caras visibles del prisma rectangular -->
-              <div class="iso-face top">
-                <span>ESTANTE {{ estante.id }}</span>
-              </div>
-              <div class="iso-face front"></div>
-              <div class="iso-face back"></div>
-              <div class="iso-face left"></div>
-              <div class="iso-face right"></div>
-
+              <div class="shelf-label">ESTANTE {{ estante.id }}</div>
+              
               <!-- Indicador animado si el libro está aquí -->
-              <div v-if="isBookInShelf(estante.id)" class="target-pin">
-                <div class="pin-bounce"></div>
-                <div class="pin-shadow"></div>
+              <div v-if="isBookInShelf(estante.id)" class="target-indicator">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="#ef4444" stroke="white" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3" fill="white"></circle></svg>
               </div>
             </div>
           </div>
@@ -390,21 +382,19 @@ const clearSelection = () => {
 }
 
 /* =========================================
-   ESCENARIO 3D (LIGHT THEME GLASSMORPHISM)
+   ESCENARIO (CONTENEDOR PRINCIPAL)
    ========================================= */
 .scene-container {
-  /* Fondo claro y limpio */
-  background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
   height: 650px;
   display: flex;
   justify-content: center;
   align-items: center;
-  perspective: 1500px;
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.02), 0 10px 30px rgba(0,0,0,0.03);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
 }
 
 .back-btn {
@@ -412,8 +402,7 @@ const clearSelection = () => {
   top: 1.5rem;
   left: 1.5rem;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
+  background: white;
   border: 1px solid #cbd5e1;
   padding: 0.75rem 1.2rem;
   border-radius: 12px;
@@ -423,206 +412,125 @@ const clearSelection = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  transition: all 0.2s;
 }
 
 .back-btn:hover {
-  background: #ffffff;
+  background: #f1f5f9;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
 
 /* =========================================
-   VISTA MAPA ISOMÉTRICO
+   VISTA MAPA PLANO 2D (TOP-DOWN)
    ========================================= */
-.isometric-scene {
-  position: absolute;
+.topdown-scene {
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.floor-plane {
+.topdown-floor {
   width: 800px;
-  height: 600px;
-  /* Glowing Grid suave */
-  background-image: 
-    linear-gradient(rgba(148, 163, 184, 0.15) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.15) 2px, transparent 2px);
-  background-size: 40px 40px;
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(4px);
-  
-  transform: rotateX(60deg) rotateZ(-35deg);
-  transform-style: preserve-3d;
-  position: relative;
-  
-  /* Borde limpio */
-  border: 1px solid rgba(203, 213, 225, 0.8);
+  height: 550px;
+  background: white;
+  border: 3px solid #cbd5e1;
   border-radius: 16px;
-  box-shadow: 
-    0 30px 60px rgba(0,0,0,0.08), 
-    inset 0 0 40px rgba(255, 255, 255, 0.8);
-    
-  /* Anti-aliasing fix for 3D */
-  outline: 1px solid transparent;
+  position: relative;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+  /* Blueprint Grid */
+  background-image: 
+    linear-gradient(#f1f5f9 1px, transparent 1px), 
+    linear-gradient(90deg, #f1f5f9 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-.entrance-marker {
+.topdown-entrance {
   position: absolute;
-  bottom: -15px;
-  left: 300px;
-  background: #ffffff;
-  color: #475569;
-  padding: 8px 40px;
-  font-weight: 800;
-  letter-spacing: 4px;
-  font-size: 1rem;
-  transform: translateZ(2px);
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-  border: 1px solid #e2e8f0;
-}
-
-/* Prisma Rectangular del Estante (Cristal Limpio) */
-.iso-shelf {
-  position: absolute;
-  width: 70px;
-  height: 220px;
-  transform-style: preserve-3d;
-  cursor: pointer;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* Anti-aliasing hack */
-  outline: 1px solid transparent;
-}
-
-.iso-shelf:hover {
-  transform: translateZ(20px);
-}
-
-.iso-face {
-  position: absolute;
-  transition: all 0.4s ease;
-  /* Glassmorphism Claro */
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.5), 0 4px 10px rgba(0,0,0,0.03);
-  outline: 1px solid transparent; /* Anti-aliasing */
-  backface-visibility: hidden; /* Reduce jagging en caras ocultas */
-}
-
-/* Extrusión en Z: 100px de alto */
-.iso-face.top {
-  width: 100%; 
-  height: 100%;
-  transform: translateZ(100px);
-  background: rgba(255, 255, 255, 0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 10px 40px;
+  border: 3px solid #cbd5e1;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
   color: #64748b;
   font-weight: 800;
-  font-size: 0.9rem;
-  box-shadow: inset 0 0 20px rgba(255,255,255,0.8);
-}
-.iso-face.front { /* Y = 220 */
-  bottom: 0; left: 0;
-  width: 100%; height: 100px;
-  transform-origin: bottom;
-  transform: rotateX(-90deg);
-}
-.iso-face.back { /* Y = 0 */
-  top: 0; left: 0;
-  width: 100%; height: 100px;
-  transform-origin: top;
-  transform: rotateX(90deg);
-}
-.iso-face.left { /* X = 0 */
-  top: 0; left: 0;
-  width: 100px; height: 100%;
-  transform-origin: left;
-  transform: rotateY(-90deg);
-  background: rgba(241, 245, 249, 0.7); /* Sombra suave para profundidad */
-}
-.iso-face.right { /* X = 70 */
-  top: 0; right: 0;
-  width: 100px; height: 100%;
-  transform-origin: right;
-  transform: rotateY(90deg);
+  font-size: 1rem;
+  letter-spacing: 2px;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.02);
 }
 
-/* Layout de los estantes en el piso */
-.shelf-1 { top: 80px; left: 80px; } 
-.shelf-2 { top: 80px; left: 260px; }
-.shelf-3 { top: 80px; left: 440px; }
-.shelf-4 { top: 80px; left: 620px; }
-.shelf-5 { top: 340px; left: 260px; }
-.shelf-6 { top: 340px; left: 440px; }
-.shelf-7 { top: 340px; left: 620px; }
+/* Rectángulo del Estante */
+.topdown-shelf {
+  position: absolute;
+  width: 60px;
+  height: 200px;
+  background: #e2e8f0;
+  border: 2px solid #94a3b8;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
 
-/* Estante Objetivo (Efecto Resaltado Carmesí del Sistema) */
-.is-target {
-  animation: floatTarget 2s infinite ease-in-out;
+.topdown-shelf:hover {
+  background: #cbd5e1;
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+  border-color: #64748b;
+}
+
+.shelf-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  color: #475569;
+  font-weight: 800;
+  letter-spacing: 3px;
+  font-size: 0.95rem;
+}
+
+/* Layout de los estantes en el piso 2D */
+.td-shelf-1 { top: 60px; left: 80px; } 
+.td-shelf-2 { top: 60px; left: 240px; }
+.td-shelf-3 { top: 60px; left: 440px; }
+.td-shelf-4 { top: 60px; left: 640px; }
+.td-shelf-5 { top: 300px; left: 240px; }
+.td-shelf-6 { top: 300px; left: 440px; }
+.td-shelf-7 { top: 300px; left: 640px; }
+
+/* Estante Objetivo (Efecto Destacado Carmesí) */
+.topdown-shelf.is-target {
+  background: #fee2e2;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2), 0 10px 15px rgba(239, 68, 68, 0.2);
   z-index: 10;
-}
-.is-target .iso-face {
-  background: rgba(254, 226, 226, 0.6);
-  border-color: #fda4af;
-  box-shadow: inset 0 0 20px rgba(159, 18, 57, 0.1), 0 10px 20px rgba(159, 18, 57, 0.15);
-}
-.is-target .iso-face.top {
-  background: rgba(255, 255, 255, 0.9);
-  color: #9f1239;
-}
-.is-target .iso-face.left {
-  background: rgba(254, 205, 211, 0.7);
+  transform: scale(1.05);
 }
 
-@keyframes floatTarget {
-  0%, 100% { transform: translateZ(5px); }
-  50% { transform: translateZ(25px); }
+.topdown-shelf.is-target .shelf-label {
+  color: #9f1239;
 }
 
 /* Pin Marcador */
-.target-pin {
+.target-indicator {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) translateZ(180px) rotateX(-90deg) rotateY(-35deg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none;
+  top: -20px;
+  animation: mapBounce 1s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 4px 6px rgba(239, 68, 68, 0.4));
 }
 
-.pin-bounce {
-  width: 40px;
-  height: 40px;
-  background: #e11d48;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  animation: pinBounce 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 20px rgba(225, 29, 72, 0.3);
-  border: 3px solid #ffffff;
-}
-.pin-bounce::after {
-  content: '';
-  position: absolute;
-  width: 12px; height: 12px;
-  background: white;
-  border-radius: 50%;
-  top: 11px; left: 11px;
-}
-
-@keyframes pinBounce {
-  0% { transform: rotate(-45deg) translateY(0) scale(1); }
-  50% { transform: rotate(-45deg) translateY(-25px) scale(1.1); }
-  100% { transform: rotate(-45deg) translateY(0) scale(1); }
+@keyframes mapBounce {
+  from { transform: translateY(0) scale(1); }
+  to { transform: translateY(-15px) scale(1.1); }
 }
 
 
