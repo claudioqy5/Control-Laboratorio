@@ -41,24 +41,16 @@ const selectBook = (book) => {
   currentView.value = 'map' // Mantener siempre la vista del mapa aéreo
 }
 
-// 31 Estantes independientes con cara única (Estante 1 a la izquierda, luego 8 pasillos de hasta 4 estantes cada uno)
+// 25 Estantes independientes con cara única (Estante 1 a la izquierda, luego 6 pasillos de 4 estantes cada uno)
 const estantesData = []
 estantesData.push({ id: 1, left: 60, top: 220, width: 40, height: 180, caras: ['A'], pisos: 6 })
 let currentId = 2
-const aislesLeft = [170, 280, 390, 500, 610, 720, 830, 940]
+const aislesLeft = [170, 280, 390, 500, 610, 720]
 for (const aisleX of aislesLeft) {
-  if (currentId <= 31) {
-    estantesData.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })
-  }
-  if (currentId <= 31) {
-    estantesData.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })
-  }
-  if (currentId <= 31) {
-    estantesData.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170, caras: ['A'], pisos: 6 })
-  }
-  if (currentId <= 31) {
-    estantesData.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, caras: ['A'], pisos: 6 })
-  }
+  estantesData.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })
+  estantesData.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })
+  estantesData.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170, caras: ['A'], pisos: 6 })
+  estantesData.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, caras: ['A'], pisos: 6 })
 }
 const estantes = estantesData
 
@@ -544,7 +536,7 @@ const clearSelection = () => {
 }
 
 .wood-floor {
-  width: 1060px;
+  width: 850px;
   height: 600px;
   background-color: #d1bfae;
   background-image: 
