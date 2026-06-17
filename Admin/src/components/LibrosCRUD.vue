@@ -134,18 +134,29 @@ const saveLibro = async () => {
     return
   }
 
-  try {
-    const isNew = !currentLibro.value.libroID
-    let savedLibroId = currentLibro.value.libroID
-
-    // Prepare payload (don't send raw base64 as portada if it's new, wait for the actual file upload)
-    const payload = { ...currentLibro.value }
-    if (portadaFile.value) {
-      payload.portada = null // Backend will update this when we upload the file
-    }
-
-    if (isNew) {
-      const res = await axios.post(`${API_BASE_URL}/api/Libros`, payload)
+    try {
+      const isNew = !currentLibro.value.libroID
+      let savedLibroId = currentLibro.value.libroID
+  
+      // Prepare payload
+      const payload = { ...currentLibro.value }
+      
+      // Fix for ASP.NET Core rejecting 'null' for int properties
+      if (isNew) {
+        payload.libroID = 0
+      }
+      
+      // Paginacion es number
+      payload.paginas = Number(payload.paginas) || 0
+      if (payload.estante) payload.estante = Number(payload.estante)
+      if (payload.piso) payload.piso = Number(payload.piso)
+  
+      if (portadaFile.value) {
+        payload.portada = null // Backend will update this when we upload the file
+      }
+  
+      if (isNew) {
+        const res = await axios.post(`${API_BASE_URL}/api/Libros`, payload)
       savedLibroId = res.data.libroID
       showToast('Libro registrado exitosamente.', 'success')
     } else {
@@ -169,15 +180,26 @@ const saveLibro = async () => {
     showModal.value = false
     portadaFile.value = null
 
-  } catch (error) {
-    console.error("Error saving libro:", error)
-    if (error.response && error.response.data && error.response.data.mensaje) {
-      validationError.value = error.response.data.mensaje
-    } else {
-      validationError.value = "Ocurrió un error al guardar el libro."
+    } catch (error) {
+      console.error("Error saving libro:", error)
+      if (error.response && error.response.data) {
+        if (error.response.data.mensaje) {
+          validationError.value = error.response.data.mensaje
+        } else if (error.response.data.errors) {
+          // Extraer errores de validación automáticos de ASP.NET Core
+          const errMessages = []
+          for (const field in error.response.data.errors) {
+            errMessages.push(...error.response.data.errors[field])
+          }
+          validationError.value = errMessages.join(" | ")
+        } else {
+          validationError.value = "Ocurrió un error de validación en el servidor."
+        }
+      } else {
+        validationError.value = "Ocurrió un error de red al guardar el libro."
+      }
     }
   }
-}
 
 const editLibro = (libro) => {
   currentLibro.value = { ...libro }

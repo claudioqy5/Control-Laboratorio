@@ -390,12 +390,12 @@ const clearSelection = () => {
 }
 
 /* =========================================
-   ESCENARIO 3D (PREMIUM GLASS / HIGH-TECH)
+   ESCENARIO 3D (LIGHT THEME GLASSMORPHISM)
    ========================================= */
 .scene-container {
-  /* Fondo moderno oscuro estilo escáner/holográfico para resaltar los cristales */
-  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-  border: 1px solid #334155;
+  /* Fondo claro y limpio */
+  background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
   border-radius: 20px;
   position: relative;
   overflow: hidden;
@@ -404,7 +404,7 @@ const clearSelection = () => {
   justify-content: center;
   align-items: center;
   perspective: 1500px;
-  box-shadow: inset 0 0 80px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.02), 0 10px 30px rgba(0,0,0,0.03);
 }
 
 .back-btn {
@@ -412,25 +412,25 @@ const clearSelection = () => {
   top: 1.5rem;
   left: 1.5rem;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #cbd5e1;
   padding: 0.75rem 1.2rem;
   border-radius: 12px;
   font-weight: 700;
-  color: white;
+  color: #334155;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .back-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 
 /* =========================================
@@ -449,24 +449,24 @@ const clearSelection = () => {
 .floor-plane {
   width: 800px;
   height: 600px;
-  /* Glowing Grid */
+  /* Glowing Grid suave */
   background-image: 
-    linear-gradient(rgba(56, 189, 248, 0.15) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(56, 189, 248, 0.15) 2px, transparent 2px);
+    linear-gradient(rgba(148, 163, 184, 0.15) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.15) 2px, transparent 2px);
   background-size: 40px 40px;
-  background-color: rgba(15, 23, 42, 0.8);
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
   
   transform: rotateX(60deg) rotateZ(-35deg);
   transform-style: preserve-3d;
   position: relative;
   
-  /* Borde brillante */
-  border: 2px solid rgba(56, 189, 248, 0.3);
+  /* Borde limpio */
+  border: 1px solid rgba(203, 213, 225, 0.8);
   border-radius: 16px;
   box-shadow: 
-    0 40px 100px rgba(0,0,0,0.8), 
-    inset 0 0 80px rgba(56, 189, 248, 0.1),
-    0 0 20px rgba(56, 189, 248, 0.2);
+    0 30px 60px rgba(0,0,0,0.08), 
+    inset 0 0 40px rgba(255, 255, 255, 0.8);
     
   /* Anti-aliasing fix for 3D */
   outline: 1px solid transparent;
@@ -476,18 +476,19 @@ const clearSelection = () => {
   position: absolute;
   bottom: -15px;
   left: 300px;
-  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.8), transparent);
-  color: white;
+  background: #ffffff;
+  color: #475569;
   padding: 8px 40px;
   font-weight: 800;
   letter-spacing: 4px;
   font-size: 1rem;
   transform: translateZ(2px);
-  text-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
 }
 
-/* Prisma Rectangular del Estante (Cristal Holográfico) */
+/* Prisma Rectangular del Estante (Cristal Limpio) */
 .iso-shelf {
   position: absolute;
   width: 70px;
@@ -506,11 +507,11 @@ const clearSelection = () => {
 .iso-face {
   position: absolute;
   transition: all 0.4s ease;
-  /* Glassmorphism */
-  background: rgba(14, 165, 233, 0.1);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  box-shadow: inset 0 0 20px rgba(14, 165, 233, 0.2);
+  /* Glassmorphism Claro */
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.5), 0 4px 10px rgba(0,0,0,0.03);
   outline: 1px solid transparent; /* Anti-aliasing */
   backface-visibility: hidden; /* Reduce jagging en caras ocultas */
 }
@@ -520,15 +521,14 @@ const clearSelection = () => {
   width: 100%; 
   height: 100%;
   transform: translateZ(100px);
-  background: rgba(56, 189, 248, 0.2);
+  background: rgba(255, 255, 255, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #fff;
+  color: #64748b;
   font-weight: 800;
   font-size: 0.9rem;
-  text-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
-  box-shadow: inset 0 0 30px rgba(255,255,255,0.2), 0 0 15px rgba(56, 189, 248, 0.3);
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.8);
 }
 .iso-face.front { /* Y = 220 */
   bottom: 0; left: 0;
@@ -547,7 +547,7 @@ const clearSelection = () => {
   width: 100px; height: 100%;
   transform-origin: left;
   transform: rotateY(-90deg);
-  background: rgba(14, 165, 233, 0.15); /* Ligeramente más oscuro por "sombra" */
+  background: rgba(241, 245, 249, 0.7); /* Sombra suave para profundidad */
 }
 .iso-face.right { /* X = 70 */
   top: 0; right: 0;
@@ -565,23 +565,22 @@ const clearSelection = () => {
 .shelf-6 { top: 340px; left: 440px; }
 .shelf-7 { top: 340px; left: 620px; }
 
-/* Estante Objetivo (Efecto Neón Magenta) */
+/* Estante Objetivo (Efecto Resaltado Carmesí del Sistema) */
 .is-target {
   animation: floatTarget 2s infinite ease-in-out;
   z-index: 10;
 }
 .is-target .iso-face {
-  background: rgba(244, 63, 94, 0.15);
-  border-color: rgba(251, 113, 133, 0.8);
-  box-shadow: inset 0 0 30px rgba(244, 63, 94, 0.3), 0 0 20px rgba(244, 63, 94, 0.4);
+  background: rgba(254, 226, 226, 0.6);
+  border-color: #fda4af;
+  box-shadow: inset 0 0 20px rgba(159, 18, 57, 0.1), 0 10px 20px rgba(159, 18, 57, 0.15);
 }
 .is-target .iso-face.top {
-  background: rgba(251, 113, 133, 0.3);
-  color: #fff;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.9);
+  color: #9f1239;
 }
 .is-target .iso-face.left {
-  background: rgba(225, 29, 72, 0.25);
+  background: rgba(254, 205, 211, 0.7);
 }
 
 @keyframes floatTarget {
@@ -589,7 +588,7 @@ const clearSelection = () => {
   50% { transform: translateZ(25px); }
 }
 
-/* Pin Marcador Holográfico */
+/* Pin Marcador */
 .target-pin {
   position: absolute;
   top: 50%;
@@ -604,21 +603,20 @@ const clearSelection = () => {
 .pin-bounce {
   width: 40px;
   height: 40px;
-  background: radial-gradient(circle, #fda4af 0%, #e11d48 70%);
+  background: #e11d48;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   animation: pinBounce 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 25px rgba(225, 29, 72, 0.8), inset 0 0 10px rgba(255,255,255,0.5);
-  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow: 0 10px 20px rgba(225, 29, 72, 0.3);
+  border: 3px solid #ffffff;
 }
 .pin-bounce::after {
   content: '';
   position: absolute;
-  width: 14px; height: 14px;
+  width: 12px; height: 12px;
   background: white;
   border-radius: 50%;
-  top: 13px; left: 13px;
-  box-shadow: 0 0 10px rgba(255,255,255,0.8);
+  top: 11px; left: 11px;
 }
 
 @keyframes pinBounce {
