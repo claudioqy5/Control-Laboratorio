@@ -40,6 +40,7 @@ namespace ControlLaboratorio.API.Controllers
                     alumnoNombres = s.Alumno != null ? $"{s.Alumno.Nombres} {s.Alumno.ApellidoPaterno} {s.Alumno.ApellidoMaterno}" : "Desconocido",
                     alumnoCodigo = s.Alumno != null ? s.Alumno.CodigoUniversitario : "N/A",
                     equipoRed = s.Equipo != null ? s.Equipo.NombreRed : "Desconocido",
+                    equipoAlias = s.Equipo != null ? s.Equipo.Alias : null,
                     horaInicio = s.HoraInicio,
                     horaFin = s.HoraFin,
                     estado = s.HoraFin == null ? "En línea" : "Finalizado",

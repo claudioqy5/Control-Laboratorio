@@ -149,7 +149,7 @@ onMounted(() => {
           <td>
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-              <strong style="color: #111827;">{{ alumno.ultimaSesion.equipoRed }}</strong>
+              <strong :title="alumno.ultimaSesion.equipoRed" style="color: #111827;">{{ alumno.ultimaSesion.equipoAlias || alumno.ultimaSesion.equipoRed }}</strong>
             </div>
           </td>
           <td style="color: #475569;">{{ formatTime(alumno.ultimaSesion.horaInicio) }}</td>
@@ -196,7 +196,7 @@ onMounted(() => {
                     <td style="text-align: left; padding-left: 1rem;">
                       <div style="display: flex; align-items: center; gap: 8px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                        <strong style="color: #475569;">{{ ses.equipoRed }}</strong>
+                        <strong :title="ses.equipoRed" style="color: #475569;">{{ ses.equipoAlias || ses.equipoRed }}</strong>
                       </div>
                     </td>
                     <td style="color: #64748b;">{{ formatTime(ses.horaInicio) }}</td>
