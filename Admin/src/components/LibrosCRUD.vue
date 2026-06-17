@@ -378,9 +378,19 @@ onMounted(() => {
             <span>{{ validationError }}</span>
           </div>
 
-          <div class="modal-body-layout">
-            <!-- Columna Izquierda: Formulario -->
+          <div class="modal-body-layout-wide">
+            <!-- Columna 1: Info Principal -->
             <div class="modal-form-column">
+              <div class="input-group">
+                <label :class="{ 'error-label': errors.titulo }">Título *</label>
+                <input v-model="currentLibro.titulo" placeholder="Título del libro" class="premium-input" :class="{ 'invalid': errors.titulo }">
+              </div>
+              
+              <div class="input-group">
+                <label :class="{ 'error-label': errors.autor }">Autor *</label>
+                <input v-model="currentLibro.autor" placeholder="Autor principal" class="premium-input" :class="{ 'invalid': errors.autor }">
+              </div>
+
               <div class="form-grid-2">
                 <div class="input-group">
                   <label :class="{ 'error-label': errors.nroRegistro }">N° Registro *</label>
@@ -398,6 +408,13 @@ onMounted(() => {
                   <input v-model="currentLibro.nroClasificacion" placeholder="Ej. WB 100 G216 2021" class="premium-input">
                 </div>
                 <div class="input-group">
+                  <label>Año</label>
+                  <input v-model="currentLibro.anio" placeholder="Ej. 2021" class="premium-input">
+                </div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="input-group">
                   <label>Editorial</label>
                   <input v-model="currentLibro.editorial" placeholder="Editorial" class="premium-input">
                 </div>
@@ -406,8 +423,11 @@ onMounted(() => {
                   <input v-model="currentLibro.edicion" placeholder="Ej. 3ra Edición" class="premium-input">
                 </div>
               </div>
-              
-              <div class="form-row-2">
+            </div>
+
+            <!-- Columna 2: Detalles y Ubicación -->
+            <div class="modal-form-column">
+              <div class="form-grid-2">
                 <div class="input-group">
                   <label>Categoría</label>
                   <select v-model="currentLibro.categoria" class="premium-input">
@@ -427,7 +447,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div class="form-row-3">
+              <div class="form-grid-2">
                 <div class="input-group">
                   <label>Páginas</label>
                   <input type="number" v-model="currentLibro.paginas" placeholder="0" class="premium-input">
@@ -440,53 +460,38 @@ onMounted(() => {
                     <option value="Mantenimiento">Mantenimiento</option>
                   </select>
                 </div>
-                <div class="input-group">
-                  <label>Resumen / Descripción</label>
-                  <input v-model="currentLibro.resumen" placeholder="Breve descripción" class="premium-input">
-                </div>
               </div>
 
               <div class="input-group">
-                <label :class="{ 'error-label': errors.titulo }">Título *</label>
-                <input v-model="currentLibro.titulo" placeholder="Título del libro" class="premium-input" :class="{ 'invalid': errors.titulo }">
-              </div>
-
-              <div class="form-grid-2">
-                <div class="input-group">
-                  <label :class="{ 'error-label': errors.autor }">Autor *</label>
-                  <input v-model="currentLibro.autor" placeholder="Autor principal" class="premium-input" :class="{ 'invalid': errors.autor }">
-                </div>
-                <div class="input-group">
-                  <label>Año</label>
-                  <input v-model="currentLibro.anio" placeholder="Ej. 2021" class="premium-input">
-                </div>
+                <label>Resumen / Descripción</label>
+                <textarea v-model="currentLibro.resumen" placeholder="Breve descripción del contenido" class="premium-input" style="height: 72px; resize: none;"></textarea>
               </div>
 
               <!-- Ubicación Física -->
-              <h4 style="margin: 10px 0 5px; color: #334155; font-size: 0.9rem;">Ubicación Física</h4>
-              <div class="form-grid-2" style="grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+              <h4 style="margin: 10px 0 0; color: #334155; font-size: 0.9rem;">Ubicación Física</h4>
+              <div class="form-grid-3">
                 <div class="input-group">
-                  <label>Estante (1-7)</label>
-                  <input type="number" min="1" max="7" v-model="currentLibro.estante" placeholder="Ej. 2" class="premium-input">
+                  <label>Estante</label>
+                  <input type="number" min="1" max="7" v-model="currentLibro.estante" placeholder="1-7" class="premium-input">
                 </div>
                 <div class="input-group">
-                  <label>Cara (A/B)</label>
-                  <select v-model="currentLibro.cara" class="premium-input" style="height: 44px;">
+                  <label>Cara</label>
+                  <select v-model="currentLibro.cara" class="premium-input">
                     <option value="">N/A</option>
-                    <option value="A">Cara A</option>
-                    <option value="B">Cara B</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
                   </select>
                 </div>
                 <div class="input-group">
-                  <label>Piso (1-6)</label>
-                  <input type="number" min="1" max="6" v-model="currentLibro.piso" placeholder="Ej. 3" class="premium-input">
+                  <label>Piso</label>
+                  <input type="number" min="1" max="6" v-model="currentLibro.piso" placeholder="1-6" class="premium-input">
                 </div>
               </div>
             </div>
 
-            <!-- Columna Derecha: Portada -->
+            <!-- Columna 3: Portada -->
             <div class="modal-cover-column">
-              <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Portada del Libro</label>
+              <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px; text-align: center;">Portada del Libro</label>
               <div class="cover-upload-container">
                 <div class="book-cover-preview-lg">
                   <img v-if="currentLibro.portada" :src="currentLibro.portada.startsWith('data:') ? currentLibro.portada : API_BASE_URL + currentLibro.portada" alt="Vista previa de portada" />
@@ -500,14 +505,14 @@ onMounted(() => {
                   <div style="display: flex; gap: 8px; width: 100%;">
                     <label class="btn btn-secondary" style="margin: 0; padding: 8px 14px; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; justify-content: center; flex: 1;">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                      Subir Foto
+                      Subir
                       <input type="file" @change="handlePortadaChange" accept="image/*" style="display: none;">
                     </label>
                     <button v-if="currentLibro.portada" type="button" class="btn btn-danger" @click="removePortada" style="padding: 8px 14px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; justify-content: center;">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                   </div>
-                  <span style="font-size: 0.68rem; color: #94a3b8; text-align: center; margin-top: 4px; line-height: 1.2;">Proporción recomendada: 3:4. Máx. 1MB.</span>
+                  <span style="font-size: 0.68rem; color: #94a3b8; text-align: center; margin-top: 4px; line-height: 1.2;">Recomendado 3:4.<br>Máx 1MB.</span>
                 </div>
               </div>
             </div>
@@ -572,7 +577,7 @@ onMounted(() => {
 
 .modal-card {
   width: 100%;
-  max-width: 780px;
+  max-width: 1100px;
   max-height: 95vh;
   background: #ffffff;
   border-radius: 20px;
@@ -643,6 +648,12 @@ onMounted(() => {
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 1.25rem;
 }
 
@@ -851,9 +862,9 @@ onMounted(() => {
   justify-content: center;
 }
 
-.modal-body-layout {
+.modal-body-layout-wide {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: 1.2fr 1fr 240px;
   gap: 2rem;
   align-items: start;
 }

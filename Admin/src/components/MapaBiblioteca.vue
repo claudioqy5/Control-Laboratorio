@@ -390,20 +390,21 @@ const clearSelection = () => {
 }
 
 /* =========================================
-   ESCENARIO 3D
+   ESCENARIO 3D (PREMIUM GLASS / HIGH-TECH)
    ========================================= */
 .scene-container {
-  background: radial-gradient(circle at center, #f8fafc 0%, #e2e8f0 100%);
-  border: 1px solid #cbd5e1;
-  border-radius: 16px;
+  /* Fondo moderno oscuro estilo escáner/holográfico para resaltar los cristales */
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 20px;
   position: relative;
   overflow: hidden;
-  height: 600px;
+  height: 650px;
   display: flex;
   justify-content: center;
   align-items: center;
-  perspective: 1200px;
-  box-shadow: inset 0 0 50px rgba(0,0,0,0.05);
+  perspective: 1500px;
+  box-shadow: inset 0 0 80px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.1);
 }
 
 .back-btn {
@@ -411,24 +412,25 @@ const clearSelection = () => {
   top: 1.5rem;
   left: 1.5rem;
   z-index: 20;
-  background: white;
-  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 0.75rem 1.2rem;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 700;
-  color: #334155;
+  color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .back-btn:hover {
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
 }
 
 /* =========================================
@@ -447,47 +449,70 @@ const clearSelection = () => {
 .floor-plane {
   width: 800px;
   height: 600px;
-  background: repeating-linear-gradient(45deg, #e2e8f0, #e2e8f0 40px, #cbd5e1 40px, #cbd5e1 80px);
+  /* Glowing Grid */
+  background-image: 
+    linear-gradient(rgba(56, 189, 248, 0.15) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.15) 2px, transparent 2px);
+  background-size: 40px 40px;
+  background-color: rgba(15, 23, 42, 0.8);
+  
   transform: rotateX(60deg) rotateZ(-35deg);
   transform-style: preserve-3d;
   position: relative;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.15), inset 0 0 100px rgba(255,255,255,0.5);
-  border: 6px solid #94a3b8;
-  border-radius: 12px;
+  
+  /* Borde brillante */
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  border-radius: 16px;
+  box-shadow: 
+    0 40px 100px rgba(0,0,0,0.8), 
+    inset 0 0 80px rgba(56, 189, 248, 0.1),
+    0 0 20px rgba(56, 189, 248, 0.2);
+    
+  /* Anti-aliasing fix for 3D */
+  outline: 1px solid transparent;
 }
 
 .entrance-marker {
   position: absolute;
-  bottom: -6px;
-  left: 100px;
-  background: #334155;
+  bottom: -15px;
+  left: 300px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.8), transparent);
   color: white;
-  padding: 5px 30px;
+  padding: 8px 40px;
   font-weight: 800;
-  letter-spacing: 2px;
-  font-size: 1.2rem;
-  transform: translateZ(1px);
+  letter-spacing: 4px;
+  font-size: 1rem;
+  transform: translateZ(2px);
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
   border-radius: 4px;
 }
 
-/* Prisma Rectangular del Estante */
+/* Prisma Rectangular del Estante (Cristal Holográfico) */
 .iso-shelf {
   position: absolute;
   width: 70px;
   height: 220px;
   transform-style: preserve-3d;
   cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Anti-aliasing hack */
+  outline: 1px solid transparent;
 }
 
 .iso-shelf:hover {
-  transform: translateZ(15px);
+  transform: translateZ(20px);
 }
 
 .iso-face {
   position: absolute;
-  border: 1px solid rgba(15, 23, 42, 0.2);
-  transition: all 0.3s;
+  transition: all 0.4s ease;
+  /* Glassmorphism */
+  background: rgba(14, 165, 233, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow: inset 0 0 20px rgba(14, 165, 233, 0.2);
+  outline: 1px solid transparent; /* Anti-aliasing */
+  backface-visibility: hidden; /* Reduce jagging en caras ocultas */
 }
 
 /* Extrusión en Z: 100px de alto */
@@ -495,103 +520,111 @@ const clearSelection = () => {
   width: 100%; 
   height: 100%;
   transform: translateZ(100px);
-  background: #cbd5e1;
+  background: rgba(56, 189, 248, 0.2);
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #334155;
-  font-weight: 900;
+  color: #fff;
+  font-weight: 800;
   font-size: 0.9rem;
-  box-shadow: inset 0 0 20px rgba(255,255,255,0.5);
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+  box-shadow: inset 0 0 30px rgba(255,255,255,0.2), 0 0 15px rgba(56, 189, 248, 0.3);
 }
 .iso-face.front { /* Y = 220 */
   bottom: 0; left: 0;
   width: 100%; height: 100px;
   transform-origin: bottom;
   transform: rotateX(-90deg);
-  background: #94a3b8;
 }
 .iso-face.back { /* Y = 0 */
   top: 0; left: 0;
   width: 100%; height: 100px;
   transform-origin: top;
   transform: rotateX(90deg);
-  background: #94a3b8;
 }
 .iso-face.left { /* X = 0 */
   top: 0; left: 0;
   width: 100px; height: 100%;
   transform-origin: left;
   transform: rotateY(-90deg);
-  background: #64748b;
+  background: rgba(14, 165, 233, 0.15); /* Ligeramente más oscuro por "sombra" */
 }
 .iso-face.right { /* X = 70 */
   top: 0; right: 0;
   width: 100px; height: 100%;
   transform-origin: right;
   transform: rotateY(90deg);
-  background: #64748b;
 }
 
 /* Layout de los estantes en el piso */
-.shelf-1 { top: 60px; left: 60px; } /* Estante 1 (1 cara) contra la pared izquierda */
-.shelf-2 { top: 60px; left: 240px; }
-.shelf-3 { top: 60px; left: 420px; }
-.shelf-4 { top: 60px; left: 600px; }
-.shelf-5 { top: 320px; left: 240px; }
-.shelf-6 { top: 320px; left: 420px; }
-.shelf-7 { top: 320px; left: 600px; }
+.shelf-1 { top: 80px; left: 80px; } 
+.shelf-2 { top: 80px; left: 260px; }
+.shelf-3 { top: 80px; left: 440px; }
+.shelf-4 { top: 80px; left: 620px; }
+.shelf-5 { top: 340px; left: 260px; }
+.shelf-6 { top: 340px; left: 440px; }
+.shelf-7 { top: 340px; left: 620px; }
 
-/* Estante Objetivo (Cuando se busca un libro) */
+/* Estante Objetivo (Efecto Neón Magenta) */
 .is-target {
-  animation: floatShelf 2s infinite ease-in-out;
+  animation: floatTarget 2s infinite ease-in-out;
+  z-index: 10;
 }
 .is-target .iso-face {
-  background: #fecdd3;
-  border-color: #e11d48;
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(251, 113, 133, 0.8);
+  box-shadow: inset 0 0 30px rgba(244, 63, 94, 0.3), 0 0 20px rgba(244, 63, 94, 0.4);
 }
 .is-target .iso-face.top {
-  background: #fda4af;
-  color: #9f1239;
+  background: rgba(251, 113, 133, 0.3);
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
 }
-.is-target .iso-face.left, .is-target .iso-face.right {
-  background: #fb7185;
-}
-
-@keyframes floatShelf {
-  0%, 100% { transform: translateZ(0); }
-  50% { transform: translateZ(20px); }
+.is-target .iso-face.left {
+  background: rgba(225, 29, 72, 0.25);
 }
 
-/* Pin Marcador */
+@keyframes floatTarget {
+  0%, 100% { transform: translateZ(5px); }
+  50% { transform: translateZ(25px); }
+}
+
+/* Pin Marcador Holográfico */
 .target-pin {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) translateZ(160px) rotateX(-90deg) rotateY(-35deg); /* Enderezado hacia la cámara */
+  transform: translate(-50%, -50%) translateZ(180px) rotateX(-90deg) rotateY(-35deg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
 }
 
 .pin-bounce {
-  width: 30px;
-  height: 30px;
-  background: #e11d48;
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle, #fda4af 0%, #e11d48 70%);
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  animation: pinBounce 1s infinite alternate;
-  box-shadow: 0 0 20px rgba(225, 29, 72, 0.6);
+  animation: pinBounce 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 25px rgba(225, 29, 72, 0.8), inset 0 0 10px rgba(255,255,255,0.5);
+  border: 2px solid rgba(255,255,255,0.8);
 }
 .pin-bounce::after {
   content: '';
   position: absolute;
-  width: 10px; height: 10px;
+  width: 14px; height: 14px;
   background: white;
   border-radius: 50%;
-  top: 10px; left: 10px;
+  top: 13px; left: 13px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.8);
 }
 
 @keyframes pinBounce {
-  0% { transform: rotate(-45deg) translateY(0); }
-  100% { transform: rotate(-45deg) translateY(-30px); }
+  0% { transform: rotate(-45deg) translateY(0) scale(1); }
+  50% { transform: rotate(-45deg) translateY(-25px) scale(1.1); }
+  100% { transform: rotate(-45deg) translateY(0) scale(1); }
 }
 
 
