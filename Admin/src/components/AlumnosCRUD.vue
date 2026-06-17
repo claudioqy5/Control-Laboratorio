@@ -71,11 +71,11 @@ const buscarPorEscaneo = async () => {
     return
   }
 
-  // No existe → abrir modal vacío con el código
+  // No existe → abrir modal vacío con el código (carrera predeterminada: Medicina Humana)
   currentAlumno.value = {
     codigoUniversitario: codigo,
     dni: '', nombres: '', apellidoPaterno: '', apellidoMaterno: '',
-    carrera: '', telefono: '', correoInstitucional: '', correoPersonal: '',
+    carrera: 'Medicina Humana', telefono: '', correoInstitucional: `${codigo}@urp.edu.pe`, correoPersonal: '',
     estado: true
   }
   showModal.value = true
@@ -94,7 +94,7 @@ const handleCameraScan = async (data) => {
     nombres: data.nombres || '',
     apellidoPaterno: data.apellidoPaterno || '',   // ← usa el campo separado del backend
     apellidoMaterno: data.apellidoMaterno || '',   // ← usa el campo separado del backend
-    carrera: data.carrera || 'Medicina Humana',    // ← por defecto Medicina Humana
+    carrera: 'Medicina Humana',                       // ← siempre Medicina Humana por defecto
     telefono: '',
     correoInstitucional: correoInst,
     correoPersonal: '',
