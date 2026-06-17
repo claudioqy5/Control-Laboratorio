@@ -1,0 +1,876 @@
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+
+// Estado y persistencia en localStorage para simular el backend
+const libros = ref([])
+const searchQuery = ref('')
+const showModal = ref(false)
+const currentPage = ref(1)
+const pageSize = 10
+
+const currentLibro = ref({
+  libroID: null,
+  nroRegistro: '',
+  codigoBarras: '',
+  nroClasificacion: '',
+  titulo: '',
+  autor: '',
+  anio: '',
+  ejemplar: '',
+  portada: ''
+})
+
+const toast = ref({ show: false, message: '', type: 'success' })
+
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => {
+    toast.value.show = false
+  }, 4000)
+}
+
+const errors = ref({
+  nroRegistro: false,
+  codigoBarras: false,
+  titulo: false,
+  autor: false
+})
+const validationError = ref('')
+
+// Cargar datos iniciales
+const loadLibros = () => {
+  const data = localStorage.getItem('mockLibros')
+  if (data) {
+    libros.value = JSON.parse(data)
+  } else {
+    // Datos de ejemplo iniciales (premium, simulando biblioteca de medicina)
+    const defaultLibros = [
+      {
+        libroID: 1,
+        nroRegistro: 'REG-00234',
+        codigoBarras: '7701234567891',
+        nroClasificacion: 'WB 100 G216 2021',
+        titulo: 'Principios de Medicina Interna de Harrison',
+        autor: 'Dennis L. Kasper, Anthony S. Fauci',
+        anio: '2021',
+        ejemplar: '1'
+      },
+      {
+        libroID: 2,
+        nroRegistro: 'REG-00235',
+        codigoBarras: '7701234567892',
+        nroClasificacion: 'WB 100 G216 2021',
+        titulo: 'Principios de Medicina Interna de Harrison',
+        autor: 'Dennis L. Kasper, Anthony S. Fauci',
+        anio: '2021',
+        ejemplar: '2'
+      },
+      {
+        libroID: 3,
+        nroRegistro: 'REG-00512',
+        codigoBarras: '9788413821731',
+        nroClasificacion: 'QS 4 G283 2022',
+        titulo: 'Anatomía Humana: Descriptiva, Topográfica y Funcional',
+        autor: 'Henri Rouvière, André Delmas',
+        anio: '2022',
+        ejemplar: '1'
+      },
+      {
+        libroID: 4,
+        nroRegistro: 'REG-00891',
+        codigoBarras: '9786071514134',
+        nroClasificacion: 'QV 4 G653 2020',
+        titulo: 'Las Bases Farmacológicas de la Terapéutica',
+        autor: 'Alfred Goodman Gilman, Laurence Brunton',
+        anio: '2020',
+        ejemplar: '3'
+      },
+      {
+        libroID: 5,
+        nroRegistro: 'REG-01124',
+        codigoBarras: '9788418534010',
+        nroClasificacion: 'QW 4 J473 2022',
+        titulo: 'Microbiología Médica de Jawetz, Melnick y Adelberg',
+        autor: 'Stefan Riedel, Stephen A. Morse',
+        anio: '2022',
+        ejemplar: '1'
+      }
+    ]
+    libros.value = defaultLibros
+    saveToLocalStorage()
+  }
+}
+
+const saveToLocalStorage = () => {
+  localStorage.setItem('mockLibros', JSON.stringify(libros.value))
+}
+
+const filteredLibros = computed(() => {
+  let result = libros.value
+
+  if (searchQuery.value) {
+    const queryWords = searchQuery.value.toLowerCase().split(/\s+/).filter(Boolean)
+    result = result.filter(libro => {
+      const bookString = `${libro.titulo} ${libro.autor} ${libro.nroRegistro} ${libro.codigoBarras} ${libro.nroClasificacion}`.toLowerCase()
+      return queryWords.every(word => bookString.includes(word))
+    })
+  }
+  return result
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredLibros.value.length / pageSize) || 1
+})
+
+const paginatedLibros = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  const end = start + pageSize
+  return filteredLibros.value.slice(start, end)
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--
+}
+
+watch(showModal, (newVal) => {
+  if (!newVal) {
+    errors.value = {
+      nroRegistro: false,
+      codigoBarras: false,
+      titulo: false,
+      autor: false
+    }
+    validationError.value = ''
+  }
+})
+
+const saveLibro = () => {
+  errors.value = {
+    nroRegistro: false,
+    codigoBarras: false,
+    titulo: false,
+    autor: false
+  }
+  validationError.value = ''
+
+  const missingFields = []
+  if (!currentLibro.value.nroRegistro?.trim()) {
+    errors.value.nroRegistro = true
+    missingFields.push('N° registro')
+  }
+  if (!currentLibro.value.codigoBarras?.trim()) {
+    errors.value.codigoBarras = true
+    missingFields.push('Código de barras')
+  }
+  if (!currentLibro.value.titulo?.trim()) {
+    errors.value.titulo = true
+    missingFields.push('Título')
+  }
+  if (!currentLibro.value.autor?.trim()) {
+    errors.value.autor = true
+    missingFields.push('Autor')
+  }
+
+  if (missingFields.length > 0) {
+    validationError.value = `Falta ingresar los siguientes datos obligatorios: ${missingFields.join(', ')}.`
+    return
+  }
+
+  const isNew = !currentLibro.value.libroID
+  if (isNew) {
+    // Validar duplicado local
+    const existeReg = libros.value.some(l => l.nroRegistro.trim().toLowerCase() === currentLibro.value.nroRegistro.trim().toLowerCase())
+    if (existeReg) {
+      showToast('Ya existe un libro con ese N° de Registro.', 'error')
+      errors.value.nroRegistro = true
+      return
+    }
+
+    const nuevoLibro = {
+      ...currentLibro.value,
+      libroID: Date.now() // ID temporal basado en timestamp
+    }
+    libros.value.push(nuevoLibro)
+    showToast('Libro registrado exitosamente.', 'success')
+  } else {
+    // Editar existente
+    const index = libros.value.findIndex(l => l.libroID === currentLibro.value.libroID)
+    if (index !== -1) {
+      libros.value[index] = { ...currentLibro.value }
+      showToast('Datos del libro actualizados correctamente.', 'success')
+    }
+  }
+
+  saveToLocalStorage()
+  showModal.value = false
+}
+
+const editLibro = (libro) => {
+  currentLibro.value = { ...libro }
+  showModal.value = true
+}
+
+const deleteLibro = (id) => {
+  if (confirm('¿Está seguro de eliminar este libro del catálogo?')) {
+    libros.value = libros.value.filter(l => l.libroID !== id)
+    saveToLocalStorage()
+    showToast('Libro eliminado correctamente.', 'success')
+    // Ajustar página actual si queda vacía
+    if (paginatedLibros.value.length === 0 && currentPage.value > 1) {
+      currentPage.value--
+    }
+  }
+}
+
+const handlePortadaChange = (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    if (file.size > 1024 * 1024) {
+      showToast('La imagen supera el límite de 1MB.', 'error')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      currentLibro.value.portada = event.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const removePortada = () => {
+  currentLibro.value.portada = ''
+}
+
+onMounted(() => {
+  loadLibros()
+})
+</script>
+
+<template>
+  <div>
+    <!-- Toast Notification -->
+    <div class="toast-container" :class="{ 'toast-show': toast.show, 'toast-success': toast.type === 'success', 'toast-error': toast.type === 'error' }">
+      <div class="toast-icon">
+        <svg v-if="toast.type === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <svg v-if="toast.type === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      </div>
+      <div class="toast-message">{{ toast.message }}</div>
+    </div>
+
+    <!-- Cabecera -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+      <div>        
+        <h2 style="color: #111827; font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem;">Registro de Libros</h2>
+        <div style="color: #6b7280; font-size: 0.875rem;">{{ libros.length }} Catálogos Registrados (Simulación Frontend)</div>
+      </div>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <!-- Buscador -->
+        <div style="position: relative;">
+          <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input
+            type="text"
+            v-model="searchQuery"
+            @input="currentPage = 1"
+            placeholder="Buscar por título, autor, clasificación..."
+            :style="{
+              padding: '0.5rem 1rem 0.5rem 2rem',
+              borderRadius: '0.5rem',
+              border: '1px solid #e5e7eb',
+              width: '320px',
+              fontSize: '0.875rem',
+              color: '#111827',
+              outline: 'none'
+            }"
+          >
+        </div>
+        <!-- Botón Nuevo -->
+        <button class="btn btn-primary" @click="currentLibro = { libroID: null, nroRegistro: '', codigoBarras: '', nroClasificacion: '', titulo: '', autor: '', anio: '', ejemplar: '1', portada: '' }; showModal = true">Nuevo Libro</button>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <table class="centered-table">
+      <thead>
+        <tr>
+          <th>Nº</th>
+          <th>Portada</th>
+          <th>N° Registro</th>
+          <th>Código de Barras</th>
+          <th>N° Clasificación</th>
+          <th>Título</th>
+          <th>Autor</th>
+          <th>Año</th>
+          <th>Ejemplar</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="paginatedLibros.length === 0">
+          <td colspan="10" style="text-align: center; color: #9ca3af; padding: 2rem;">No se encontraron libros registrados.</td>
+        </tr>
+        <tr v-for="(l, index) in paginatedLibros" :key="l.libroID">
+          <td style="color: #6b7280; font-weight: 600;">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
+          <td>
+            <div style="display: flex; justify-content: center; align-items: center;">
+              <div class="book-cover-thumbnail">
+                <img v-if="l.portada" :src="l.portada" alt="Portada" />
+                <div v-else class="book-cover-placeholder">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td><strong style="color: #111827;">{{ l.nroRegistro }}</strong></td>
+          <td style="font-family: monospace; color: #475569;">{{ l.codigoBarras }}</td>
+          <td><span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">{{ l.nroClasificacion || '-' }}</span></td>
+          <td style="text-align: left; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ l.titulo }}</td>
+          <td style="text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ l.autor }}</td>
+          <td>{{ l.anio || '-' }}</td>
+          <td>
+            <span style="background: #fff1f2; color: #9f1239; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">
+              Ej. {{ l.ejemplar }}
+            </span>
+          </td>
+          <td style="white-space: nowrap;">
+            <button class="icon-btn edit-btn" @click="editLibro(l)" title="Editar Libro">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            <button class="icon-btn delete-btn" @click="deleteLibro(l.libroID)" title="Eliminar Libro">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Paginación -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <span style="color: #64748b; font-size: 0.875rem; font-weight: 500;">
+        Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ Math.min(currentPage * pageSize, filteredLibros.length) }} de {{ filteredLibros.length }} registros
+      </span>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button class="btn" style="background: white; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 4px;" @click="prevPage" :disabled="currentPage === 1" :style="{ opacity: currentPage === 1 ? '0.5' : '1', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Anterior
+        </button>
+        
+        <span style="color: #111827; font-size: 0.875rem; font-weight: 600; padding: 0 0.5rem;">
+          Página {{ currentPage }} de {{ totalPages }}
+        </span>
+
+        <button class="btn" style="background: white; border: 1px solid #e2e8f0; color: #475569; display: flex; align-items: center; gap: 4px;" @click="nextPage" :disabled="currentPage === totalPages" :style="{ opacity: currentPage === totalPages ? '0.5' : '1', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }">
+          Siguiente
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Premium Modal Overlay -->
+    <div v-if="showModal" class="modal-backdrop" @click.self="showModal = false">
+      <div class="modal-card">
+        <!-- Header -->
+        <div class="modal-header">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            </div>
+            <h3>{{ currentLibro.libroID ? 'Editar Libro' : 'Nuevo Libro' }}</h3>
+          </div>
+          <button class="close-btn" @click="showModal = false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        
+        <!-- Body -->
+        <div class="modal-body">
+          <!-- Validation Banner -->
+          <div v-if="validationError" class="validation-banner">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>{{ validationError }}</span>
+          </div>
+
+          <div class="modal-body-layout">
+            <!-- Columna Izquierda: Formulario -->
+            <div class="modal-form-column">
+              <div class="form-grid-2">
+                <div class="input-group">
+                  <label :class="{ 'error-label': errors.nroRegistro }">N° Registro *</label>
+                  <input v-model="currentLibro.nroRegistro" placeholder="Ej. REG-00234" class="premium-input" :class="{ 'invalid': errors.nroRegistro }">
+                </div>
+                <div class="input-group">
+                  <label :class="{ 'error-label': errors.codigoBarras }">Código de Barras *</label>
+                  <input v-model="currentLibro.codigoBarras" placeholder="Escanear o ingresar número" class="premium-input" :class="{ 'invalid': errors.codigoBarras }">
+                </div>
+              </div>
+
+              <div class="form-grid-2">
+                <div class="input-group">
+                  <label>N° Clasificación</label>
+                  <input v-model="currentLibro.nroClasificacion" placeholder="Ej. WB 100 G216 2021" class="premium-input">
+                </div>
+                <div class="input-group">
+                  <label>Ejemplar</label>
+                  <input v-model="currentLibro.ejemplar" placeholder="Ej. 1" class="premium-input">
+                </div>
+              </div>
+              
+              <div class="input-group">
+                <label :class="{ 'error-label': errors.titulo }">Título *</label>
+                <input v-model="currentLibro.titulo" placeholder="Título del libro" class="premium-input" :class="{ 'invalid': errors.titulo }">
+              </div>
+
+              <div class="form-grid-2">
+                <div class="input-group">
+                  <label :class="{ 'error-label': errors.autor }">Autor *</label>
+                  <input v-model="currentLibro.autor" placeholder="Autor principal" class="premium-input" :class="{ 'invalid': errors.autor }">
+                </div>
+                <div class="input-group">
+                  <label>Año</label>
+                  <input v-model="currentLibro.anio" placeholder="Ej. 2021" class="premium-input">
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Portada -->
+            <div class="modal-cover-column">
+              <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Portada del Libro</label>
+              <div class="cover-upload-container">
+                <div class="book-cover-preview-lg">
+                  <img v-if="currentLibro.portada" :src="currentLibro.portada" alt="Vista previa de portada" />
+                  <div v-else class="book-cover-placeholder-xl">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    <span style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px; font-weight: 500;">Sin Portada</span>
+                  </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; align-items: center;">
+                  <div style="display: flex; gap: 8px; width: 100%;">
+                    <label class="btn btn-secondary" style="margin: 0; padding: 8px 14px; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; justify-content: center; flex: 1;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                      Subir Foto
+                      <input type="file" @change="handlePortadaChange" accept="image/*" style="display: none;">
+                    </label>
+                    <button v-if="currentLibro.portada" type="button" class="btn btn-danger" @click="removePortada" style="padding: 8px 14px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; justify-content: center;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                  <span style="font-size: 0.68rem; color: #94a3b8; text-align: center; margin-top: 4px; line-height: 1.2;">Proporción recomendada: 3:4. Máx. 1MB.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="showModal = false">Cancelar</button>
+          <button class="btn btn-primary premium-btn" @click="saveLibro">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            Guardar Libro
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.centered-table th, .centered-table td {
+  text-align: center;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.edit-btn {
+  color: #6366f1;
+  margin-right: 8px;
+}
+.edit-btn:hover {
+  background: #e0e7ff;
+}
+.delete-btn {
+  color: #ef4444;
+}
+.delete-btn:hover {
+  background: #fee2e2;
+}
+
+/* Premium Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 780px;
+  max-height: 95vh;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.modal-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-icon {
+  background: #e0e7ff;
+  color: #4f46e5;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.close-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal-body {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateY(150%);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  z-index: 10000;
+  border-left: 5px solid transparent;
+}
+
+.toast-show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast-success {
+  border-left-color: #10b981;
+}
+.toast-success .toast-icon {
+  color: #10b981;
+  background: #d1fae5;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+}
+
+.toast-error {
+  border-left-color: #ef4444;
+}
+.toast-error .toast-icon {
+  color: #ef4444;
+  background: #fee2e2;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+}
+
+.toast-message {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.premium-input {
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #1e293b;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.premium-input:focus {
+  outline: none;
+  border-color: #9f1239;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(159, 18, 57, 0.1);
+}
+
+.premium-input::placeholder {
+  color: #94a3b8;
+}
+
+.modal-footer {
+  padding: 1.25rem 2rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #f8fafc;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background: #f1f5f9;
+}
+
+.premium-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-weight: 700;
+  background: #9f1239;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(159, 18, 57, 0.3);
+  transition: all 0.2s;
+}
+.premium-btn:hover {
+  background: #881337;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(159, 18, 57, 0.4);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(8px); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.premium-input.invalid {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
+.premium-input.invalid:focus {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}
+
+.error-label {
+  color: #ef4444 !important;
+}
+
+.validation-banner {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  animation: shake 0.4s ease-in-out;
+  margin-bottom: 1rem;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Portada Styles */
+.book-cover-thumbnail {
+  width: 32px;
+  height: 44px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+
+.book-cover-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-cover-placeholder {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-body-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.modal-form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal-cover-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cover-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
+  box-sizing: border-box;
+  justify-content: center;
+  flex: 1;
+}
+
+.book-cover-preview-lg {
+  width: 140px;
+  height: 187px; /* Proporción 3:4 */
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.book-cover-preview-lg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-cover-placeholder-xl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .modal-body-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+</style>

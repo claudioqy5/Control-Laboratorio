@@ -8,6 +8,7 @@ import LaboratoryMap from './components/LaboratoryMap.vue'
 import EquiposList from './components/EquiposList.vue'
 import ReportesConexiones from './components/ReportesConexiones.vue'
 import ActualizacionesSistema from './components/ActualizacionesSistema.vue'
+import LibrosCRUD from './components/LibrosCRUD.vue'
 
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
@@ -65,6 +66,10 @@ onMounted(checkAuth)
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         <span v-if="!isSidebarCollapsed">Participantes</span>
       </a>
+      <a href="#" class="nav-item" :class="{ active: currentView === 'libros' }" @click="currentView = 'libros'" :title="isSidebarCollapsed ? 'Libros' : ''">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        <span v-if="!isSidebarCollapsed">Libros</span>
+      </a>
       <a href="#" class="nav-item" :class="{ active: currentView === 'active' }" @click="currentView = 'active'" :title="isSidebarCollapsed ? 'En Línea' : ''">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
         <span v-if="!isSidebarCollapsed">En Línea</span>
@@ -95,6 +100,7 @@ onMounted(checkAuth)
       <LaboratoryMap v-if="currentView === 'map'" />
       <EquiposList v-if="currentView === 'equipos'" />
       <AlumnosCRUD v-if="currentView === 'alumnos'" />
+      <LibrosCRUD v-if="currentView === 'libros'" />
       <ActiveSessions v-if="currentView === 'active'" />
       <ReportesConexiones v-if="currentView === 'conexiones'" />
       <ActualizacionesSistema v-if="currentView === 'actualizaciones'" />
