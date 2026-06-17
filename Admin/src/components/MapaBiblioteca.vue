@@ -149,7 +149,10 @@ const clearSelection = () => {
             >
               <!-- Cara Superior (Techo) -->
               <div class="iso-face top">
-                <span>{{ estante.id }}</span>
+                <span class="top-label">
+                  ESTANTE
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                </span>
               </div>
               
               <!-- Caras Delantera y Trasera (cortas) -->
@@ -158,14 +161,16 @@ const clearSelection = () => {
               
               <!-- Caras Laterales (Largas, muestran los libros) -->
               <div class="iso-face left">
-                 <div class="fake-book-col" style="background: linear-gradient(180deg, #9ca3af 10%, #6b7280 15%, #cbd5e1 20%, #e2e8f0 30%, #ef4444 35%, #9ca3af 45%, #f59e0b 60%, #3b82f6 80%, #6b7280 90%);"></div>
-                 <div class="fake-book-col" style="background: linear-gradient(180deg, #10b981 10%, #cbd5e1 20%, #6b7280 25%, #9ca3af 45%, #ef4444 50%, #f59e0b 60%, #e2e8f0 80%, #3b82f6 90%);"></div>
-                 <div class="fake-book-col" style="background: linear-gradient(180deg, #3b82f6 5%, #6b7280 15%, #ef4444 30%, #e2e8f0 40%, #cbd5e1 55%, #f59e0b 60%, #10b981 80%, #9ca3af 95%);"></div>
+                 <div class="fake-book-col left-face"></div>
+                 <div class="fake-book-col left-face alt-pattern"></div>
+                 <div class="fake-book-col left-face"></div>
+                 <div class="fake-book-col left-face alt-pattern"></div>
               </div>
               <div class="iso-face right">
-                 <div class="fake-book-col" style="background: linear-gradient(180deg, #9ca3af 10%, #6b7280 15%, #cbd5e1 20%, #e2e8f0 30%, #ef4444 35%, #9ca3af 45%, #f59e0b 60%, #3b82f6 80%, #6b7280 90%);"></div>
-                 <div class="fake-book-col" style="background: linear-gradient(180deg, #10b981 10%, #cbd5e1 20%, #6b7280 25%, #9ca3af 45%, #ef4444 50%, #f59e0b 60%, #e2e8f0 80%, #3b82f6 90%);"></div>
-                 <div class="fake-book-col" style="background: linear-gradient(180deg, #3b82f6 5%, #6b7280 15%, #ef4444 30%, #e2e8f0 40%, #cbd5e1 55%, #f59e0b 60%, #10b981 80%, #9ca3af 95%);"></div>
+                 <div class="fake-book-col right-face alt-pattern"></div>
+                 <div class="fake-book-col right-face"></div>
+                 <div class="fake-book-col right-face alt-pattern"></div>
+                 <div class="fake-book-col right-face"></div>
               </div>
             </div>
           </div>
@@ -518,8 +523,8 @@ const clearSelection = () => {
 
 .iso-face {
   position: absolute;
-  background: #e2e8f0;
-  border: 1px solid #cbd5e1;
+  background: #f4f4f5; /* Very light grey */
+  border: 1px solid #d4d4d8;
   backface-visibility: hidden;
 }
 
@@ -527,13 +532,20 @@ const clearSelection = () => {
 .iso-face.top {
   width: 100%; height: 100%;
   transform: translateZ(120px);
-  background: #f8fafc;
+  background: #fafafa;
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #94a3b8;
+  color: #a1a1aa;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+}
+.top-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .iso-face.front { /* Frontal = Ancho (X=40), Extrusión Z=120 */
@@ -541,7 +553,7 @@ const clearSelection = () => {
   width: 100%; height: 120px;
   transform-origin: bottom;
   transform: rotateX(-90deg);
-  background: #cbd5e1;
+  background: #e4e4e7;
 }
 
 .iso-face.back {
@@ -549,7 +561,7 @@ const clearSelection = () => {
   width: 100%; height: 120px;
   transform-origin: top;
   transform: rotateX(90deg);
-  background: #cbd5e1;
+  background: #e4e4e7;
 }
 
 .iso-face.left { /* Largo (Y), Extrusión Z=120 */
@@ -557,7 +569,7 @@ const clearSelection = () => {
   width: 120px; height: 100%;
   transform-origin: left;
   transform: rotateY(-90deg);
-  background: #94a3b8;
+  background: #27272a; /* Dark interior */
   display: flex;
   justify-content: space-evenly;
   align-items: center;
@@ -570,36 +582,69 @@ const clearSelection = () => {
   width: 120px; height: 100%;
   transform-origin: right;
   transform: rotateY(90deg);
-  background: #e2e8f0;
+  background: #27272a; /* Dark interior */
   display: flex;
+  flex-direction: row-reverse;
   justify-content: space-evenly;
   align-items: center;
   padding: 5px 0;
   box-sizing: border-box;
 }
 
+/* Book texturing */
 .fake-book-col {
   width: 25px; /* Altura de repisa en 3D (eje Z) */
-  height: 95%; /* Largo de libros en el estante (eje Y) */
-  border-radius: 2px;
-  opacity: 0.8;
-  box-shadow: inset 2px 0 4px rgba(0,0,0,0.1);
+  height: 96%; /* Largo de libros en el estante (eje Y) */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #991b1b 0px, #991b1b 12px,
+    #1e40af 12px, #1e40af 24px,
+    #065f46 24px, #065f46 32px,
+    #92400e 32px, #92400e 48px,
+    #374151 48px, #374151 58px,
+    #b91c1c 58px, #b91c1c 66px,
+    #4338ca 66px, #4338ca 84px
+  );
+  background-size: 100% 100px;
+  box-shadow: inset 4px 0 8px rgba(0,0,0,0.5);
+  position: relative;
 }
+.fake-book-col.alt-pattern {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #4338ca 0px, #4338ca 16px,
+    #991b1b 16px, #991b1b 24px,
+    #065f46 24px, #065f46 40px,
+    #374151 40px, #374151 48px,
+    #1e40af 48px, #1e40af 60px,
+    #92400e 60px, #92400e 70px,
+    #b91c1c 70px, #b91c1c 84px
+  );
+}
+.fake-book-col.left-face { border-left: 4px solid #a1a1aa; }
+.fake-book-col.right-face { border-right: 4px solid #a1a1aa; }
 
 /* TARGET SHELF (Resaltado Rojo Brillante) */
 .iso-shelf.is-target .iso-face {
-  background: #ef4444 !important;
-  border-color: #dc2626 !important;
-  box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+  background: rgba(239, 68, 68, 0.8) !important;
+  border-color: #f87171 !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
 }
 .iso-shelf.is-target .iso-face.top {
-  color: #fff;
-  text-shadow: 0 0 5px rgba(255,255,255,0.5);
-  box-shadow: 0 0 40px rgba(239, 68, 68, 0.7); /* Resplandor rojo */
+  background: #ef4444 !important;
+  color: white !important;
+  text-shadow: 0 0 5px rgba(255,255,255,0.8);
+}
+.iso-shelf.is-target .iso-face.left,
+.iso-shelf.is-target .iso-face.right {
+  background: #7f1d1d !important; /* Oscuro adentro para contraste */
 }
 .iso-shelf.is-target .fake-book-col {
-  opacity: 1;
+  /* Overlay rojizo semitransparente sobre los libros */
+  box-shadow: inset 0 0 0 100px rgba(239, 68, 68, 0.5), inset 4px 0 8px rgba(0,0,0,0.6) !important;
 }
+.iso-shelf.is-target .fake-book-col.left-face { border-left-color: #fca5a5 !important; }
+.iso-shelf.is-target .fake-book-col.right-face { border-right-color: #fca5a5 !important; }
 
 /* Layout de los 7 estantes en fila */
 .shelf-pos-1 { top: 220px; left: 60px; height: 180px; } 
