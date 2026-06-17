@@ -128,38 +128,29 @@ namespace ControlLaboratorio.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new { mensaje = "No se proporcionó ningún archivo." });
 
+            if (file.Length > 1 * 1024 * 1024)
+                return BadRequest(new { mensaje = "El archivo supera el límite de 1MB." });
+
             var libro = await _context.Libros.FindAsync(id);
             if (libro == null)
                 return NotFound(new { mensaje = "Libro no encontrado" });
 
-            // Ensure the directory exists. Fallback to ContentRootPath/wwwroot if WebRootPath is null.
-            var webRoot = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-            var uploadsFolder = Path.Combine(webRoot, "portadas", "biblioteca");
-            if (!Directory.Exists(uploadsFolder))
+            // Convertir la imagen a Base64 para evitar pérdida de archivos en despliegues con sistema de archivos efímero (como Docker en PaaS)
+            using (var ms = new MemoryStream())
             {
-                Directory.CreateDirectory(uploadsFolder);
+                await file.CopyToAsync(ms);
+                var fileBytes = ms.ToArray();
+                string base64String = Convert.ToBase64String(fileBytes);
+                string mimeType = file.ContentType;
+                
+                libro.Portada = $"data:{mimeType};base64,{base64String}";
             }
-
-            // Generate a unique filename using a GUID and original extension
-            var fileExtension = Path.GetExtension(file.FileName);
-            var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            // Save the file
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            // Update the DB with the relative URL using the new /api/static prefix
-            var relativeUrl = $"/api/static/portadas/biblioteca/{uniqueFileName}";
-            libro.Portada = relativeUrl;
 
             await _context.SaveChangesAsync();
 
             return Ok(new { 
-                mensaje = "Portada subida con éxito", 
-                portadaUrl = relativeUrl 
+                mensaje = "Portada guardada permanentemente en base de datos", 
+                portadaUrl = libro.Portada 
             });
         }
 

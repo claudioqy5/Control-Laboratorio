@@ -148,7 +148,10 @@ const saveLibro = async () => {
       
       // Paginacion es number
       payload.paginas = Number(payload.paginas) || 0
-      if (payload.estante) payload.estante = Number(payload.estante)
+      if (payload.estante) {
+        payload.estante = parseInt(payload.estante, 10)
+        if (payload.estante > 31) payload.estante = 31
+      }
       if (payload.piso) payload.piso = Number(payload.piso)
   
       if (portadaFile.value) {
@@ -524,7 +527,7 @@ onMounted(() => {
               <div class="form-grid-3">
                 <div class="input-group">
                   <label>Estante</label>
-                  <input type="number" min="1" max="7" v-model="currentLibro.estante" placeholder="1-7" class="premium-input">
+                  <input type="number" min="1" max="31" step="1" v-model="currentLibro.estante" placeholder="1-31" class="premium-input" oninput="if(this.value){ this.value = Math.round(this.value); if(this.value > 31) this.value = 31; }">
                 </div>
                 <div class="input-group">
                   <label>Cara</label>
