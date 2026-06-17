@@ -58,6 +58,19 @@ namespace ControlLaboratorio.API.Data
 
             modelBuilder.Entity<Multa>()
                 .HasIndex(m => m.AlumnoID);
+
+            // Prevenir ciclos de borrado en cascada (Cascade Delete Cycles)
+            modelBuilder.Entity<Prestamo>()
+                .HasOne(p => p.Libro)
+                .WithMany()
+                .HasForeignKey(p => p.LibroID)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Multa>()
+                .HasOne(m => m.Prestamo)
+                .WithMany()
+                .HasForeignKey(m => m.PrestamoID)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }
