@@ -18,8 +18,14 @@ const currentLibro = ref({
   titulo: '',
   autor: '',
   anio: '',
-  ejemplar: '',
+  editorial: '',
+  edicion: '',
   portada: '',
+  categoria: 'Medicina General',
+  idioma: 'Español',
+  paginas: 0,
+  estado: 'Disponible',
+  resumen: '',
   estante: null,
   cara: '',
   piso: null
@@ -263,7 +269,7 @@ onMounted(() => {
           >
         </div>
         <!-- Botón Nuevo -->
-        <button class="btn btn-primary" @click="currentLibro = { libroID: null, nroRegistro: '', codigoBarras: '', nroClasificacion: '', titulo: '', autor: '', anio: '', ejemplar: '1', portada: '', estante: null, cara: '', piso: null }; showModal = true">Nuevo Libro</button>
+        <button class="btn btn-primary" @click="currentLibro = { libroID: null, nroRegistro: '', codigoBarras: '', nroClasificacion: '', titulo: '', autor: '', anio: '', editorial: '', edicion: '', categoria: 'Medicina General', idioma: 'Español', paginas: 0, estado: 'Disponible', resumen: '', portada: '', estante: null, cara: '', piso: null }; showModal = true">Nuevo Libro</button>
       </div>
     </div>
 
@@ -279,7 +285,7 @@ onMounted(() => {
           <th>Título</th>
           <th>Autor</th>
           <th>Año</th>
-          <th>Ejemplar</th>
+          <th>Detalles</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -306,9 +312,9 @@ onMounted(() => {
           <td style="text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ l.autor }}</td>
           <td>{{ l.anio || '-' }}</td>
           <td>
-            <span style="background: #fff1f2; color: #9f1239; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">
-              Ej. {{ l.ejemplar }}
-            </span>
+            <div class="author-cell">
+              {{ l.editorial }} <span v-if="l.edicion">- Ed. {{ l.edicion }}</span>
+            </div>
           </td>
           <td style="white-space: nowrap;">
             <button class="icon-btn edit-btn" @click="editLibro(l)" title="Editar Libro">
@@ -392,11 +398,54 @@ onMounted(() => {
                   <input v-model="currentLibro.nroClasificacion" placeholder="Ej. WB 100 G216 2021" class="premium-input">
                 </div>
                 <div class="input-group">
-                  <label>Ejemplar</label>
-                  <input v-model="currentLibro.ejemplar" placeholder="Ej. 1" class="premium-input">
+                  <label>Editorial</label>
+                  <input v-model="currentLibro.editorial" placeholder="Editorial" class="premium-input">
+                </div>
+                <div class="input-group">
+                  <label>Edición</label>
+                  <input v-model="currentLibro.edicion" placeholder="Ej. 3ra Edición" class="premium-input">
                 </div>
               </div>
               
+              <div class="form-row-2">
+                <div class="input-group">
+                  <label>Categoría</label>
+                  <select v-model="currentLibro.categoria" class="premium-input">
+                    <option value="Medicina General">Medicina General</option>
+                    <option value="Anatomía">Anatomía</option>
+                    <option value="Fisiología">Fisiología</option>
+                    <option value="Farmacología">Farmacología</option>
+                    <option value="Microbiología">Microbiología</option>
+                    <option value="Patología">Patología</option>
+                    <option value="Cirugía">Cirugía</option>
+                    <option value="Otros">Otros</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label>Idioma</label>
+                  <input v-model="currentLibro.idioma" placeholder="Ej. Español" class="premium-input">
+                </div>
+              </div>
+
+              <div class="form-row-3">
+                <div class="input-group">
+                  <label>Páginas</label>
+                  <input type="number" v-model="currentLibro.paginas" placeholder="0" class="premium-input">
+                </div>
+                <div class="input-group">
+                  <label>Estado</label>
+                  <select v-model="currentLibro.estado" class="premium-input">
+                    <option value="Disponible">Disponible</option>
+                    <option value="Prestado">Prestado</option>
+                    <option value="Mantenimiento">Mantenimiento</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label>Resumen / Descripción</label>
+                  <input v-model="currentLibro.resumen" placeholder="Breve descripción" class="premium-input">
+                </div>
+              </div>
+
               <div class="input-group">
                 <label :class="{ 'error-label': errors.titulo }">Título *</label>
                 <input v-model="currentLibro.titulo" placeholder="Título del libro" class="premium-input" :class="{ 'invalid': errors.titulo }">
