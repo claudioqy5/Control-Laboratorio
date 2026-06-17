@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import axios from 'axios'
+import { API_BASE_URL } from '../config'
 
-// Estado y persistencia en localStorage para simular el backend
+// Estado del componente
 const libros = ref([])
 const searchQuery = ref('')
 const showModal = ref(false)
@@ -17,7 +19,10 @@ const currentLibro = ref({
   autor: '',
   anio: '',
   ejemplar: '',
-  portada: ''
+  portada: '',
+  estante: null,
+  cara: '',
+  piso: null
 })
 
 const toast = ref({ show: false, message: '', type: 'success' })
@@ -37,72 +42,15 @@ const errors = ref({
 })
 const validationError = ref('')
 
-// Cargar datos iniciales
-const loadLibros = () => {
-  const data = localStorage.getItem('mockLibros')
-  if (data) {
-    libros.value = JSON.parse(data)
-  } else {
-    // Datos de ejemplo iniciales (premium, simulando biblioteca de medicina)
-    const defaultLibros = [
-      {
-        libroID: 1,
-        nroRegistro: 'REG-00234',
-        codigoBarras: '7701234567891',
-        nroClasificacion: 'WB 100 G216 2021',
-        titulo: 'Principios de Medicina Interna de Harrison',
-        autor: 'Dennis L. Kasper, Anthony S. Fauci',
-        anio: '2021',
-        ejemplar: '1'
-      },
-      {
-        libroID: 2,
-        nroRegistro: 'REG-00235',
-        codigoBarras: '7701234567892',
-        nroClasificacion: 'WB 100 G216 2021',
-        titulo: 'Principios de Medicina Interna de Harrison',
-        autor: 'Dennis L. Kasper, Anthony S. Fauci',
-        anio: '2021',
-        ejemplar: '2'
-      },
-      {
-        libroID: 3,
-        nroRegistro: 'REG-00512',
-        codigoBarras: '9788413821731',
-        nroClasificacion: 'QS 4 G283 2022',
-        titulo: 'Anatomía Humana: Descriptiva, Topográfica y Funcional',
-        autor: 'Henri Rouvière, André Delmas',
-        anio: '2022',
-        ejemplar: '1'
-      },
-      {
-        libroID: 4,
-        nroRegistro: 'REG-00891',
-        codigoBarras: '9786071514134',
-        nroClasificacion: 'QV 4 G653 2020',
-        titulo: 'Las Bases Farmacológicas de la Terapéutica',
-        autor: 'Alfred Goodman Gilman, Laurence Brunton',
-        anio: '2020',
-        ejemplar: '3'
-      },
-      {
-        libroID: 5,
-        nroRegistro: 'REG-01124',
-        codigoBarras: '9788418534010',
-        nroClasificacion: 'QW 4 J473 2022',
-        titulo: 'Microbiología Médica de Jawetz, Melnick y Adelberg',
-        autor: 'Stefan Riedel, Stephen A. Morse',
-        anio: '2022',
-        ejemplar: '1'
-      }
-    ]
-    libros.value = defaultLibros
-    saveToLocalStorage()
+// Cargar datos desde el API
+const loadLibros = async () => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/Libros`)
+    libros.value = res.data
+  } catch (err) {
+    console.error("Error al cargar libros:", err)
+    showToast('Error al conectar con el servidor', 'error')
   }
-}
-
-const saveToLocalStorage = () => {
-  localStorage.setItem('mockLibros', JSON.stringify(libros.value))
 }
 
 const filteredLibros = computed(() => {
@@ -148,7 +96,7 @@ watch(showModal, (newVal) => {
   }
 })
 
-const saveLibro = () => {
+const saveLibro = async () => {
   errors.value = {
     nroRegistro: false,
     codigoBarras: false,
@@ -180,33 +128,49 @@ const saveLibro = () => {
     return
   }
 
-  const isNew = !currentLibro.value.libroID
-  if (isNew) {
-    // Validar duplicado local
-    const existeReg = libros.value.some(l => l.nroRegistro.trim().toLowerCase() === currentLibro.value.nroRegistro.trim().toLowerCase())
-    if (existeReg) {
-      showToast('Ya existe un libro con ese N° de Registro.', 'error')
-      errors.value.nroRegistro = true
-      return
+  try {
+    const isNew = !currentLibro.value.libroID
+    let savedLibroId = currentLibro.value.libroID
+
+    // Prepare payload (don't send raw base64 as portada if it's new, wait for the actual file upload)
+    const payload = { ...currentLibro.value }
+    if (portadaFile.value) {
+      payload.portada = null // Backend will update this when we upload the file
     }
 
-    const nuevoLibro = {
-      ...currentLibro.value,
-      libroID: Date.now() // ID temporal basado en timestamp
-    }
-    libros.value.push(nuevoLibro)
-    showToast('Libro registrado exitosamente.', 'success')
-  } else {
-    // Editar existente
-    const index = libros.value.findIndex(l => l.libroID === currentLibro.value.libroID)
-    if (index !== -1) {
-      libros.value[index] = { ...currentLibro.value }
+    if (isNew) {
+      const res = await axios.post(`${API_BASE_URL}/api/Libros`, payload)
+      savedLibroId = res.data.libroID
+      showToast('Libro registrado exitosamente.', 'success')
+    } else {
+      await axios.put(`${API_BASE_URL}/api/Libros/${savedLibroId}`, payload)
       showToast('Datos del libro actualizados correctamente.', 'success')
     }
-  }
 
-  saveToLocalStorage()
-  showModal.value = false
+    // Si hay un archivo de portada seleccionado, subirlo
+    if (portadaFile.value && savedLibroId) {
+      const formData = new FormData()
+      formData.append('file', portadaFile.value)
+      
+      const uploadRes = await axios.post(`${API_BASE_URL}/api/Libros/${savedLibroId}/Portada`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      console.log('Portada subida', uploadRes.data)
+    }
+
+    // Recargar datos desde el backend
+    await loadLibros()
+    showModal.value = false
+    portadaFile.value = null
+
+  } catch (error) {
+    console.error("Error saving libro:", error)
+    if (error.response && error.response.data && error.response.data.mensaje) {
+      validationError.value = error.response.data.mensaje
+    } else {
+      validationError.value = "Ocurrió un error al guardar el libro."
+    }
+  }
 }
 
 const editLibro = (libro) => {
@@ -214,17 +178,25 @@ const editLibro = (libro) => {
   showModal.value = true
 }
 
-const deleteLibro = (id) => {
+const deleteLibro = async (id) => {
   if (confirm('¿Está seguro de eliminar este libro del catálogo?')) {
-    libros.value = libros.value.filter(l => l.libroID !== id)
-    saveToLocalStorage()
-    showToast('Libro eliminado correctamente.', 'success')
-    // Ajustar página actual si queda vacía
-    if (paginatedLibros.value.length === 0 && currentPage.value > 1) {
-      currentPage.value--
+    try {
+      await axios.delete(`${API_BASE_URL}/api/Libros/${id}`)
+      showToast('Libro eliminado correctamente.', 'success')
+      await loadLibros()
+      
+      // Ajustar página actual si queda vacía
+      if (paginatedLibros.value.length === 0 && currentPage.value > 1) {
+        currentPage.value--
+      }
+    } catch (err) {
+      console.error("Error al eliminar", err)
+      showToast('Error al eliminar libro.', 'error')
     }
   }
 }
+
+const portadaFile = ref(null)
 
 const handlePortadaChange = (e) => {
   const file = e.target.files[0]
@@ -233,8 +205,10 @@ const handlePortadaChange = (e) => {
       showToast('La imagen supera el límite de 1MB.', 'error')
       return
     }
+    portadaFile.value = file
     const reader = new FileReader()
     reader.onload = (event) => {
+      // Show preview only
       currentLibro.value.portada = event.target.result
     }
     reader.readAsDataURL(file)
@@ -243,6 +217,7 @@ const handlePortadaChange = (e) => {
 
 const removePortada = () => {
   currentLibro.value.portada = ''
+  portadaFile.value = null
 }
 
 onMounted(() => {
@@ -288,7 +263,7 @@ onMounted(() => {
           >
         </div>
         <!-- Botón Nuevo -->
-        <button class="btn btn-primary" @click="currentLibro = { libroID: null, nroRegistro: '', codigoBarras: '', nroClasificacion: '', titulo: '', autor: '', anio: '', ejemplar: '1', portada: '' }; showModal = true">Nuevo Libro</button>
+        <button class="btn btn-primary" @click="currentLibro = { libroID: null, nroRegistro: '', codigoBarras: '', nroClasificacion: '', titulo: '', autor: '', anio: '', ejemplar: '1', portada: '', estante: null, cara: '', piso: null }; showModal = true">Nuevo Libro</button>
       </div>
     </div>
 
@@ -317,7 +292,7 @@ onMounted(() => {
           <td>
             <div style="display: flex; justify-content: center; align-items: center;">
               <div class="book-cover-thumbnail">
-                <img v-if="l.portada" :src="l.portada" alt="Portada" />
+                <img v-if="l.portada" :src="l.portada.startsWith('data:') ? l.portada : API_BASE_URL + l.portada" alt="Portada" />
                 <div v-else class="book-cover-placeholder">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                 </div>
@@ -437,6 +412,27 @@ onMounted(() => {
                   <input v-model="currentLibro.anio" placeholder="Ej. 2021" class="premium-input">
                 </div>
               </div>
+
+              <!-- Ubicación Física -->
+              <h4 style="margin: 10px 0 5px; color: #334155; font-size: 0.9rem;">Ubicación Física</h4>
+              <div class="form-grid-2" style="grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                <div class="input-group">
+                  <label>Estante (1-7)</label>
+                  <input type="number" min="1" max="7" v-model="currentLibro.estante" placeholder="Ej. 2" class="premium-input">
+                </div>
+                <div class="input-group">
+                  <label>Cara (A/B)</label>
+                  <select v-model="currentLibro.cara" class="premium-input" style="height: 44px;">
+                    <option value="">N/A</option>
+                    <option value="A">Cara A</option>
+                    <option value="B">Cara B</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label>Piso (1-6)</label>
+                  <input type="number" min="1" max="6" v-model="currentLibro.piso" placeholder="Ej. 3" class="premium-input">
+                </div>
+              </div>
             </div>
 
             <!-- Columna Derecha: Portada -->
@@ -444,7 +440,7 @@ onMounted(() => {
               <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">Portada del Libro</label>
               <div class="cover-upload-container">
                 <div class="book-cover-preview-lg">
-                  <img v-if="currentLibro.portada" :src="currentLibro.portada" alt="Vista previa de portada" />
+                  <img v-if="currentLibro.portada" :src="currentLibro.portada.startsWith('data:') ? currentLibro.portada : API_BASE_URL + currentLibro.portada" alt="Vista previa de portada" />
                   <div v-else class="book-cover-placeholder-xl">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     <span style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px; font-weight: 500;">Sin Portada</span>

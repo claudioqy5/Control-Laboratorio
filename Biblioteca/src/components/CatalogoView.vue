@@ -259,6 +259,7 @@ const goToPage = (page) => {
       </div>
     </div>
   </div>
+</template>
 
 <style scoped>
 .book-wrapper {
@@ -436,4 +437,3 @@ const goToPage = (page) => {
   color: var(--urp-red);
 }
 </style>
-</template>

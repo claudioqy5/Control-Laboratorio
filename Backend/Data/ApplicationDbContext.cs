@@ -12,6 +12,10 @@ namespace ControlLaboratorio.API.Data
         public DbSet<Alumno> Alumnos { get; set; }
         public DbSet<Equipo> Equipos { get; set; }
         public DbSet<Sesion> Sesiones { get; set; }
+        public DbSet<Libro> Libros { get; set; }
+        public DbSet<Prestamo> Prestamos { get; set; }
+        public DbSet<Favorito> Favoritos { get; set; }
+        public DbSet<Multa> Multas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,8 +35,29 @@ namespace ControlLaboratorio.API.Data
             modelBuilder.Entity<Sesion>()
                 .HasIndex(s => s.AlumnoID);
 
-            // Seed data if needed, but the user said DB already created.
-            // However, we need to ensure the PC is in the Equipos table for the agent to work.
+            // Configuraciones de Biblioteca
+            modelBuilder.Entity<Libro>()
+                .HasIndex(l => l.NroRegistro)
+                .IsUnique();
+
+            modelBuilder.Entity<Libro>()
+                .HasIndex(l => l.CodigoBarras)
+                .IsUnique();
+
+            modelBuilder.Entity<Prestamo>()
+                .HasIndex(p => p.AlumnoID);
+
+            modelBuilder.Entity<Prestamo>()
+                .HasIndex(p => p.LibroID);
+
+            modelBuilder.Entity<Favorito>()
+                .HasIndex(f => f.AlumnoID);
+
+            modelBuilder.Entity<Favorito>()
+                .HasIndex(f => f.LibroID);
+
+            modelBuilder.Entity<Multa>()
+                .HasIndex(m => m.AlumnoID);
         }
     }
 }
