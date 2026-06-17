@@ -14,7 +14,7 @@ const databases = [
     description:
       'Herramienta de apoyo clínico basada en evidencia que brinda acceso a más de 2,000 monografías de enfermedades y condiciones, algoritmos diagnósticos, guías de tratamiento, calculadoras clínicas y más de 200 videos de procedimientos. Diseñada para responder preguntas clínicas críticas en minutos.',
     features: ['2,000+ monografías clínicas', 'Algoritmos diagnósticos', 'Calculadoras médicas', 'Información de fármacos A–Z'],
-    url: 'https://www.5minuteconsult.com'
+    url: 'https://loginwolterskluwer.urp.elogim.com/as/authorization.oauth2?client_id=HLRP.MedicalProcedures.Kauri&code_challenge=BFwEbHOyzTOTPCc1Rheulf5jXxml-wsy9b6rR5oVtJk&code_challenge_method=S256&response_type=code&pfidpadapterid=KauriAdapter&response_mode=form_post&scope=openid%20profile%20email&referer=https%3A%2F%2Fmenu.urp.elogim.com%2F&state=20680c61-06a5-4044-a033-f3ed9a183a3e&redirect_uri=https%3A%2F%2Fclinicalcontext.lww.com%2F.sso%2Fcode%2Foneid'
   },
   {
     id: 2,
@@ -28,7 +28,7 @@ const databases = [
     description:
       'Plataforma integral de McGraw-Hill con más de 100 títulos de referencia en español, incluyendo Harrison, Goodman & Gilman, y Diagnóstico Clínico y Tratamiento. Incluye recursos multimedia, herramienta Diagnosaurus® para diagnóstico diferencial, base de datos de fármacos, calculadoras clínicas y casos clínicos interactivos.',
     features: ['100+ libros en español', 'Diagnosaurus® diferencial', 'Videos y animaciones 3D', 'Autoevaluación interactiva'],
-    url: 'https://accessmedicina.mhmedical.com'
+    url: 'https://accessmedicina.urp.elogim.com/'
   },
   {
     id: 3,
@@ -42,7 +42,7 @@ const databases = [
     description:
       'Plataforma de visualización 3D interactiva conocida como el "Google Maps del cuerpo humano". Presenta más de 8,000 estructuras anatómicas seleccionables individualmente, más de 600 condiciones y tratamientos simulados, disponible en 8 idiomas. Ideal para el aprendizaje anatómico y la comunicación médico-paciente.',
     features: ['8,000+ estructuras anatómicas', '600+ condiciones simuladas', 'Modelos 3D interactivos', 'Accesible desde cualquier dispositivo'],
-    url: 'https://www.biodigital.com'
+    url: 'https://humanbiodigital.urp.elogim.com/login/create?code=URP9XF4H'
   },
   {
     id: 4,
@@ -56,7 +56,7 @@ const databases = [
     description:
       'Herramienta de apoyo a la decisión clínica basada en evidencia del BMJ. Cubre el proceso completo de atención al paciente: evaluación de síntomas, diagnóstico diferencial, tratamiento y seguimiento. Incluye más de 250 calculadoras médicas, videos de procedimientos, miles de guías clínicas y seguimiento automático de créditos CME/CPD.',
     features: ['Diagnóstico diferencial', '250+ calculadoras médicas', 'Algoritmos de tratamiento', 'Hojas educativas para pacientes'],
-    url: 'https://bestpractice.bmj.com'
+    url: 'https://bestpracticebmj.urp.elogim.com/info/us/'
   },
   {
     id: 5,
@@ -70,7 +70,7 @@ const databases = [
     description:
       'Plataforma de búsqueda clínica de Elsevier en español diseñada para la práctica diaria del médico. Brinda acceso a libros líderes en medicina, journals con revisión por pares, fichas de medicamentos y pautas de práctica clínica. Actualizada continuamente con contenido de más de 1,000 revistas biomédicas de Elsevier.',
     features: ['1,000+ revistas biomédicas', 'Libros clínicos en español', 'Fichas de medicamentos', 'Imágenes y videos clínicos'],
-    url: 'https://www.clinicalkey.es'
+    url: 'https://clinicalkey.urp.elogim.com/#!/'
   },
   {
     id: 6,
@@ -84,7 +84,7 @@ const databases = [
     description:
       'Plataforma educativa de Elsevier para estudiantes de medicina y ciencias de la salud. Incluye los mejores libros de texto como Gray\'s Anatomy for Students, Costanzo Physiology y más. Ofrece tarjetas de estudio (flashcards), miles de preguntas de autoevaluación, análisis de desempeño docente y acceso offline.',
     features: ['Flashcards personalizables', '4,700+ preguntas de examen', 'Notas y marcadores colaborativos', 'Acceso offline móvil'],
-    url: 'https://www.clinicalkey.com/student'
+    url: 'https://clinicalkeystudent.urp.elogim.com/student/login'
   },
   {
     id: 7,
@@ -98,7 +98,7 @@ const databases = [
     description:
       'Solución integral de apoyo a la decisión clínica de EBSCO que combina el contenido basado en evidencia de DynaMed con la información farmacológica avanzada de Micromedex. Ofrece búsqueda con IA (Dyna AI), interacciones medicamentosas, compatibilidad IV, calculadoras clínicas, árboles de decisión y actualización diaria de contenido.',
     features: ['Contenido actualizado diariamente', 'Interacciones de medicamentos', 'Integración con EHR (FHIR)', 'Créditos CME/MOC'],
-    url: 'https://www.dynamedex.com'
+    url: 'https://dynamedex.urp.elogim.com/'
   },
   {
     id: 8,
@@ -112,7 +112,7 @@ const databases = [
     description:
       'Plataforma web de libros electrónicos de Wolters Kluwer que reúne miles de textos médicos autorizados en un entorno interligado. Permite búsqueda en lenguaje natural, descarga de capítulos en PDF, anotaciones personales y acceso a colecciones multidisciplinarias de medicina, enfermería, farmacología y salud pública.',
     features: ['Miles de libros de texto médicos', 'Descarga de capítulos en PDF', 'Anotaciones y marcadores', 'Colecciones especializadas'],
-    url: 'https://ovidsp.ovid.com'
+    url: 'https://oceovid.urp.elogim.com/booksbrowse?contentLang=spa,eng'
   },
   {
     id: 9,
@@ -126,7 +126,7 @@ const databases = [
     description:
       'Colección digital de LWW (Lippincott Williams & Wilkins) diseñada para apoyar al estudiante durante las 6 rotaciones clínicas principales: Medicina Interna, Cirugía, Pediatría, Gineco-Obstetricia, Psiquiatría y Medicina Familiar. Incluye más de 30 libros de las series Blueprints y Step-Up, 150+ casos clínicos y 4,700+ preguntas de autoevaluación.',
     features: ['6 rotaciones clínicas cubiertas', '30+ libros Blueprints/Step-Up', '150+ casos clínicos', '4,700+ preguntas MCQ'],
-    url: 'https://lwwhealthlibrary.com'
+    url: 'https://clerkship.lwwhealthlibrary.com/index.aspx?rotationId=0'
   },
   {
     id: 10,
@@ -140,7 +140,7 @@ const databases = [
     description:
       'La revista médica de mayor impacto y prestigio en el mundo, publicada semanalmente desde 1812. Con un factor de impacto de 78.5 (2024), publica investigaciones originales, revisiones clínicas, casos y comentarios editoriales que definen las guías de práctica médica global. Tasa de aceptación aproximada del 5%.',
     features: ['Factor de impacto: 78.5', 'Publicación semanal desde 1812', 'Investigación práctica-cambiante', 'Videos y casos interactivos NEJM'],
-    url: 'https://www.nejm.org'
+    url: 'https://nejm.urp.elogim.com/'
   },
   {
     id: 11,
@@ -154,7 +154,7 @@ const databases = [
     description:
       'Base de datos bibliográfica agregada de Wolters Kluwer que reúne cientos de revistas de más de 50 editoriales y sociedades científicas, incluyendo el catálogo completo de Lippincott® (LWW). Permite búsqueda simultánea en libros, journals y bases de datos; vinculación bidireccional con MEDLINE y descarga en PDF o formato completo Ovid.',
     features: ['Cientos de revistas científicas', 'Acceso texto completo LWW', 'Vinculación con MEDLINE', 'Gestión de citas integrada'],
-    url: 'https://ovidsp.ovid.com'
+    url: 'https://oviddc2.urp.elogim.com/ovid-new-a/ovidweb.cgi?QS2=434f4e1a73d37e8c79e5d8c142641a542280cb57f0416e41d37d53a4d3815bf29da7a83e487343ffffa6718412c0ffea71f57506abe817240749582d80fe2e6fc5f8c2ebcd70909b59ce62630189ba4083fa4dd0d125180a24206cd935bd149dac3b7f1c0aa6bfd342d180eaa7f86eacc822b42709cf3ec2c586abdee77ae0287b547be6903a4dd2f3c534cff5da574e913fec17c05fbc8a1aeab0bc6c07a4e80db9f5e3bf56e2e9ec70bb9df0976e2f23b57f1770a3df8ff3ece399f88f1b69cf541864e834848186735c5b60d7eecd648e142165148443fb0eec92300e1878dbd74a3f7167356feeddef15fc9466f9'
   },
   {
     id: 12,
@@ -168,7 +168,7 @@ const databases = [
     description:
       'Plataforma de acceso de Springer Nature con más de 10 millones de documentos científicos: journals revisados por pares, libros electrónicos, series de libros, obras de referencia, protocolos y actas de congresos. Cubre todas las especialidades médicas y áreas de investigación biomédica, con búsqueda avanzada y contenido semánticamente interligado.',
     features: ['10+ millones de documentos', 'Todas las especialidades médicas', 'E-books y journals integrados', 'Búsqueda avanzada por disciplina'],
-    url: 'https://link.springer.com'
+    url: 'https://link.springer.com/journals/browse-subject?subject=HEALTH_SCIENCES'
   }
 ]
 </script>

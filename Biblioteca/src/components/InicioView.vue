@@ -186,7 +186,7 @@ onUnmounted(() => {
           <div class="hero-content">
             <span class="slide-badge">SUSCRIPCIÓN INSTITUCIONAL</span>
             <h1 class="hero-title">Bases de Datos Científicas Premium</h1>
-            <p class="hero-subtitle">Accede de forma gratuita a ClinicalKey, UpToDate, PubMed Central y Scopus. Herramientas avanzadas para estudiantes e investigadores.</p>
+            <p class="hero-subtitle">Accede de forma gratuita a Access Medicina, BMJ Best Practice, ClinicalKey, DynaMedex y más. Herramientas avanzadas para estudiantes e investigadores de la URP.</p>
             <div style="margin-top: 1.5rem;">
               <button class="btn btn-urp" @click="emit('set-view', 'bases-datos')">Explorar Bases de Datos</button>
             </div>
@@ -247,39 +247,39 @@ onUnmounted(() => {
         </div>
 
         <div class="bases-datos-row">
-          <!-- Card 1 -->
-          <div class="db-card" @click="emit('set-view', 'bases-datos')">
+          <!-- Card 1: Access Medicina -->
+          <div class="db-card" @click="window.open('https://accessmedicina.urp.elogim.com/', '_blank')">
             <div class="db-card-image">
-              <div class="badge-db badge-premium">Suscripción Premium</div>
-              <div style="background-color: #1a365d; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.05em;">ClinicalKey</div>
+              <div class="badge-db badge-premium">McGraw-Hill</div>
+              <div style="background: linear-gradient(135deg, #0066cc, #003f99); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.2rem; text-align: center; padding: 1rem; letter-spacing: -0.03em;">Access<br>Medicina</div>
             </div>
             <div class="db-card-content">
-              <h3 class="db-card-title">ClinicalKey</h3>
-              <p class="db-card-desc">Herramienta de búsqueda de contenido clínico que brinda acceso a la información clínica más reciente para la toma de decisiones rápidas y precisas.</p>
+              <h3 class="db-card-title">Access Medicina – Español</h3>
+              <p class="db-card-desc">Más de 100 títulos en español: Harrison, Goodman &amp; Gilman y más. Incluye Diagnosaurus®, calculadoras clínicas y autoevaluación.</p>
             </div>
           </div>
 
-          <!-- Card 2 -->
-          <div class="db-card" @click="emit('set-view', 'bases-datos')">
+          <!-- Card 2: BMJ Best Practice -->
+          <div class="db-card" @click="window.open('https://bestpracticebmj.urp.elogim.com/info/us/', '_blank')">
             <div class="db-card-image">
               <div class="badge-db badge-updated">Actualización Diaria</div>
-              <div style="background-color: #2b6cb0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.05em;">UpToDate</div>
+              <div style="background: linear-gradient(135deg, #c00000, #8b0000); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.1rem; text-align: center; padding: 1rem;">BMJ<br>Best Practice</div>
             </div>
             <div class="db-card-content">
-              <h3 class="db-card-title">UpToDate</h3>
-              <p class="db-card-desc">Recurso de apoyo a las decisiones clínicas basado en evidencia, escrito por médicos expertos para el diagnóstico clínico y tratamiento de pacientes.</p>
+              <h3 class="db-card-title">BMJ Best Practice</h3>
+              <p class="db-card-desc">Guías clínicas basadas en evidencia del British Medical Journal. Diagnóstico diferencial, algoritmos de tratamiento y 250+ calculadoras médicas.</p>
             </div>
           </div>
 
-          <!-- Card 3 -->
-          <div class="db-card" @click="emit('set-view', 'bases-datos')">
+          <!-- Card 3: DynaMedex -->
+          <div class="db-card" @click="window.open('https://dynamedex.urp.elogim.com/', '_blank')">
             <div class="db-card-image">
-              <div class="badge-db badge-open">Acceso Abierto</div>
-              <div style="background-color: #2c7a7b; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.05em;">PubMed Central</div>
+              <div class="badge-db badge-open">EBSCO Health</div>
+              <div style="background: linear-gradient(135deg, #005f9e, #003366); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.3rem; text-align: center; padding: 1rem;">DynaMedex</div>
             </div>
             <div class="db-card-content">
-              <h3 class="db-card-title">PubMed Central</h3>
-              <p class="db-card-desc">Archivo gratuito de artículos de revistas biomédicas y de ciencias de la vida a texto completo del Instituto Nacional de Salud de EE.UU.</p>
+              <h3 class="db-card-title">DynaMedex</h3>
+              <p class="db-card-desc">Combina DynaMed y Micromedex: evidencia clínica + información farmacológica avanzada. IA integrada, interacciones de medicamentos y actualización diaria.</p>
             </div>
           </div>
         </div>
