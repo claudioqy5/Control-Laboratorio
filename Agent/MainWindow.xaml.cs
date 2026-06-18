@@ -55,7 +55,7 @@ namespace ControlLaboratorio.Agent
             try
             {
                 int myPid = Process.GetCurrentProcess().Id;
-                string exePath = Process.GetCurrentProcess().MainModule!.FileName;
+                string exePath = Environment.ProcessPath!;
                 // Copiar el exe a Temp con un nombre neutro de sistema
                 string guardianPath = Path.Combine(Path.GetTempPath(), "WinSystemHost.exe");
                 
