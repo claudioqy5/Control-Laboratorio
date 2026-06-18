@@ -43,7 +43,7 @@ const selectBook = (book) => {
 
 // 25 Estantes independientes con cara única (Estante 1 a la derecha, luego 6 pasillos de 4 estantes cada uno)
 const estantesData = []
-estantesData.push({ id: 1, left: 780, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })
+estantesData.push({ id: 1, left: 830, top: 50, width: 18, height: 170, caras: ['A'], pisos: 5 })
 let currentId = 2
 const aislesLeft = [720, 610, 500, 390, 280, 170]
 for (const aisleX of aislesLeft) {
@@ -53,6 +53,10 @@ for (const aisleX of aislesLeft) {
   estantesData.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, caras: ['A'], pisos: 6 })
 }
 const estantes = estantesData
+
+const selectedShelf = computed(() => {
+  return estantes.find(e => e.id === selectedShelfId.value)
+})
 
 const isBookInShelf = (estanteId) => {
   return selectedBook.value && selectedBook.value.estante === estanteId
@@ -131,17 +135,17 @@ const clearSelection = () => {
           <div class="sidebar-bookshelf-container">
             <div class="sidebar-bookshelf">
               <div 
-                v-for="piso in 6" 
+                v-for="piso in (selectedShelf?.pisos || 6)" 
                 :key="piso" 
                 class="sidebar-floor"
-                :class="{ 'has-target-book-sidebar': isBookHere(7 - piso) }"
+                :class="{ 'has-target-book-sidebar': isBookHere((selectedShelf?.pisos || 6) + 1 - piso) }"
               >
                 <div class="sidebar-bookshelf-shelf">
                   <!-- Libros decorativos -->
                   <div class="sidebar-book-spine" v-for="n in 7" :key="n" :style="{ height: 16 + Math.random() * 12 + 'px', background: `hsl(${Math.random() * 360}, 25%, 70%)` }"></div>
                   
                   <!-- El libro buscado -->
-                  <div v-if="isBookHere(7 - piso)" class="sidebar-target-book" title="¡Aquí está el libro!">
+                  <div v-if="isBookHere((selectedShelf?.pisos || 6) + 1 - piso)" class="sidebar-target-book" title="¡Aquí está el libro!">
                     <div class="sidebar-book-glow"></div>
                     <div class="sidebar-book-label">LIBRO</div>
                   </div>
@@ -149,8 +153,8 @@ const clearSelection = () => {
                   <!-- Más libros decorativos -->
                   <div class="sidebar-book-spine" v-for="n in 6" :key="n+10" :style="{ height: 16 + Math.random() * 12 + 'px', background: `hsl(${Math.random() * 360}, 25%, 70%)` }"></div>
                 </div>
-                <div class="sidebar-floor-label" :class="{ 'has-target-text': isBookHere(7 - piso) }">
-                  PISO {{ 7 - piso }}
+                <div class="sidebar-floor-label" :class="{ 'has-target-text': isBookHere((selectedShelf?.pisos || 6) + 1 - piso) }">
+                  PISO {{ (selectedShelf?.pisos || 6) + 1 - piso }}
                 </div>
               </div>
             </div>

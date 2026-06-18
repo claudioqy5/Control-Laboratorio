@@ -315,15 +315,19 @@ const tempSelectedShelf = ref(null)
 const tempSelectedPiso = ref(null)
 
 const estantes = []
-estantes.push({ id: 1, left: 780, top: 50, width: 18, height: 170 })
+estantes.push({ id: 1, left: 830, top: 50, width: 18, height: 170, pisos: 5 })
 let currentId = 2
 const aislesLeft = [720, 610, 500, 390, 280, 170]
 for (const aisleX of aislesLeft) {
-  estantes.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170 })
-  estantes.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170 })
-  estantes.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170 })
-  estantes.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170 })
+  estantes.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, pisos: 6 })
+  estantes.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, pisos: 6 })
+  estantes.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170, pisos: 6 })
+  estantes.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170, pisos: 6 })
 }
+
+const tempSelectedShelfObj = computed(() => {
+  return estantes.find(e => e.id === tempSelectedShelf.value)
+})
 
 const openMapSelector = () => {
   tempSelectedShelf.value = currentLibro.value.estante ? parseInt(currentLibro.value.estante, 10) : null
@@ -333,6 +337,11 @@ const openMapSelector = () => {
 
 const selectShelf = (shelfId) => {
   tempSelectedShelf.value = shelfId
+  // Si cambiamos de estante y el estante nuevo tiene menos pisos que el piso actualmente seleccionado temporalmente, lo reiniciamos
+  const newShelfObj = estantes.find(e => e.id === shelfId)
+  if (tempSelectedPiso.value && newShelfObj && tempSelectedPiso.value > newShelfObj.pisos) {
+    tempSelectedPiso.value = null
+  }
 }
 
 const selectFloor = (floorNum) => {
@@ -749,16 +758,16 @@ onMounted(() => {
             </div>
             
             <div class="shelf-vertical-preview" v-if="tempSelectedShelf">
-              <div v-for="piso in 6" :key="piso" 
+              <div v-for="piso in (tempSelectedShelfObj?.pisos || 6)" :key="piso" 
                    class="floor-row" 
-                   :class="{ 'selected-floor': tempSelectedPiso === (7 - piso) }"
-                   @click="selectFloor(7 - piso)">
+                   :class="{ 'selected-floor': tempSelectedPiso === ((tempSelectedShelfObj?.pisos || 6) + 1 - piso) }"
+                   @click="selectFloor((tempSelectedShelfObj?.pisos || 6) + 1 - piso)">
                 <div class="floor-shelf-line">
                   <div class="floor-books">
                     <div class="book-spine" v-for="n in 8" :key="n" :style="{ height: 12 + (n % 3) * 4 + 'px', background: `hsl(${(n * 45) % 360}, 45%, 65%)` }"></div>
                   </div>
                 </div>
-                <div class="floor-number" :class="{ 'selected-floor-text': tempSelectedPiso === (7 - piso) }">PISO {{ 7 - piso }}</div>
+                <div class="floor-number" :class="{ 'selected-floor-text': tempSelectedPiso === ((tempSelectedShelfObj?.pisos || 6) + 1 - piso) }">PISO {{ (tempSelectedShelfObj?.pisos || 6) + 1 - piso }}</div>
               </div>
             </div>
             <div v-else class="select-shelf-placeholder">
