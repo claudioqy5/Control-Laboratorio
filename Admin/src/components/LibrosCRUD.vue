@@ -315,7 +315,7 @@ const tempSelectedShelf = ref(null)
 const tempSelectedPiso = ref(null)
 
 const estantes = []
-estantes.push({ id: 1, left: 770, top: 220, width: 40, height: 180 })
+estantes.push({ id: 1, left: 780, top: 50, width: 18, height: 170 })
 let currentId = 2
 const aislesLeft = [720, 610, 500, 390, 280, 170]
 for (const aisleX of aislesLeft) {
