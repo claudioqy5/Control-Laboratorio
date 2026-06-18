@@ -201,11 +201,17 @@ const clearSelection = () => {
                  <div class="fake-book-col left-face"></div>
                  <div class="fake-book-col left-face alt-pattern"></div>
                  <div class="fake-book-col left-face"></div>
+                 <div class="fake-book-col left-face alt-pattern"></div>
+                 <div class="fake-book-col left-face"></div>
+                 <div class="fake-book-col left-face alt-pattern"></div>
               </div>
               <div class="iso-face right">
                  <div class="fake-book-col right-face alt-pattern"></div>
                  <div class="fake-book-col right-face"></div>
                  <div class="fake-book-col right-face alt-pattern"></div>
+                 <div class="fake-book-col right-face"></div>
+                 <div class="fake-book-col right-face alt-pattern"></div>
+                 <div class="fake-book-col right-face"></div>
               </div>
             </div>
           </div>
@@ -756,7 +762,7 @@ const clearSelection = () => {
   display: flex;
   justify-content: space-evenly;
   align-items: center;
-  padding: 5px 0;
+  padding: 3px 0;
   box-sizing: border-box;
 }
 
@@ -770,13 +776,13 @@ const clearSelection = () => {
   flex-direction: row-reverse;
   justify-content: space-evenly;
   align-items: center;
-  padding: 5px 0;
+  padding: 3px 0;
   box-sizing: border-box;
 }
 
 /* Book texturing */
 .fake-book-col {
-  width: 25px; /* Altura de repisa en 3D (eje Z) */
+  width: 14px; /* Altura de repisa en 3D (eje Z) - Ajustado para 6 pisos */
   height: 96%; /* Largo de libros en el estante (eje Y) */
   background-image: repeating-linear-gradient(
     to bottom,
@@ -806,8 +812,8 @@ const clearSelection = () => {
 }
 
 /* Repisas de madera horizontales que sostienen los libros */
-.fake-book-col.left-face { border-left: 4px solid #A06E3D; }
-.fake-book-col.right-face { border-right: 4px solid #A06E3D; }
+.fake-book-col.left-face { border-left: 3px solid #A06E3D; }
+.fake-book-col.right-face { border-right: 3px solid #A06E3D; }
 
 /* TARGET SHELF (Resaltado Rojo Brillante) */
 .iso-shelf.is-target .iso-face {
