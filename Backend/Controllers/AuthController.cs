@@ -79,17 +79,17 @@ namespace ControlLaboratorio.API.Controllers
 
             if (sesionActiva != null)
             {
-                // Si la sesión activa en el equipo es de un día anterior, es una sesión huérfana.
-                // La cerramos automáticamente con su HoraLimite o HoraInicio + 3 horas y guardamos.
+                // Como el equipo está en la pantalla de Login, cualquier sesión activa es huérfana (el agente se reinició o cerró mal)
+                // Cerramos la sesión activa huérfana automáticamente.
+                sesionActiva.HoraFin = TimeHelper.GetPeruTime();
+                
+                // Asegurar que no exceda el límite del día si era de ayer
                 if (sesionActiva.Fecha.Date < TimeHelper.GetPeruTime().Date)
                 {
                     sesionActiva.HoraFin = sesionActiva.HoraLimite ?? sesionActiva.HoraInicio.AddHours(3);
-                    await _context.SaveChangesAsync();
                 }
-                else
-                {
-                    return BadRequest(new { message = "El equipo ya tiene una sesión activa." });
-                }
+                
+                await _context.SaveChangesAsync();
             }
 
             // Verificar si EL ALUMNO ya tiene una sesión abierta en CUALQUIER otro equipo (Evita bypass del límite)
@@ -546,6 +546,21 @@ namespace ControlLaboratorio.API.Controllers
                 return Ok(new { unlock = true, sesionId = sesionId, shutdown = shouldShutdown });
             }
             return Ok(new { unlock = false, shutdown = shouldShutdown });
+        }
+
+        [HttpGet("check-remote-shutdown/{nombreRed}")]
+        public IActionResult CheckRemoteShutdown(string nombreRed)
+        {
+            bool shouldShutdown = false;
+            if (PendingShutdowns.TryGetValue(nombreRed, out DateTime shutdownTime))
+            {
+                if ((TimeHelper.GetPeruTime() - shutdownTime).TotalMinutes <= 10)
+                {
+                    shouldShutdown = true;
+                }
+                PendingShutdowns.TryRemove(nombreRed, out _); // Consumir comando
+            }
+            return Ok(new { shutdown = shouldShutdown });
         }
     }
 }

@@ -78,10 +78,11 @@ namespace ControlLaboratorio.Installer
                     ExtractResource("ControlLaboratorio.Installer.Resources.ControlLaboratorio.Agent.exe", targetExe);
                 });
 
-                lblStatus.Text = "Configurando inicio automático y políticas de energía...";
+                lblStatus.Text = "Configurando inicio automático y limpiando versiones antiguas...";
                 await Task.Run(() => {
                     CreateStartupShortcut(targetExe);
                     ApplySystemConfigurations();
+                    CleanUpOldInstallations();
                 });
 
                 lblStatus.Text = "Iniciando el sistema...";
@@ -137,6 +138,38 @@ namespace ControlLaboratorio.Installer
             {
                 key.SetValue("BVE_ControlLaboratorioAgent", $"\"{exePath}\"");
             }
+        }
+
+        private void CleanUpOldInstallations()
+        {
+            try
+            {
+                // Limpiar posibles registros de autoarranque antiguos (Current User)
+                using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+                {
+                    if (key != null && key.GetValue("ControlLaboratorioAgent") != null)
+                    {
+                        key.DeleteValue("ControlLaboratorioAgent", false);
+                    }
+                }
+                
+                // Limpiar posibles registros de autoarranque antiguos (Local Machine)
+                using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+                {
+                    if (key != null && key.GetValue("ControlLaboratorioAgent") != null)
+                    {
+                        key.DeleteValue("ControlLaboratorioAgent", false);
+                    }
+                }
+
+                // Borrar carpeta vieja en Archivos de Programa si alguien la instaló por accidente con Inno Setup
+                string oldDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "ControlLaboratorio");
+                if (Directory.Exists(oldDir))
+                {
+                    Directory.Delete(oldDir, true);
+                }
+            }
+            catch { /* Ignorar si no existe o hay error de permisos al borrar basura vieja */ }
         }
 
         private void ApplySystemConfigurations()

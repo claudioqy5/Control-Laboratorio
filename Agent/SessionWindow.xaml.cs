@@ -118,8 +118,8 @@ namespace ControlLaboratorio.Agent
             try
             {
                 // 1. Verificar primero si hay un apagado remoto urgente
-                var unlockResponse = await _httpClient.GetFromJsonAsync<RemoteUnlockResponse>($"{MainWindow.ApiUrl}/check-remote-unlock/{Environment.MachineName}");
-                if (unlockResponse != null && unlockResponse.Shutdown)
+                var shutdownResponse = await _httpClient.GetFromJsonAsync<RemoteUnlockResponse>($"{MainWindow.ApiUrl}/check-remote-shutdown/{Environment.MachineName}");
+                if (shutdownResponse != null && shutdownResponse.Shutdown)
                 {
                     Process.Start(new ProcessStartInfo("shutdown", "/s /t 5") { CreateNoWindow = true, UseShellExecute = false });
                     return;
@@ -184,10 +184,7 @@ namespace ControlLaboratorio.Agent
             ForceLogout();
         }
 
-        public void AllowCloseForUpdate()
-        {
-            _isLoggingOut = true;
-        }
+
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
