@@ -130,25 +130,33 @@ onUnmounted(() => {
 
 const basesDatosContainer = ref(null)
 
-const databases = ref([
+const databases = [
   {
     id: 1,
     name: '5 Minute Consult',
-    provider: 'Wolters Kluwer',
+    provider: 'Wolters Kluwer / Lippincott',
     color: '#e07b2a',
-    gradient: 'linear-gradient(135deg, #e07b2a, #b25815)',
-    shortName: '5 Minute<br>Consult',
-    description: 'Herramienta de apoyo clínico basada en evidencia con algoritmos diagnósticos, guías y videos de procedimientos.',
+    bgGradient: 'linear-gradient(135deg, #fff7f0 0%, #fff0e0 100%)',
+    borderColor: '#f0a060',
+    icon: '⏱️',
+    tags: ['Decisión Clínica', 'Punto de Atención'],
+    description:
+      'Herramienta de apoyo clínico basada en evidencia que brinda acceso a más de 2,000 monografías de enfermedades y condiciones, algoritmos diagnósticos, guías de tratamiento, calculadoras clínicas y más de 200 videos de procedimientos. Diseñada para responder preguntas clínicas críticas en minutos.',
+    features: ['2,000+ monografías clínicas', 'Algoritmos diagnósticos', 'Calculadoras médicas', 'Información de fármacos A–Z'],
     url: 'https://loginwolterskluwer.urp.elogim.com/as/authorization.oauth2?client_id=HLRP.MedicalProcedures.Kauri&code_challenge=BFwEbHOyzTOTPCc1Rheulf5jXxml-wsy9b6rR5oVtJk&code_challenge_method=S256&response_type=code&pfidpadapterid=KauriAdapter&response_mode=form_post&scope=openid%20profile%20email&referer=https%3A%2F%2Fmenu.urp.elogim.com%2F&state=20680c61-06a5-4044-a033-f3ed9a183a3e&redirect_uri=https%3A%2F%2Fclinicalcontext.lww.com%2F.sso%2Fcode%2Foneid'
   },
   {
     id: 2,
     name: 'Access Medicina – Español',
-    provider: 'McGraw-Hill',
+    provider: 'McGraw-Hill Education',
     color: '#0066cc',
-    gradient: 'linear-gradient(135deg, #0066cc, #003f99)',
-    shortName: 'Access<br>Medicina',
-    description: 'Plataforma integral con más de 100 títulos de referencia en español, Diagnosaurus®, videos y casos clínicos.',
+    bgGradient: 'linear-gradient(135deg, #f0f6ff 0%, #e0edff 100%)',
+    borderColor: '#80bbff',
+    icon: '📚',
+    tags: ['Libros Médicos', 'Español'],
+    description:
+      'Plataforma integral de McGraw-Hill con más de 100 títulos de referencia en español, incluyendo Harrison, Goodman & Gilman, y Diagnóstico Clínico y Tratamiento. Incluye recursos multimedia, herramienta Diagnosaurus® para diagnóstico diferencial, base de datos de fármacos, calculadoras clínicas y casos clínicos interactivos.',
+    features: ['100+ libros en español', 'Diagnosaurus® diferencial', 'Videos y animaciones 3D', 'Autoevaluación interactiva'],
     url: 'https://accessmedicina.urp.elogim.com/'
   },
   {
@@ -156,19 +164,27 @@ const databases = ref([
     name: 'BioDigital',
     provider: 'BioDigital, Inc.',
     color: '#1a1a2e',
-    gradient: 'linear-gradient(135deg, #1a1a2e, #0f0f1b)',
-    shortName: 'BioDigital',
-    description: 'Visualización interactiva en 3D de anatomía y condiciones médicas. El "Google Maps" del cuerpo humano.',
+    bgGradient: 'linear-gradient(135deg, #f0f0ff 0%, #e0e0f8 100%)',
+    borderColor: '#9090d0',
+    icon: '🫀',
+    tags: ['Anatomía 3D', 'Visualización'],
+    description:
+      'Plataforma de visualización 3D interactiva conocida como el "Google Maps del cuerpo humano". Presenta más de 8,000 estructuras anatómicas seleccionables individualmente, más de 600 condiciones y tratamientos simulados, disponible en 8 idiomas. Ideal para el aprendizaje anatómico y la comunicación médico-paciente.',
+    features: ['8,000+ estructuras anatómicas', '600+ condiciones simuladas', 'Modelos 3D interactivos', 'Accesible desde cualquier dispositivo'],
     url: 'https://humanbiodigital.urp.elogim.com/login/create?code=URP9XF4H'
   },
   {
     id: 4,
     name: 'BMJ Best Practice',
-    provider: 'British Medical Journal',
+    provider: 'British Medical Journal (BMJ)',
     color: '#c00000',
-    gradient: 'linear-gradient(135deg, #c00000, #8b0000)',
-    shortName: 'BMJ<br>Best Practice',
-    description: 'Guías de práctica clínica y apoyo a la decisión en el punto de atención con evidencia continuamente actualizada.',
+    bgGradient: 'linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%)',
+    borderColor: '#f09090',
+    icon: '🏥',
+    tags: ['Guías Clínicas', 'Evidencia'],
+    description:
+      'Herramienta de apoyo a la decisión clínica basada en evidencia del BMJ. Cubre el proceso completo de atención al paciente: evaluación de síntomas, diagnóstico diferencial, tratamiento y seguimiento. Incluye más de 250 calculadoras médicas, videos de procedimientos, miles de guías clínicas y seguimiento automático de créditos CME/CPD.',
+    features: ['Diagnóstico diferencial', '250+ calculadoras médicas', 'Algoritmos de tratamiento', 'Hojas educativas para pacientes'],
     url: 'https://bestpracticebmj.urp.elogim.com/info/us/'
   },
   {
@@ -176,9 +192,13 @@ const databases = ref([
     name: 'Clinical Key Español',
     provider: 'Elsevier',
     color: '#ff6600',
-    gradient: 'linear-gradient(135deg, #ff6600, #c84e00)',
-    shortName: 'ClinicalKey<br>Español',
-    description: 'Búsqueda clínica con acceso a revistas biomédicas, libros de texto de referencia y fichas farmacológicas de Elsevier.',
+    bgGradient: 'linear-gradient(135deg, #fff8f0 0%, #fff0e0 100%)',
+    borderColor: '#ffb080',
+    icon: '🔑',
+    tags: ['Libros & Journals', 'Clínica'],
+    description:
+      'Plataforma de búsqueda clínica de Elsevier en español diseñada para la práctica diaria del médico. Brinda acceso a libros líderes en medicina, journals con revisión por pares, fichas de medicamentos y pautas de práctica clínica. Actualizada continuamente con contenido de más de 1,000 revistas biomédicas de Elsevier.',
+    features: ['1,000+ revistas biomédicas', 'Libros clínicos en español', 'Fichas de medicamentos', 'Imágenes y videos clínicos'],
     url: 'https://clinicalkey.urp.elogim.com/#!/'
   },
   {
@@ -186,9 +206,13 @@ const databases = ref([
     name: 'Clinical Key Student',
     provider: 'Elsevier',
     color: '#e05a00',
-    gradient: 'linear-gradient(135deg, #e05a00, #aa4300)',
-    shortName: 'ClinicalKey<br>Student',
-    description: 'Recurso de aprendizaje con libros líderes (Gray, Costanzo), flashcards y banco de preguntas de autoevaluación.',
+    bgGradient: 'linear-gradient(135deg, #fff8f0 0%, #ffefe0 100%)',
+    borderColor: '#ffa060',
+    icon: '🎓',
+    tags: ['Estudiantes', 'Autoevaluación'],
+    description:
+      'Plataforma educativa de Elsevier para estudiantes de medicina y ciencias de la salud. Incluye los mejores libros de texto como Gray\'s Anatomy for Students, Costanzo Physiology y más. Ofrece tarjetas de estudio (flashcards), miles de preguntas de autoevaluación, análisis de desempeño docente y acceso offline.',
+    features: ['Flashcards personalizables', '4,700+ preguntas de examen', 'Notas y marcadores colaborativos', 'Acceso offline móvil'],
     url: 'https://clinicalkeystudent.urp.elogim.com/student/login'
   },
   {
@@ -196,49 +220,69 @@ const databases = ref([
     name: 'DynaMedex',
     provider: 'EBSCO Health',
     color: '#005f9e',
-    gradient: 'linear-gradient(135deg, #005f9e, #003366)',
-    shortName: 'DynaMedex',
-    description: 'Apoyo a decisiones clínicas de alta velocidad combinado con la información de medicamentos de Micromedex.',
+    bgGradient: 'linear-gradient(135deg, #f0f7ff 0%, #ddeeff 100%)',
+    borderColor: '#70b0e0',
+    icon: '⚕️',
+    tags: ['Decisión Clínica', 'Fármacos'],
+    description:
+      'Solución integral de apoyo a la decisión clínica de EBSCO que combina el contenido basado en evidencia de DynaMed con la información farmacológica avanzada de Micromedex. Ofrece búsqueda con IA (Dyna AI), interacciones medicamentosas, compatibilidad IV, calculadoras clínicas, árboles de decisión y actualización diaria de contenido.',
+    features: ['Contenido actualizado diariamente', 'Interacciones de medicamentos', 'Integración con EHR (FHIR)', 'Créditos CME/MOC'],
     url: 'https://dynamedex.urp.elogim.com/'
   },
   {
     id: 8,
     name: 'Ebooks de Ovid',
-    provider: 'Wolters Kluwer',
+    provider: 'Wolters Kluwer (Books@Ovid)',
     color: '#4a0072',
-    gradient: 'linear-gradient(135deg, #4a0072, #30004a)',
-    shortName: 'Ovid<br>Ebooks',
-    description: 'Acceso a una amplia colección de libros electrónicos de medicina, enfermería, farmacología y salud pública.',
+    bgGradient: 'linear-gradient(135deg, #f8f0ff 0%, #ede0ff 100%)',
+    borderColor: '#c090e0',
+    icon: '📖',
+    tags: ['Libros Electrónicos', 'Referencia'],
+    description:
+      'Plataforma web de libros electrónicos de Wolters Kluwer que reúne miles de textos médicos autorizados en un entorno interligado. Permite búsqueda en lenguaje natural, descarga de capítulos en PDF, anotaciones personales y acceso a colecciones multidisciplinarias de medicina, enfermería, farmacología y salud pública.',
+    features: ['Miles de libros de texto médicos', 'Descarga de capítulos en PDF', 'Anotaciones y marcadores', 'Colecciones especializadas'],
     url: 'https://oceovid.urp.elogim.com/booksbrowse?contentLang=spa,eng'
   },
   {
     id: 9,
     name: 'Health Library Clerkship',
-    provider: 'Wolters Kluwer',
+    provider: 'LWW / Wolters Kluwer',
     color: '#006a4e',
-    gradient: 'linear-gradient(135deg, #006a4e, #004d38)',
-    shortName: 'Health Library<br>Clerkship',
-    description: 'Apoyo para rotaciones clínicas esenciales con libros Step-Up/Blueprints, casos clínicos y preguntas de examen.',
+    bgGradient: 'linear-gradient(135deg, #f0fff8 0%, #d0f0e8 100%)',
+    borderColor: '#70c0a0',
+    icon: '🩺',
+    tags: ['Rotaciones Clínicas', 'Residentes'],
+    description:
+      'Colección digital de LWW (Lippincott Williams & Wilkins) diseñada para apoyar al estudiante durante las 6 rotaciones clínicas principales: Medicina Interna, Cirugía, Pediatría, Gineco-Obstetricia, Psiquiatría y Medicina Familiar. Incluye más de 30 libros de las series Blueprints y Step-Up, 150+ casos clínicos y 4,700+ preguntas de autoevaluación.',
+    features: ['6 rotaciones clínicas cubiertas', '30+ libros Blueprints/Step-Up', '150+ casos clínicos', '4,700+ preguntas MCQ'],
     url: 'https://clerkship.lwwhealthlibrary.com/index.aspx?rotationId=0'
   },
   {
     id: 10,
     name: 'New England Journal of Medicine',
-    provider: 'NEJM Group',
+    provider: 'Massachusetts Medical Society',
     color: '#b22222',
-    gradient: 'linear-gradient(135deg, #b22222, #801818)',
-    shortName: 'NEJM',
-    description: 'La revista médica más prestigiosa del mundo, con investigaciones originales de alto impacto y factor de impacto de 78.5.',
+    bgGradient: 'linear-gradient(135deg, #fff5f5 0%, #ffeded 100%)',
+    borderColor: '#e09090',
+    icon: '📰',
+    tags: ['Journal Líder', 'Investigación'],
+    description:
+      'La revista médica de mayor impacto y prestigio en el mundo, publicada semanalmente desde 1812. Con un factor de impacto de 78.5 (2024), publica investigaciones originales, revisiones clínicas, casos y comentarios editoriales que definen las guías de práctica médica global. Tasa de aceptación aproximada del 5%.',
+    features: ['Factor de impacto: 78.5', 'Publicación semanal desde 1812', 'Investigación práctica-cambiante', 'Videos y casos interactivos NEJM'],
     url: 'https://nejm.urp.elogim.com/'
   },
   {
     id: 11,
     name: 'Revistas Ovid',
-    provider: 'Wolters Kluwer',
+    provider: 'Wolters Kluwer (Journals@Ovid)',
     color: '#7b3f9e',
-    gradient: 'linear-gradient(135deg, #7b3f9e, #53296c)',
-    shortName: 'Ovid<br>Revistas',
-    description: 'Acceso a texto completo de cientos de revistas científicas de alta calidad, incluyendo el catálogo de Lippincott (LWW).',
+    bgGradient: 'linear-gradient(135deg, #f9f0ff 0%, #ede0ff 100%)',
+    borderColor: '#c090dd',
+    icon: '📑',
+    tags: ['Journals', 'Texto Completo'],
+    description:
+      'Base de datos bibliográfica agregada de Wolters Kluwer que reúne cientos de revistas de más de 50 editoriales y sociedades científicas, incluyendo el catálogo completo de Lippincott® (LWW). Permite búsqueda de revistas y descarga en PDF o formato completo Ovid.',
+    features: ['Cientos de revistas científicas', 'Acceso texto completo LWW', 'Vinculación con MEDLINE', 'Gestión de citas integrada'],
     url: 'https://oviddc2.urp.elogim.com/ovid-new-a/ovidweb.cgi?QS2=434f4e1a73d37e8c79e5d8c142641a542280cb57f0416e41d37d53a4d3815bf29da7a83e487343ffffa6718412c0ffea71f57506abe817240749582d80fe2e6fc5f8c2ebcd70909b59ce62630189ba4083fa4dd0d125180a24206cd935bd149dac3b7f1c0aa6bfd342d180eaa7f86eacc822b42709cf3ec2c586abdee77ae0287b547be6903a4dd2f3c534cff5da574e913fec17c05fbc8a1aeab0bc6c07a4e80db9f5e3bf56e2e9ec70bb9df0976e2f23b57f1770a3df8ff3ece399f88f1b69cf541864e834848186735c5b60d7eecd648e142165148443fb0eec92300e1878dbd74a3f7167356feeddef15fc9466f9'
   },
   {
@@ -246,12 +290,16 @@ const databases = ref([
     name: 'Springer Link',
     provider: 'Springer Nature',
     color: '#d4770a',
-    gradient: 'linear-gradient(135deg, #d4770a, #a05905)',
-    shortName: 'Springer<br>Link',
-    description: 'Acceso a millones de documentos de investigación biomédica, libros y revistas del prestigioso sello Springer Nature.',
+    bgGradient: 'linear-gradient(135deg, #fff9f0 0%, #ffefd8 100%)',
+    borderColor: '#f0b060',
+    icon: '🔬',
+    tags: ['Investigación', 'Ciencias Biomédicas'],
+    description:
+      'Plataforma de acceso de Springer Nature con más de 10 millones de documentos científicos: journals revisados por pares, libros electrónicos, series de libros, obras de referencia, protocolos y actas de congresos. Cubre todas las especialidades médicas y áreas de investigación biomédica, con búsqueda avanzada y contenido semánticamente interligado.',
+    features: ['10+ millones de documentos', 'Todas las especialidades médicas', 'E-books y journals integrados', 'Búsqueda avanzada por disciplina'],
     url: 'https://link.springer.com/journals/browse-subject?subject=HEALTH_SCIENCES'
   }
-])
+]
 
 const slideLeft = () => {
   if (basesDatosContainer.value) {
@@ -268,6 +316,38 @@ const slideRight = () => {
 const openDatabase = (url, name) => {
   emit('show-toast', `Abriendo ${name}...`, 'success')
   window.open(url, '_blank')
+}
+
+const darkenColor = (hex, percent = 20) => {
+  const num = parseInt(hex.replace("#",""), 16),
+  amt = Math.round(2.55 * percent),
+  R = (num >> 16) - amt,
+  G = (num >> 8 & 0x00FF) - amt,
+  B = (num & 0x0000FF) - amt;
+  return "#" + (0x1000000 + (R<0?0:R>255?255:R)*0x10000 + (G<0?0:G>255?255:G)*0x100 + (B<0?0:B>255?255:B)).toString(16).slice(1);
+}
+
+const getGradient = (color) => {
+  return `linear-gradient(135deg, ${color}, ${darkenColor(color, 25)})`
+}
+
+const getShortName = (name) => {
+  if (name.includes('–')) {
+    return name.split('–')[0].trim().replace(' ', '<br>')
+  }
+  if (name.includes('-')) {
+    return name.split('-')[0].trim().replace(' ', '<br>')
+  }
+  if (name === 'New England Journal of Medicine') {
+    return 'NEJM'
+  }
+  const words = name.split(' ')
+  if (words.length > 2) {
+    return `${words[0]} ${words[1]}<br>${words.slice(2).join(' ')}`
+  } else if (words.length === 2) {
+    return `${words[0]}<br>${words[1]}`
+  }
+  return name
 }
 </script>
 
@@ -399,7 +479,7 @@ const openDatabase = (url, name) => {
               <div class="badge-db" :style="{ backgroundColor: db.color }">{{ db.provider }}</div>
               <div 
                 :style="{ 
-                  background: db.gradient, 
+                  background: getGradient(db.color), 
                   width: '100%', 
                   height: '100%', 
                   display: 'flex', 
@@ -412,12 +492,12 @@ const openDatabase = (url, name) => {
                   padding: '1rem', 
                   letterSpacing: '-0.03em' 
                 }"
-                v-html="db.shortName"
+                v-html="getShortName(db.name)"
               ></div>
             </div>
             <div class="db-card-content">
               <h3 class="db-card-title">{{ db.name }}</h3>
-              <p class="db-card-desc">{{ db.description }}</p>
+              <p class="db-card-desc">{{ db.description.length > 150 ? db.description.slice(0, 147) + '...' : db.description }}</p>
             </div>
           </div>
         </div>
