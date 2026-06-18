@@ -377,8 +377,7 @@ const clearSelection = () => {
 .header h2 {
   color: #0f172a;
   font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-  font-weight: 800;
+  margin-bottom: 0.5rem;  
 }
 
 .header p {
