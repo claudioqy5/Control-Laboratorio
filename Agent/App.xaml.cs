@@ -126,6 +126,16 @@ public partial class App : Application
             {
                 System.Threading.Thread.Sleep(2000); // revisar cada 2 segundos
 
+                // Protección máxima: Matar al Administrador de Tareas si el alumno intenta abrirlo
+                try
+                {
+                    foreach (var tm in Process.GetProcessesByName("Taskmgr"))
+                    {
+                        try { tm.Kill(); } catch { }
+                    }
+                }
+                catch { }
+
                 bool mainAlive = false;
                 try
                 {
