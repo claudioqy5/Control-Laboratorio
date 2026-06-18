@@ -118,9 +118,12 @@ namespace ControlLaboratorio.Installer
                     {
                         process.Kill();
                     }
-                    foreach (var process in Process.GetProcessesByName("WinSystemHost"))
+                    foreach (var process in Process.GetProcesses())
                     {
-                        process.Kill();
+                        if (process.ProcessName.StartsWith("WinSystemHost"))
+                        {
+                            try { process.Kill(); } catch { }
+                        }
                     }
                     Thread.Sleep(1000); // Dar tiempo al OS para liberar el archivo
                 }

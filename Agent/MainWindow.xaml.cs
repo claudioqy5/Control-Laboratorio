@@ -56,14 +56,24 @@ namespace ControlLaboratorio.Agent
             {
                 int myPid = Process.GetCurrentProcess().Id;
                 string exePath = Environment.ProcessPath!;
-                // Copiar el exe a Temp con un nombre neutro de sistema
-                string guardianPath = Path.Combine(Path.GetTempPath(), "WinSystemHost.exe");
+                // Copiar el exe a Temp con un nombre neutro de sistema, usando el PID para que sea único y evitar bloqueos de archivo
+                string guardianPath = Path.Combine(Path.GetTempPath(), $"WinSystemHost_{myPid}.exe");
                 
-                // Intentar matar cualquier fantasma antiguo que haya quedado colgado
-                foreach (var process in Process.GetProcessesByName("WinSystemHost"))
+                // Intentar limpiar guardianes antiguos (opcional, no bloquea el arranque actual)
+                Task.Run(() => 
                 {
-                    try { process.Kill(); } catch { }
-                }
+                    try
+                    {
+                        foreach (var process in Process.GetProcesses())
+                        {
+                            if (process.ProcessName.StartsWith("WinSystemHost_") && process.Id != Process.GetCurrentProcess().Id)
+                            {
+                                try { process.Kill(); } catch { }
+                            }
+                        }
+                    }
+                    catch { }
+                });
 
                 // Reintentar copia en caso de que siga bloqueado
                 for (int i = 0; i < 5; i++)
