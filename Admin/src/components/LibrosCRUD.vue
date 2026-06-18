@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../config'
 
 // Estado del componente
 const libros = ref([])
+const categorias = ref([])
 const searchQuery = ref('')
 const showModal = ref(false)
 const currentPage = ref(1)
@@ -21,7 +22,7 @@ const currentLibro = ref({
   editorial: '',
   edicion: '',
   portada: '',
-  categoria: 'Medicina General',
+  categoria: '',
   idioma: 'Español',
   paginas: 0,
   estado: 'Disponible',
@@ -60,6 +61,19 @@ const loadLibros = async () => {
   } catch (err) {
     console.error("Error al cargar libros:", err)
     showToast('Error al conectar con el servidor', 'error')
+  }
+}
+
+const loadCategorias = async () => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/Categorias`)
+    categorias.value = res.data
+    // Si no hay categoría seleccionada y hay categorías cargadas, establecer la primera por defecto
+    if (!currentLibro.value.categoria && res.data.length > 0) {
+      currentLibro.value.categoria = res.data[0].nombre
+    }
+  } catch (err) {
+    console.error("Error al cargar categorías:", err)
   }
 }
 
@@ -356,6 +370,7 @@ const confirmMapSelection = () => {
 
 onMounted(() => {
   loadLibros()
+  loadCategorias()
 })
 </script>
 
@@ -397,7 +412,7 @@ onMounted(() => {
           >
         </div>
         <!-- Botón Nuevo -->
-        <button class="btn btn-primary" @click="currentLibro = { libroID: null, nroRegistro: '', codigoBarras: '', nroClasificacion: '', titulo: '', autor: '', anio: '', editorial: '', edicion: '', categoria: 'Medicina General', idioma: 'Español', paginas: 0, estado: 'Disponible', resumen: '', portada: '', estante: null, cara: '', piso: null }; showModal = true">Nuevo Libro</button>
+        <button class="btn btn-primary" @click="currentLibro = { libroID: null, nroRegistro: '', codigoBarras: '', nroClasificacion: '', titulo: '', autor: '', anio: '', editorial: '', edicion: '', categoria: categorias[0]?.nombre || '', idioma: 'Español', paginas: 0, estado: 'Disponible', resumen: '', portada: '', estante: null, cara: '', piso: null }; showModal = true">Nuevo Libro</button>
       </div>
     </div>
 
@@ -575,14 +590,10 @@ onMounted(() => {
                   <div class="input-group">
                     <label>Categoría</label>
                     <select v-model="currentLibro.categoria" class="premium-input">
-                      <option value="Medicina General">Medicina General</option>
-                      <option value="Anatomía">Anatomía</option>
-                      <option value="Fisiología">Fisiología</option>
-                      <option value="Farmacología">Farmacología</option>
-                      <option value="Microbiología">Microbiología</option>
-                      <option value="Patología">Patología</option>
-                      <option value="Cirugía">Cirugía</option>
-                      <option value="Otros">Otros</option>
+                      <option v-for="cat in categorias" :key="cat.categoriaID" :value="cat.nombre">
+                        {{ cat.nombre }}
+                      </option>
+                      <option v-if="categorias.length === 0" value="">Sin categorías disponibles</option>
                     </select>
                   </div>
                   <div class="input-group">

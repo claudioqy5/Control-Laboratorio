@@ -91,6 +91,16 @@ using (var scope = app.Services.CreateScope())
             BEGIN
                 ALTER TABLE Equipos ADD AgentVersionFecha DATETIME2 NULL
             END
+
+            IF OBJECT_ID('Categorias', 'U') IS NULL
+            BEGIN
+                CREATE TABLE Categorias (
+                    CategoriaID INT IDENTITY(1,1) PRIMARY KEY,
+                    Codigo NVARCHAR(50) NOT NULL,
+                    Nombre NVARCHAR(150) NOT NULL,
+                    Descripcion NVARCHAR(MAX) NULL
+                );
+            END
         ");
 
         // Force cleanup and re-seeding if we want to ensure fresh mock data with all new columns populated (only in development)
@@ -102,6 +112,23 @@ using (var scope = app.Services.CreateScope())
         // Seeding mock data if empty (only in development)
         if (app.Environment.IsDevelopment())
         {
+            if (!db.Categorias.Any())
+            {
+                var mockCategorias = new List<Categoria>
+                {
+                    new Categoria { Codigo = "CAT-001", Nombre = "Medicina General", Descripcion = "Libros de medicina general y fundamentos." },
+                    new Categoria { Codigo = "CAT-002", Nombre = "Anatomía", Descripcion = "Estudio de la estructura de los seres vivos." },
+                    new Categoria { Codigo = "CAT-003", Nombre = "Fisiología", Descripcion = "Estudio de las funciones y mecanismos de los sistemas vivos." },
+                    new Categoria { Codigo = "CAT-004", Nombre = "Patología", Descripcion = "Estudio de las enfermedades." },
+                    new Categoria { Codigo = "CAT-005", Nombre = "Dermatología", Descripcion = "Especialidad médica encargada del estudio de la piel." },
+                    new Categoria { Codigo = "CAT-006", Nombre = "Pediatría", Descripcion = "Rama de la medicina que involucra la atención médica de bebés, niños y adolescentes." },
+                    new Categoria { Codigo = "CAT-007", Nombre = "Cirugía", Descripcion = "Práctica que implica manipulación mecánica de las estructuras anatómicas." }
+                };
+                db.Categorias.AddRange(mockCategorias);
+                db.SaveChanges();
+            }
+
+
             if (!db.Alumnos.Any())
             {
                 var mockAlumnos = new List<Alumno>

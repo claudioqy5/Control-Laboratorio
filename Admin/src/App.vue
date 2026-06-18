@@ -8,6 +8,7 @@ import LaboratoryMap from './components/LaboratoryMap.vue'
 import EquiposList from './components/EquiposList.vue'
 import ReportesConexiones from './components/ReportesConexiones.vue'
 import LibrosCRUD from './components/LibrosCRUD.vue'
+import CategoriasCRUD from './components/CategoriasCRUD.vue'
 import MapaBiblioteca from './components/MapaBiblioteca.vue'
 
 const currentView = ref('dashboard')
@@ -70,6 +71,10 @@ onMounted(checkAuth)
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
         <span v-if="!isSidebarCollapsed">Libros</span>
       </a>
+      <a href="#" class="nav-item" :class="{ active: currentView === 'categorias' }" @click="currentView = 'categorias'" :title="isSidebarCollapsed ? 'Categorías' : ''">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 6V3M9 6V3M15 6V3"></path></svg>
+        <span v-if="!isSidebarCollapsed">Categorías</span>
+      </a>
       <a href="#" class="nav-item" :class="{ active: currentView === 'mapa-biblio' }" @click="currentView = 'mapa-biblio'" :title="isSidebarCollapsed ? 'Mapa Biblioteca' : ''">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
         <span v-if="!isSidebarCollapsed">Mapa Biblioteca</span>
@@ -101,6 +106,7 @@ onMounted(checkAuth)
       <EquiposList v-if="currentView === 'equipos'" />
       <AlumnosCRUD v-if="currentView === 'alumnos'" />
       <LibrosCRUD v-if="currentView === 'libros'" />
+      <CategoriasCRUD v-if="currentView === 'categorias'" />
       <MapaBiblioteca v-if="currentView === 'mapa-biblio'" />
       <ActiveSessions v-if="currentView === 'active'" />
       <ReportesConexiones v-if="currentView === 'conexiones'" />
