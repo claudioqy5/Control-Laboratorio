@@ -48,11 +48,6 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Libro>> PostLibro(Libro libro)
         {
-            if (await _context.Libros.AnyAsync(l => l.NroRegistro == libro.NroRegistro))
-            {
-                return BadRequest(new { mensaje = "El número de registro ya existe" });
-            }
-
             if (await _context.Libros.AnyAsync(l => l.CodigoBarras == libro.CodigoBarras))
             {
                 return BadRequest(new { mensaje = "El código de barras ya existe" });
@@ -71,12 +66,6 @@ namespace ControlLaboratorio.API.Controllers
             if (id != libro.LibroID)
             {
                 return BadRequest(new { mensaje = "El ID del libro no coincide" });
-            }
-
-            // Validar unicidad de NroRegistro y CodigoBarras excluyendo el libro actual
-            if (await _context.Libros.AnyAsync(l => l.NroRegistro == libro.NroRegistro && l.LibroID != id))
-            {
-                return BadRequest(new { mensaje = "El número de registro ya está asignado a otro libro" });
             }
 
             if (await _context.Libros.AnyAsync(l => l.CodigoBarras == libro.CodigoBarras && l.LibroID != id))
@@ -127,10 +116,6 @@ namespace ControlLaboratorio.API.Controllers
         {
             if (libros == null || libros.Count == 0) return BadRequest(new { mensaje = "Lista vacía" });
 
-            var registrosExistentes = await _context.Libros
-                .Select(l => l.NroRegistro.Trim().ToLower())
-                .ToListAsync();
-
             var codigosBarrasExistentes = await _context.Libros
                 .Select(l => l.CodigoBarras.Trim().ToLower())
                 .ToListAsync();
@@ -139,18 +124,16 @@ namespace ControlLaboratorio.API.Controllers
 
             foreach (var libro in libros)
             {
-                var reg = libro.NroRegistro?.Trim().ToLower();
                 var cb = libro.CodigoBarras?.Trim().ToLower();
 
-                if (string.IsNullOrEmpty(reg) || string.IsNullOrEmpty(cb))
+                if (string.IsNullOrEmpty(cb))
                 {
                     continue; 
                 }
 
-                if (!registrosExistentes.Contains(reg) && !codigosBarrasExistentes.Contains(cb))
+                if (!codigosBarrasExistentes.Contains(cb))
                 {
                     nuevosLibros.Add(libro);
-                    registrosExistentes.Add(reg);
                     codigosBarrasExistentes.Add(cb);
                 }
             }

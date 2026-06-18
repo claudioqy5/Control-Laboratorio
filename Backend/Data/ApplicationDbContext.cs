@@ -38,8 +38,7 @@ namespace ControlLaboratorio.API.Data
 
             // Configuraciones de Biblioteca
             modelBuilder.Entity<Libro>()
-                .HasIndex(l => l.NroRegistro)
-                .IsUnique();
+                .HasIndex(l => l.NroRegistro);
 
             modelBuilder.Entity<Libro>()
                 .HasIndex(l => l.CodigoBarras)

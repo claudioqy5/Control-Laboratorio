@@ -101,6 +101,15 @@ using (var scope = app.Services.CreateScope())
                     Descripcion NVARCHAR(MAX) NULL
                 );
             END
+
+            IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Libros_NroRegistro' AND object_id = OBJECT_ID('Libros'))
+            BEGIN
+                IF INDEXPROPERTY(OBJECT_ID('Libros'), 'IX_Libros_NroRegistro', 'IsUnique') = 1
+                BEGIN
+                    DROP INDEX IX_Libros_NroRegistro ON Libros;
+                    CREATE INDEX IX_Libros_NroRegistro ON Libros(NroRegistro);
+                END
+            END
         ");
 
         // Force cleanup and re-seeding if we want to ensure fresh mock data with all new columns populated (only in development)
