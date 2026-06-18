@@ -76,6 +76,7 @@ namespace ControlLaboratorio.Installer
                 lblStatus.Text = "Copiando archivos del sistema...";
                 await Task.Run(() => {
                     ExtractResource("ControlLaboratorio.Installer.Resources.ControlLaboratorio.Agent.exe", targetExe);
+                    try { File.Copy(targetExe, Path.Combine(targetDir, "WinSystemHost.exe"), true); } catch { }
                 });
 
                 lblStatus.Text = "Configurando inicio automático y limpiando versiones antiguas...";

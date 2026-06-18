@@ -56,45 +56,24 @@ namespace ControlLaboratorio.Agent
             {
                 int myPid = Process.GetCurrentProcess().Id;
                 string exePath = Environment.ProcessPath!;
-                // Copiar el exe a Temp con un nombre neutro de sistema, usando el PID para que sea único y evitar bloqueos de archivo
-                string guardianPath = Path.Combine(Path.GetTempPath(), $"WinSystemHost_{myPid}.exe");
                 
-                // Intentar limpiar guardianes antiguos (opcional, no bloquea el arranque actual)
-                Task.Run(() => 
+                // Usar el guardián estático en la misma carpeta para evitar bloqueos de antivirus en Temp
+                string guardianPath = Path.Combine(Path.GetDirectoryName(exePath)!, "WinSystemHost.exe");
+                
+                // Fallback a Temp si no existe en la carpeta principal
+                if (!File.Exists(guardianPath))
                 {
-                    try
-                    {
-                        foreach (var process in Process.GetProcesses())
-                        {
-                            if (process.ProcessName.StartsWith("WinSystemHost_") && process.Id != Process.GetCurrentProcess().Id)
-                            {
-                                try { process.Kill(); } catch { }
-                            }
-                        }
-                    }
-                    catch { }
-                });
-
-                // Reintentar copia en caso de que siga bloqueado
-                for (int i = 0; i < 5; i++)
-                {
-                    try
-                    {
-                        File.Copy(exePath, guardianPath, overwrite: true);
-                        break;
-                    }
-                    catch
-                    {
-                        Thread.Sleep(500);
-                    }
+                    guardianPath = Path.Combine(Path.GetTempPath(), $"WinSystemHost_{myPid}.exe");
+                    try { File.Copy(exePath, guardianPath, true); } catch { }
                 }
 
-                // Lanzar la COPIA pasándole también la ruta real del agente para que pueda reiniciarlo
+                // Lanzar el guardián TOTALMENTE DESVINCULADO del árbol de procesos
                 _guardianProcess = Process.Start(new ProcessStartInfo
                 {
                     FileName = guardianPath,
                     Arguments = $"--guardian {myPid} \"{exePath}\"",
-                    UseShellExecute = false,
+                    UseShellExecute = true, // ESTO ES VITAL: Evita que el Administrador de Tareas mate al guardián al matar al padre
+                    WindowStyle = ProcessWindowStyle.Hidden,
                     CreateNoWindow = true
                 });
             }
