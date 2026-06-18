@@ -87,7 +87,7 @@ const clearSelection = () => {
       <!-- Buscador Mejorado -->
       <div class="search-section">
         <div class="search-box">
-          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input 
             v-model="searchQuery" 
             type="text" 
@@ -397,21 +397,21 @@ const clearSelection = () => {
 
 .search-icon {
   position: absolute;
-  left: 1.2rem;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  color: #9f1239;
+  color: #9ca3af;
 }
 
 .search-input {
   width: 100%;
-  padding: 1rem 1rem 1rem 3.5rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 1.05rem;
+  padding: 0.5rem 1rem 0.5rem 2.2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
   transition: all 0.2s;
-  background: #f8fafc;
-  color: #0f172a;
+  background: #ffffff;
+  color: #111827;
   box-sizing: border-box;
 }
 
@@ -419,7 +419,7 @@ const clearSelection = () => {
   outline: none;
   border-color: #9f1239;
   background: white;
-  box-shadow: 0 0 0 4px rgba(159, 18, 57, 0.1);
+  box-shadow: 0 0 0 3px rgba(159, 18, 57, 0.1);
 }
 
 .search-results {
