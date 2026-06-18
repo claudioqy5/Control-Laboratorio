@@ -41,10 +41,14 @@ const showToast = (message, type = 'success') => {
 }
 
 const errors = ref({
-  nroRegistro: false,
-  codigoBarras: false,
-  titulo: false,
-  autor: false
+  nroRegistro: '',
+  codigoBarras: '',
+  titulo: '',
+  autor: '',
+  anio: '',
+  paginas: '',
+  estante: '',
+  piso: ''
 })
 const validationError = ref('')
 
@@ -93,10 +97,14 @@ const prevPage = () => {
 watch(showModal, (newVal) => {
   if (!newVal) {
     errors.value = {
-      nroRegistro: false,
-      codigoBarras: false,
-      titulo: false,
-      autor: false
+      nroRegistro: '',
+      codigoBarras: '',
+      titulo: '',
+      autor: '',
+      anio: '',
+      paginas: '',
+      estante: '',
+      piso: ''
     }
     validationError.value = ''
   }
@@ -104,33 +112,75 @@ watch(showModal, (newVal) => {
 
 const saveLibro = async () => {
   errors.value = {
-    nroRegistro: false,
-    codigoBarras: false,
-    titulo: false,
-    autor: false
+    nroRegistro: '',
+    codigoBarras: '',
+    titulo: '',
+    autor: '',
+    anio: '',
+    paginas: '',
+    estante: '',
+    piso: ''
   }
   validationError.value = ''
 
-  const missingFields = []
-  if (!currentLibro.value.nroRegistro?.trim()) {
-    errors.value.nroRegistro = true
-    missingFields.push('N° registro')
-  }
-  if (!currentLibro.value.codigoBarras?.trim()) {
-    errors.value.codigoBarras = true
-    missingFields.push('Código de barras')
-  }
+  let hasErrors = false
+
   if (!currentLibro.value.titulo?.trim()) {
-    errors.value.titulo = true
-    missingFields.push('Título')
+    errors.value.titulo = 'El título es obligatorio.'
+    hasErrors = true
   }
   if (!currentLibro.value.autor?.trim()) {
-    errors.value.autor = true
-    missingFields.push('Autor')
+    errors.value.autor = 'El autor es obligatorio.'
+    hasErrors = true
+  }
+  if (!currentLibro.value.nroRegistro?.trim()) {
+    errors.value.nroRegistro = 'El número de registro es obligatorio.'
+    hasErrors = true
+  }
+  if (!currentLibro.value.codigoBarras?.trim()) {
+    errors.value.codigoBarras = 'El código de barras es obligatorio.'
+    hasErrors = true
   }
 
-  if (missingFields.length > 0) {
-    validationError.value = `Falta ingresar los siguientes datos obligatorios: ${missingFields.join(', ')}.`
+  // Validar Año (debe ser numérico y estar en un rango razonable, por ej. 1500 a año actual + 2)
+  if (currentLibro.value.anio) {
+    const anioNum = Number(currentLibro.value.anio)
+    const currentYear = new Date().getFullYear()
+    if (isNaN(anioNum) || anioNum < 1500 || anioNum > currentYear + 2) {
+      errors.value.anio = `El año debe ser un número válido entre 1500 y ${currentYear + 2}.`
+      hasErrors = true
+    }
+  }
+
+  // Validar Páginas
+  if (currentLibro.value.paginas !== undefined && currentLibro.value.paginas !== null && currentLibro.value.paginas !== '') {
+    const paginasNum = Number(currentLibro.value.paginas)
+    if (isNaN(paginasNum) || paginasNum < 0 || !Number.isInteger(paginasNum)) {
+      errors.value.paginas = 'Las páginas deben ser un número entero mayor o igual a 0.'
+      hasErrors = true
+    }
+  }
+
+  // Validar Estante
+  if (currentLibro.value.estante !== undefined && currentLibro.value.estante !== null && currentLibro.value.estante !== '') {
+    const estanteNum = Number(currentLibro.value.estante)
+    if (isNaN(estanteNum) || estanteNum < 1 || estanteNum > 31) {
+      errors.value.estante = 'El estante debe estar entre 1 y 31.'
+      hasErrors = true
+    }
+  }
+
+  // Validar Piso
+  if (currentLibro.value.piso !== undefined && currentLibro.value.piso !== null && currentLibro.value.piso !== '') {
+    const pisoNum = Number(currentLibro.value.piso)
+    if (isNaN(pisoNum) || pisoNum < 1 || pisoNum > 6) {
+      errors.value.piso = 'El piso debe estar entre 1 y 6.'
+      hasErrors = true
+    }
+  }
+
+  if (hasErrors) {
+    validationError.value = 'Por favor, corrija los campos marcados en rojo con sus respectivos errores.'
     return
   }
 
@@ -490,122 +540,146 @@ onMounted(() => {
           </div>
 
           <div class="modal-body-layout-wide">
-            <!-- Columna 1: Info Principal -->
+            <!-- Columna 1: Información General & Editorial -->
             <div class="modal-form-column">
-              <div class="input-group">
-                <label :class="{ 'error-label': errors.titulo }">Título *</label>
-                <input v-model="currentLibro.titulo" placeholder="Título del libro" class="premium-input" :class="{ 'invalid': errors.titulo }">
-              </div>
-              
-              <div class="input-group">
-                <label :class="{ 'error-label': errors.autor }">Autor *</label>
-                <input v-model="currentLibro.autor" placeholder="Autor principal" class="premium-input" :class="{ 'invalid': errors.autor }">
-              </div>
+              <!-- Card: Información Principal -->
+              <div class="form-section">
+                <div class="form-section-title">Información Principal</div>
+                <div class="input-group">
+                  <label :class="{ 'error-label': errors.titulo }">Título *</label>
+                  <input v-model="currentLibro.titulo" placeholder="Título del libro" class="premium-input" :class="{ 'invalid': errors.titulo }">
+                  <span v-if="errors.titulo" class="field-error-message">{{ errors.titulo }}</span>
+                </div>
+                
+                <div class="input-group">
+                  <label :class="{ 'error-label': errors.autor }">Autor *</label>
+                  <input v-model="currentLibro.autor" placeholder="Autor principal" class="premium-input" :class="{ 'invalid': errors.autor }">
+                  <span v-if="errors.autor" class="field-error-message">{{ errors.autor }}</span>
+                </div>
 
-              <div class="form-grid-2">
                 <div class="input-group">
-                  <label :class="{ 'error-label': errors.nroRegistro }">N° Registro *</label>
-                  <input v-model="currentLibro.nroRegistro" placeholder="Ej. REG-00234" class="premium-input" :class="{ 'invalid': errors.nroRegistro }">
-                </div>
-                <div class="input-group">
-                  <label :class="{ 'error-label': errors.codigoBarras }">Código de Barras *</label>
-                  <input v-model="currentLibro.codigoBarras" placeholder="Escanear o ingresar número" class="premium-input" :class="{ 'invalid': errors.codigoBarras }">
-                </div>
-              </div>
-
-              <div class="form-grid-2">
-                <div class="input-group">
-                  <label>N° Clasificación</label>
-                  <input v-model="currentLibro.nroClasificacion" placeholder="Ej. WB 100 G216 2021" class="premium-input">
-                </div>
-                <div class="input-group">
-                  <label>Año</label>
-                  <input v-model="currentLibro.anio" placeholder="Ej. 2021" class="premium-input">
+                  <label>Resumen / Descripción</label>
+                  <textarea v-model="currentLibro.resumen" placeholder="Breve descripción del contenido" class="premium-input" style="height: 100px; resize: none;"></textarea>
                 </div>
               </div>
 
-              <div class="form-grid-2">
-                <div class="input-group">
-                  <label>Editorial</label>
-                  <input v-model="currentLibro.editorial" placeholder="Editorial" class="premium-input">
+              <!-- Card: Datos Editoriales & Categorías -->
+              <div class="form-section">
+                <div class="form-section-title">Datos Editoriales & Categorización</div>
+                
+                <div class="form-grid-2">
+                  <div class="input-group">
+                    <label>Categoría</label>
+                    <select v-model="currentLibro.categoria" class="premium-input">
+                      <option value="Medicina General">Medicina General</option>
+                      <option value="Anatomía">Anatomía</option>
+                      <option value="Fisiología">Fisiología</option>
+                      <option value="Farmacología">Farmacología</option>
+                      <option value="Microbiología">Microbiología</option>
+                      <option value="Patología">Patología</option>
+                      <option value="Cirugía">Cirugía</option>
+                      <option value="Otros">Otros</option>
+                    </select>
+                  </div>
+                  <div class="input-group">
+                    <label>Idioma</label>
+                    <input v-model="currentLibro.idioma" placeholder="Ej. Español" class="premium-input">
+                  </div>
                 </div>
-                <div class="input-group">
-                  <label>Edición</label>
-                  <input v-model="currentLibro.edicion" placeholder="Ej. 3ra Edición" class="premium-input">
+
+                <div class="form-grid-2">
+                  <div class="input-group">
+                    <label>Editorial</label>
+                    <input v-model="currentLibro.editorial" placeholder="Editorial" class="premium-input">
+                  </div>
+                  <div class="input-group">
+                    <label>Edición</label>
+                    <input v-model="currentLibro.edicion" placeholder="Ej. 3ra Edición" class="premium-input">
+                  </div>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="input-group">
+                    <label :class="{ 'error-label': errors.paginas }">Páginas</label>
+                    <input type="number" v-model="currentLibro.paginas" placeholder="0" class="premium-input" :class="{ 'invalid': errors.paginas }">
+                    <span v-if="errors.paginas" class="field-error-message">{{ errors.paginas }}</span>
+                  </div>
+                  <div class="input-group">
+                    <label>Estado</label>
+                    <select v-model="currentLibro.estado" class="premium-input">
+                      <option value="Disponible">Disponible</option>
+                      <option value="Prestado">Prestado</option>
+                      <option value="Mantenimiento">Mantenimiento</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Columna 2: Detalles y Ubicación -->
+            <!-- Columna 2: Identificación & Ubicación Física -->
             <div class="modal-form-column">
-              <div class="form-grid-2">
-                <div class="input-group">
-                  <label>Categoría</label>
-                  <select v-model="currentLibro.categoria" class="premium-input">
-                    <option value="Medicina General">Medicina General</option>
-                    <option value="Anatomía">Anatomía</option>
-                    <option value="Fisiología">Fisiología</option>
-                    <option value="Farmacología">Farmacología</option>
-                    <option value="Microbiología">Microbiología</option>
-                    <option value="Patología">Patología</option>
-                    <option value="Cirugía">Cirugía</option>
-                    <option value="Otros">Otros</option>
-                  </select>
+              <!-- Card: Identificación del Catálogo -->
+              <div class="form-section">
+                <div class="form-section-title">Identificación & Registro</div>
+                
+                <div class="form-grid-2">
+                  <div class="input-group">
+                    <label :class="{ 'error-label': errors.nroRegistro }">N° Registro *</label>
+                    <input v-model="currentLibro.nroRegistro" placeholder="Ej. REG-00234" class="premium-input" :class="{ 'invalid': errors.nroRegistro }">
+                    <span v-if="errors.nroRegistro" class="field-error-message">{{ errors.nroRegistro }}</span>
+                  </div>
+                  <div class="input-group">
+                    <label :class="{ 'error-label': errors.codigoBarras }">Código de Barras *</label>
+                    <input v-model="currentLibro.codigoBarras" placeholder="Escanear o ingresar número" class="premium-input" :class="{ 'invalid': errors.codigoBarras }">
+                    <span v-if="errors.codigoBarras" class="field-error-message">{{ errors.codigoBarras }}</span>
+                  </div>
                 </div>
-                <div class="input-group">
-                  <label>Idioma</label>
-                  <input v-model="currentLibro.idioma" placeholder="Ej. Español" class="premium-input">
+
+                <div class="form-grid-2">
+                  <div class="input-group">
+                    <label>N° Clasificación</label>
+                    <input v-model="currentLibro.nroClasificacion" placeholder="Ej. WB 100 G216 2021" class="premium-input">
+                  </div>
+                  <div class="input-group">
+                    <label :class="{ 'error-label': errors.anio }">Año</label>
+                    <input v-model="currentLibro.anio" placeholder="Ej. 2021" class="premium-input" :class="{ 'invalid': errors.anio }">
+                    <span v-if="errors.anio" class="field-error-message">{{ errors.anio }}</span>
+                  </div>
                 </div>
               </div>
 
-              <div class="form-grid-2">
-                <div class="input-group">
-                  <label>Páginas</label>
-                  <input type="number" v-model="currentLibro.paginas" placeholder="0" class="premium-input">
+              <!-- Card: Ubicación Física -->
+              <div class="form-section">
+                <div class="form-section-title">
+                  <span>Ubicación en Biblioteca</span>
+                  <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; margin: 0;" @click="openMapSelector">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+                    Seleccionar en Mapa
+                  </button>
                 </div>
-                <div class="input-group">
-                  <label>Estado</label>
-                  <select v-model="currentLibro.estado" class="premium-input">
-                    <option value="Disponible">Disponible</option>
-                    <option value="Prestado">Prestado</option>
-                    <option value="Mantenimiento">Mantenimiento</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="input-group">
-                <label>Resumen / Descripción</label>
-                <textarea v-model="currentLibro.resumen" placeholder="Breve descripción del contenido" class="premium-input" style="height: 72px; resize: none;"></textarea>
-              </div>
-
-              <!-- Ubicación Física -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0 5px;">
-                <h4 style="margin: 0; color: #334155; font-size: 0.9rem;">Ubicación Física</h4>
-                <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;" @click="openMapSelector">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
-                  Seleccionar en Mapa
-                </button>
-              </div>
-              <div class="form-grid-3">
-                <div class="input-group">
-                  <label>Estante</label>
-                  <input type="number" min="1" max="31" step="1" v-model="currentLibro.estante" placeholder="1-31" class="premium-input" oninput="if(this.value){ this.value = Math.round(this.value); if(this.value > 31) this.value = 31; }">
-                </div>
-                <div class="input-group">
-                  <label>Cara</label>
-                  <select v-model="currentLibro.cara" class="premium-input">
-                    <option value="">N/A</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                  </select>
-                </div>
-                <div class="input-group">
-                  <label>Piso</label>
-                  <input type="number" min="1" max="6" v-model="currentLibro.piso" placeholder="1-6" class="premium-input">
+                
+                <div class="form-grid-3">
+                  <div class="input-group">
+                    <label :class="{ 'error-label': errors.estante }">Estante</label>
+                    <input type="number" min="1" max="31" step="1" v-model="currentLibro.estante" placeholder="1-31" class="premium-input" :class="{ 'invalid': errors.estante }" oninput="if(this.value){ this.value = Math.round(this.value); if(this.value > 31) this.value = 31; }">
+                    <span v-if="errors.estante" class="field-error-message">{{ errors.estante }}</span>
+                  </div>
+                  <div class="input-group">
+                    <label>Cara</label>
+                    <select v-model="currentLibro.cara" class="premium-input">
+                      <option value="">N/A</option>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                    </select>
+                  </div>
+                  <div class="input-group">
+                    <label :class="{ 'error-label': errors.piso }">Piso</label>
+                    <input type="number" min="1" max="6" v-model="currentLibro.piso" placeholder="1-6" class="premium-input" :class="{ 'invalid': errors.piso }">
+                    <span v-if="errors.piso" class="field-error-message">{{ errors.piso }}</span>
+                  </div>
                 </div>
               </div>
             </div>
-
             <!-- Columna 3: Portada -->
             <div class="modal-cover-column">
               <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px; text-align: center;">Portada del Libro</label>
@@ -736,6 +810,39 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.form-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.field-error-message {
+  font-size: 0.72rem;
+  color: #ef4444;
+  margin-top: 2px;
+  font-weight: 600;
+  text-align: left;
+  line-height: 1.2;
+}
+
 .centered-table th, .centered-table td {
   text-align: center;
 }
