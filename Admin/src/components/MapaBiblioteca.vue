@@ -114,33 +114,7 @@ const clearSelection = () => {
         </div>
       </div>
 
-      <!-- Información del libro seleccionado -->
-      <transition name="fade">
-        <div v-if="selectedBook" class="selected-book-sidebar-card">
-          <button class="clear-btn-sidebar" @click="clearSelection" title="Limpiar selección">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-          
-          <div class="book-cover-large">
-            <img v-if="selectedBook.portada" :src="selectedBook.portada.startsWith('data:') ? selectedBook.portada : API_BASE_URL + selectedBook.portada" alt="Portada" />
-            <div v-else class="book-cover-placeholder">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-              <span>Sin Portada</span>
-            </div>
-          </div>
 
-          <div class="selected-info-vertical">
-            <h3>{{ selectedBook.titulo }}</h3>
-            <p class="author">{{ selectedBook.autor }}</p>
-          </div>
-
-          <div class="location-badge-vertical">
-            <div class="badge-title">UBICACIÓN EXACTA</div>
-            <div class="badge-value">Estante {{ selectedBook.estante }}</div>
-            <div class="badge-sub">Piso {{ selectedBook.piso }}</div>
-          </div>
-        </div>
-      </transition>
 
       <!-- Detalle del Estante en el Sidebar -->
       <transition name="fade">
@@ -236,12 +210,143 @@ const clearSelection = () => {
             </div>
           </div>
         </div>
+
+        <!-- Información del libro seleccionado (ahora más pequeña y dentro del mapa interactivo) -->
+        <transition name="fade">
+          <div v-if="selectedBook" class="selected-book-map-card">
+            <button class="clear-btn-sidebar" @click="clearSelection" title="Limpiar selección">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            
+            <div class="book-cover-medium">
+              <img v-if="selectedBook.portada" :src="selectedBook.portada.startsWith('data:') ? selectedBook.portada : API_BASE_URL + selectedBook.portada" alt="Portada" />
+              <div v-else class="book-cover-placeholder-medium">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                <span>Sin Portada</span>
+              </div>
+            </div>
+
+            <div class="selected-info-vertical-medium">
+              <h3>{{ selectedBook.titulo }}</h3>
+              <p class="author">{{ selectedBook.autor }}</p>
+            </div>
+
+            <div class="location-badge-vertical-medium">
+              <div class="badge-title">UBICACIÓN EXACTA</div>
+              <div class="badge-value">Estante {{ selectedBook.estante }}</div>
+              <div class="badge-sub">Piso {{ selectedBook.piso }}</div>
+            </div>
+          </div>
+        </transition>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* Tarjeta de Libro Seleccionado en el Mapa (Abajo a la Derecha) */
+.selected-book-map-card {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 30;
+  width: 220px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(254, 205, 211, 0.8);
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 10px 25px -5px rgba(159, 18, 57, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.book-cover-medium {
+  width: 90px;
+  height: 130px;
+  border-radius: 6px;
+  box-shadow: 0 6px 12px -3px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-cover-medium img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.book-cover-placeholder-medium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #94a3b8;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.selected-info-vertical-medium h3 {
+  color: #9f1239;
+  margin-top: 0;
+  margin-bottom: 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.selected-info-vertical-medium .author {
+  color: #475569;
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.location-badge-vertical-medium {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.75rem;
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  border: 1px solid #fecdd3;
+}
+
+.location-badge-vertical-medium .badge-title {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #9f1239;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.25rem;
+}
+
+.location-badge-vertical-medium .badge-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.1rem;
+}
+
+.location-badge-vertical-medium .badge-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
 .library-map-container {
   padding: 1.5rem;
   background: white;
