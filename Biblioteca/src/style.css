@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Herr+Von+Muellerhoff&family=Outfit:wght@100..900&display=swap');
+
+
 :root {
   --urp-red: #9f1239;
   --urp-red-hover: #881337;
@@ -10,7 +13,7 @@
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --transition-fast: all 0.2s ease;
   --transition-medium: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -2132,6 +2135,7 @@ body {
 }
 
 .slide-badge-minimal {
+  font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
   display: inline-block;
   font-size: 0.85rem;
   font-weight: 700;

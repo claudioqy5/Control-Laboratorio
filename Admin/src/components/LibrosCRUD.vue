@@ -259,6 +259,42 @@ const viewImage = (url) => {
   showImageModal.value = true
 }
 
+// Mapa Selector logic
+const showMapSelectorModal = ref(false)
+const tempSelectedShelf = ref(null)
+const tempSelectedPiso = ref(null)
+
+const estantes = []
+estantes.push({ id: 1, left: 60, top: 220, width: 40, height: 180 })
+let currentId = 2
+const aislesLeft = [170, 280, 390, 500, 610, 720]
+for (const aisleX of aislesLeft) {
+  estantes.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170 })
+  estantes.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170 })
+  estantes.push({ id: currentId++, left: aisleX, top: 230, width: 18, height: 170 })
+  estantes.push({ id: currentId++, left: aisleX + 22, top: 230, width: 18, height: 170 })
+}
+
+const openMapSelector = () => {
+  tempSelectedShelf.value = currentLibro.value.estante ? parseInt(currentLibro.value.estante, 10) : null
+  tempSelectedPiso.value = currentLibro.value.piso ? parseInt(currentLibro.value.piso, 10) : null
+  showMapSelectorModal.value = true
+}
+
+const selectShelf = (shelfId) => {
+  tempSelectedShelf.value = shelfId
+}
+
+const selectFloor = (floorNum) => {
+  tempSelectedPiso.value = floorNum
+}
+
+const confirmMapSelection = () => {
+  currentLibro.value.estante = tempSelectedShelf.value
+  currentLibro.value.piso = tempSelectedPiso.value
+  showMapSelectorModal.value = false
+}
+
 onMounted(() => {
   loadLibros()
 })
@@ -543,7 +579,13 @@ onMounted(() => {
               </div>
 
               <!-- Ubicación Física -->
-              <h4 style="margin: 10px 0 0; color: #334155; font-size: 0.9rem;">Ubicación Física</h4>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0 5px;">
+                <h4 style="margin: 0; color: #334155; font-size: 0.9rem;">Ubicación Física</h4>
+                <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px;" @click="openMapSelector">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+                  Seleccionar en Mapa
+                </button>
+              </div>
               <div class="form-grid-3">
                 <div class="input-group">
                   <label>Estante</label>
@@ -601,6 +643,84 @@ onMounted(() => {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
             Guardar Libro
           </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Modal de Selección en Mapa -->
+    <div v-if="showMapSelectorModal" class="map-selector-backdrop" @click.self="showMapSelectorModal = false">
+      <div class="map-selector-card">
+        <div class="map-selector-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="modal-icon" style="background: #fdf2f8; color: #9f1239; width: 36px; height: 36px; border-radius: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon></svg>
+            </div>
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">Seleccionar Ubicación en Mapa 3D</h3>
+          </div>
+          <button class="close-btn" @click="showMapSelectorModal = false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        
+        <div class="map-selector-body">
+          <!-- Left side: floor selector -->
+          <div class="map-selector-left">
+            <div class="selected-shelf-info">
+              <h4>{{ tempSelectedShelf ? `ESTANTE ${tempSelectedShelf}` : 'Seleccione un estante' }}</h4>
+              <p>Haga clic en un estante a la derecha en el mapa 3D y elija el piso aquí.</p>
+            </div>
+            
+            <div class="shelf-vertical-preview" v-if="tempSelectedShelf">
+              <div v-for="piso in 6" :key="piso" 
+                   class="floor-row" 
+                   :class="{ 'selected-floor': tempSelectedPiso === (7 - piso) }"
+                   @click="selectFloor(7 - piso)">
+                <div class="floor-shelf-line">
+                  <div class="floor-books">
+                    <div class="book-spine" v-for="n in 8" :key="n" :style="{ height: 12 + (n % 3) * 4 + 'px', background: `hsl(${(n * 45) % 360}, 45%, 65%)` }"></div>
+                  </div>
+                </div>
+                <div class="floor-number" :class="{ 'selected-floor-text': tempSelectedPiso === (7 - piso) }">PISO {{ 7 - piso }}</div>
+              </div>
+            </div>
+            <div v-else class="select-shelf-placeholder">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon></svg>
+              <span>Por favor, seleccione un estante en el mapa 3D primero</span>
+            </div>
+          </div>
+
+          <!-- Right side: 3D interactive map -->
+          <div class="map-selector-right">
+            <div class="map-scene-wrapper">
+              <div class="isometric-scene-mini">
+                <div class="wood-floor-mini">
+                  <div v-for="estante in estantes" :key="estante.id"
+                       class="iso-shelf-mini"
+                       :class="{ 'is-selected-shelf': tempSelectedShelf === estante.id }"
+                       :style="{ left: (estante.left * 0.70) + 'px', top: (estante.top * 0.70) + 'px', width: (estante.width * 0.70) + 'px', height: (estante.height * 0.70) + 'px' }"
+                       @click="selectShelf(estante.id)">
+                    <div class="iso-face-mini top-mini">
+                      <span>{{ estante.id }}</span>
+                    </div>
+                    <div class="iso-face-mini front-mini"></div>
+                    <div class="iso-face-mini left-mini"></div>
+                    <div class="iso-face-mini right-mini"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-selector-footer">
+          <div class="current-selection-summary">
+            Ubicación seleccionada: Estante <strong>{{ tempSelectedShelf || '-' }}</strong> &bull; Piso <strong>{{ tempSelectedPiso || '-' }}</strong>
+          </div>
+          <div style="display: flex; gap: 0.75rem;">
+            <button class="btn btn-secondary" @click="showMapSelectorModal = false">Cancelar</button>
+            <button class="btn btn-primary" :disabled="!tempSelectedShelf || !tempSelectedPiso" @click="confirmMapSelection">Confirmar Ubicación</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1064,5 +1184,281 @@ onMounted(() => {
 @keyframes zoomIn {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* Map Selector Modal CSS */
+.map-selector-backdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.map-selector-card {
+  width: 90%;
+  max-width: 980px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-selector-header {
+  padding: 1.25rem 1.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.map-selector-body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  height: 480px;
+}
+
+.map-selector-left {
+  border-right: 1px solid #f1f5f9;
+  padding-right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.selected-shelf-info h4 {
+  margin: 0 0 4px 0;
+  color: #0f172a;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.selected-shelf-info p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.shelf-vertical-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fafafa;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.floor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.floor-row:hover {
+  border-color: #9f1239;
+  background: #fff1f2;
+}
+
+.floor-row.selected-floor {
+  background: #9f1239;
+  border-color: #9f1239;
+}
+
+.floor-shelf-line {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  height: 24px;
+  border-bottom: 2px solid #cbd5e1;
+  margin-right: 12px;
+  padding-bottom: 1px;
+}
+
+.floor-books {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 100%;
+}
+
+.floor-row.selected-floor .floor-shelf-line {
+  border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+.book-spine {
+  width: 5px;
+  border-radius: 1px 1px 0 0;
+  opacity: 0.85;
+}
+
+.floor-number {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.floor-number.selected-floor-text {
+  color: white;
+}
+
+.select-shelf-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  text-align: center;
+  gap: 12px;
+  padding: 2rem;
+}
+
+.map-selector-right {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.map-scene-wrapper {
+  transform: scale(0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.isometric-scene-mini {
+  width: 100%;
+  height: 100%;
+  perspective: 2000px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wood-floor-mini {
+  width: 638px; /* 850 * 0.75 scaled down slightly to fit */
+  height: 450px;
+  background-color: #d1bfae;
+  background-image: 
+    repeating-linear-gradient(45deg, #c3b09e 25%, transparent 25%, transparent 75%, #c3b09e 75%, #c3b09e), 
+    repeating-linear-gradient(45deg, #c3b09e 25%, #d1bfae 25%, #d1bfae 75%, #c3b09e 75%, #c3b09e);
+  background-position: 0 0, 11px 11px;
+  background-size: 22px 22px;
+  transform: rotateX(60deg) rotateZ(-35deg);
+  transform-style: preserve-3d;
+  position: relative;
+  border: 1px solid #111;
+  box-shadow: -1px 1px 0 #111, -2px 2px 0 #111, -3px 3px 10px rgba(0,0,0,0.3);
+}
+
+.iso-shelf-mini {
+  position: absolute;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.iso-shelf-mini:hover {
+  transform: translateZ(5px);
+}
+
+.iso-shelf-mini.is-selected-shelf {
+  transform: translateZ(12px);
+}
+
+.iso-face-mini {
+  position: absolute;
+  background: #8B5A2B;
+  border: 1px solid #5C3A21;
+  backface-visibility: hidden;
+}
+
+.iso-face-mini.top-mini {
+  width: 100%; height: 100%;
+  transform: translateZ(60px);
+  background: #A06E3D;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #3E2723;
+  font-weight: 900;
+  font-size: 0.65rem;
+}
+
+.iso-shelf-mini.is-selected-shelf .iso-face-mini.top-mini {
+  background: #9f1239;
+  color: white;
+  border-color: #9f1239;
+}
+
+.iso-face-mini.front-mini {
+  bottom: 0; left: 0;
+  width: 100%; height: 60px;
+  transform-origin: bottom;
+  transform: rotateX(-90deg);
+  background: #794D24;
+}
+.iso-shelf-mini.is-selected-shelf .iso-face-mini.front-mini {
+  background: #881337;
+}
+
+.iso-face-mini.left-mini {
+  top: 0; left: 0;
+  width: 60px; height: 100%;
+  transform-origin: left;
+  transform: rotateY(-90deg);
+  background: #2E1B10;
+}
+
+.iso-face-mini.right-mini {
+  top: 0; right: 0;
+  width: 60px; height: 100%;
+  transform-origin: right;
+  transform: rotateY(90deg);
+  background: #2E1B10;
+}
+
+.map-selector-footer {
+  padding: 1rem 1.75rem;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+}
+
+.current-selection-summary {
+  font-size: 0.85rem;
+  color: #475569;
+}
+.current-selection-summary strong {
+  color: #9f1239;
+  font-size: 0.95rem;
 }
 </style>
