@@ -41,11 +41,11 @@ const selectBook = (book) => {
   currentView.value = 'map' // Mantener siempre la vista del mapa aéreo
 }
 
-// 25 Estantes independientes con cara única (Estante 1 a la izquierda, luego 6 pasillos de 4 estantes cada uno)
+// 25 Estantes independientes con cara única (Estante 1 a la derecha, luego 6 pasillos de 4 estantes cada uno)
 const estantesData = []
-estantesData.push({ id: 1, left: 60, top: 220, width: 40, height: 180, caras: ['A'], pisos: 6 })
+estantesData.push({ id: 1, left: 770, top: 220, width: 40, height: 180, caras: ['A'], pisos: 6 })
 let currentId = 2
-const aislesLeft = [170, 280, 390, 500, 610, 720]
+const aislesLeft = [720, 610, 500, 390, 280, 170]
 for (const aisleX of aislesLeft) {
   estantesData.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })
   estantesData.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170, caras: ['A'], pisos: 6 })

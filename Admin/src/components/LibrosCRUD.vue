@@ -315,9 +315,9 @@ const tempSelectedShelf = ref(null)
 const tempSelectedPiso = ref(null)
 
 const estantes = []
-estantes.push({ id: 1, left: 60, top: 220, width: 40, height: 180 })
+estantes.push({ id: 1, left: 770, top: 220, width: 40, height: 180 })
 let currentId = 2
-const aislesLeft = [170, 280, 390, 500, 610, 720]
+const aislesLeft = [720, 610, 500, 390, 280, 170]
 for (const aisleX of aislesLeft) {
   estantes.push({ id: currentId++, left: aisleX, top: 50, width: 18, height: 170 })
   estantes.push({ id: currentId++, left: aisleX + 22, top: 50, width: 18, height: 170 })
@@ -556,11 +556,6 @@ onMounted(() => {
                   <input v-model="currentLibro.autor" placeholder="Autor principal" class="premium-input" :class="{ 'invalid': errors.autor }">
                   <span v-if="errors.autor" class="field-error-message">{{ errors.autor }}</span>
                 </div>
-
-                <div class="input-group">
-                  <label>Resumen / Descripción</label>
-                  <textarea v-model="currentLibro.resumen" placeholder="Breve descripción del contenido" class="premium-input" style="height: 100px; resize: none;"></textarea>
-                </div>
               </div>
 
               <!-- Card: Datos Editoriales & Categorías -->
@@ -677,6 +672,14 @@ onMounted(() => {
                     <input type="number" min="1" max="6" v-model="currentLibro.piso" placeholder="1-6" class="premium-input" :class="{ 'invalid': errors.piso }">
                     <span v-if="errors.piso" class="field-error-message">{{ errors.piso }}</span>
                   </div>
+                </div>
+              </div>
+
+              <!-- Card: Resumen / Descripción -->
+              <div class="form-section">
+                <div class="form-section-title">Resumen / Descripción</div>
+                <div class="input-group">
+                  <textarea v-model="currentLibro.resumen" placeholder="Breve descripción del contenido" class="premium-input" style="height: 60px; resize: none;"></textarea>
                 </div>
               </div>
             </div>
@@ -887,7 +890,7 @@ onMounted(() => {
 
 .modal-card {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1250px;
   max-height: 95vh;
   background: #ffffff;
   border-radius: 20px;
@@ -1174,21 +1177,21 @@ onMounted(() => {
 
 .modal-body-layout-wide {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 240px;
-  gap: 2rem;
+  grid-template-columns: 1fr 1fr 260px;
+  gap: 1.5rem;
   align-items: start;
 }
 
 .modal-form-column {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .modal-cover-column {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: auto;
 }
 
 .cover-upload-container {
@@ -1202,7 +1205,7 @@ onMounted(() => {
   border: 1px dashed #cbd5e1;
   box-sizing: border-box;
   justify-content: center;
-  flex: 1;
+  height: auto;
 }
 
 .book-cover-preview-lg {
