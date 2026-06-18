@@ -310,19 +310,22 @@ onMounted(() => {
     <table class="centered-table">
       <thead>
         <tr>
-          <th>Libro e Información</th>
-          <th>Códigos</th>
-          <th>Ubicación Fís.</th>
+          <th>Libro</th>
+          <th>Editorial / Año</th>
+          <th>Nro. Registro</th>
+          <th>Clasificación</th>
+          <th>Estante</th>
+          <th>Piso / Cara</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="paginatedLibros.length === 0">
-          <td colspan="5" style="text-align: center; color: #9ca3af; padding: 3rem;">No se encontraron libros registrados.</td>
+          <td colspan="8" style="text-align: center; color: #9ca3af; padding: 3rem;">No se encontraron libros registrados.</td>
         </tr>
         <tr v-for="l in paginatedLibros" :key="l.libroID">
-          <!-- Columna 1: Libro e Info -->
+          <!-- Columna 1: Libro -->
           <td>
             <div style="display: flex; gap: 1rem; align-items: center; text-align: left;">
               <div class="book-cover-thumbnail" style="flex-shrink: 0; width: 45px; height: 60px;">
@@ -332,30 +335,47 @@ onMounted(() => {
                 </div>
               </div>
               <div style="min-width: 0;">
-                <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">{{ l.titulo }}</div>
-                <div style="color: #64748b; font-size: 0.85rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">{{ l.autor }} &bull; {{ l.anio || 'S/A' }}</div>
-                <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;">{{ l.editorial }} <span v-if="l.edicion">({{ l.edicion }})</span></div>
+                <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" :title="l.titulo">{{ l.titulo }}</div>
+                <div style="color: #64748b; font-size: 0.85rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" :title="l.autor">{{ l.autor }}</div>
               </div>
             </div>
           </td>
 
-          <!-- Columna 2: Códigos -->
+          <!-- Columna 2: Editorial / Año -->
           <td>
-            <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
-              <strong style="color: #111827; font-size: 0.95rem;">{{ l.nroRegistro }}</strong>
-              <span style="background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-family: monospace; border: 1px solid #e2e8f0;">CL: {{ l.nroClasificacion || 'N/A' }}</span>
+            <div style="text-align: center;">
+              <div style="font-weight: 600; color: #334155; font-size: 0.9rem;">{{ l.editorial || 'S/E' }}</div>
+              <div style="color: #64748b; font-size: 0.8rem; margin-top: 2px;">{{ l.anio || 'S/A' }} <span v-if="l.edicion">({{ l.edicion }})</span></div>
             </div>
           </td>
 
-          <!-- Columna 3: Ubicación Fís. -->
+          <!-- Columna 3: Nro. Registro -->
           <td>
-             <div style="display: flex; flex-direction: column; gap: 2px; align-items: center;">
-                <span style="font-weight: 700; color: #334155; font-size: 0.9rem;">Estante {{ l.estante || '-' }}</span>
-                <span style="font-size: 0.8rem; color: #64748b;">Cara {{ l.cara || '-' }}, Piso {{ l.piso || '-' }}</span>
-             </div>
+            <strong style="color: #111827; font-size: 0.95rem;">{{ l.nroRegistro }}</strong>
           </td>
 
-          <!-- Columna 4: Estado -->
+          <!-- Columna 4: Clasificación -->
+          <td>
+            <span style="background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-family: monospace; border: 1px solid #e2e8f0; font-weight: 600;">
+              {{ l.nroClasificacion || 'N/A' }}
+            </span>
+          </td>
+
+          <!-- Columna 5: Estante -->
+          <td>
+            <span style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">
+              Estante {{ l.estante || '-' }}
+            </span>
+          </td>
+
+          <!-- Columna 6: Piso / Cara -->
+          <td>
+            <div style="color: #475569; font-size: 0.85rem; font-weight: 500;">
+              Piso {{ l.piso || '-' }} &bull; Cara {{ l.cara || '-' }}
+            </div>
+          </td>
+
+          <!-- Columna 7: Estado -->
           <td>
             <span :style="{ 
               background: l.estado === 'Disponible' ? '#dcfce7' : '#fee2e2', 
@@ -370,7 +390,7 @@ onMounted(() => {
             </span>
           </td>
 
-          <!-- Columna 5: Acciones -->
+          <!-- Columna 8: Acciones -->
           <td style="white-space: nowrap;">
             <button class="icon-btn edit-btn" @click="editLibro(l)" title="Editar Libro">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
