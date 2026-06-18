@@ -553,13 +553,26 @@ body {
   border-color: #94a3b8;
 }
 
+.bases-datos-marquee-wrapper {
+  position: relative;
+  width: 100vw;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, white 8%, white 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, white 8%, white 92%, transparent);
+  padding: 1rem 0;
+}
+
 .bases-datos-row {
   display: flex;
-  overflow-x: auto;
-  scroll-behavior: smooth;
+  flex-wrap: nowrap;
+  overflow-x: hidden;
   gap: 1.5rem;
-  margin-bottom: 3.5rem;
-  padding: 0.5rem 0.25rem;
+  cursor: grab;
+  user-select: none;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
@@ -577,8 +590,7 @@ body {
   transition: var(--transition-medium);
   display: flex;
   flex-direction: column;
-  flex: 0 0 calc(33.333% - 1rem);
-  min-width: 300px;
+  flex: 0 0 320px;
   cursor: pointer;
 }
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import carouselVideo from '../assets/carousel1.mp4'
 import carousel2Img from '../assets/carousel2.png'
 import carousel3Img from '../assets/carousel3.png'
@@ -117,15 +117,26 @@ watch(activeSlide, (newVal) => {
   }
 })
 
+let animationFrameId = null
+
 onMounted(() => {
   typeText()
   runCarouselTimer()
+  
+  setTimeout(() => {
+    if (basesDatosContainer.value) {
+      const halfWidth = basesDatosContainer.value.scrollWidth / 2
+      basesDatosContainer.value.scrollLeft = halfWidth
+    }
+    animateMarquee()
+  }, 100)
 })
 
 onUnmounted(() => {
   if (carouselTimeoutId) clearTimeout(carouselTimeoutId)
   if (typingTimeout1) clearTimeout(typingTimeout1)
   if (typingTimeout2) clearTimeout(typingTimeout2)
+  if (animationFrameId) cancelAnimationFrame(animationFrameId)
 })
 
 const basesDatosContainer = ref(null)
@@ -313,16 +324,124 @@ const databases = [
   }
 ]
 
-const slideLeft = () => {
+const doubledDatabases = computed(() => [...databases, ...databases])
+
+let isDragging = false
+let isHovered = false
+let startX = 0
+let scrollStart = 0
+let dragVelocity = 0
+let lastTime = 0
+let lastX = 0
+let dragDistance = 0
+
+const startDrag = (e) => {
+  isDragging = true
+  dragDistance = 0
+  startX = e.clientX
+  lastX = e.clientX
+  scrollStart = basesDatosContainer.value.scrollLeft
+  dragVelocity = 0
+  lastTime = performance.now()
+  
   if (basesDatosContainer.value) {
-    basesDatosContainer.value.scrollBy({ left: -340, behavior: 'smooth' })
+    basesDatosContainer.value.style.scrollBehavior = 'auto'
   }
 }
 
-const slideRight = () => {
-  if (basesDatosContainer.value) {
-    basesDatosContainer.value.scrollBy({ left: 340, behavior: 'smooth' })
+const onDrag = (e) => {
+  if (!isDragging) return
+  const dx = e.clientX - lastX
+  dragDistance += Math.abs(dx)
+  
+  const totalDx = e.clientX - startX
+  basesDatosContainer.value.scrollLeft = scrollStart - totalDx
+  
+  const container = basesDatosContainer.value
+  const halfWidth = container.scrollWidth / 2
+  if (container.scrollLeft <= 0) {
+    container.scrollLeft += halfWidth
+    scrollStart += halfWidth
+  } else if (container.scrollLeft >= halfWidth) {
+    container.scrollLeft -= halfWidth
+    scrollStart -= halfWidth
   }
+  
+  const now = performance.now()
+  const dt = now - lastTime
+  if (dt > 0) {
+    const instantaneousX = e.clientX
+    const velocity = (instantaneousX - lastX) / dt * 16.67
+    dragVelocity = dragVelocity * 0.2 + velocity * 0.8
+    lastX = instantaneousX
+    lastTime = now
+  }
+}
+
+const stopDrag = () => {
+  isDragging = false
+  if (basesDatosContainer.value) {
+    basesDatosContainer.value.style.scrollBehavior = 'smooth'
+  }
+}
+
+const onMouseLeave = () => {
+  isHovered = false
+  stopDrag()
+}
+
+const onMouseEnter = () => {
+  isHovered = true
+}
+
+const onTouchStart = (e) => {
+  if (e.touches.length > 0) {
+    startDrag({
+      clientX: e.touches[0].clientX
+    })
+  }
+}
+
+const onTouchMove = (e) => {
+  if (e.touches.length > 0) {
+    onDrag({
+      clientX: e.touches[0].clientX
+    })
+  }
+}
+
+const handleCardClick = (url, name) => {
+  if (dragDistance > 5) return
+  openDatabase(url, name)
+}
+
+const animateMarquee = () => {
+  const container = basesDatosContainer.value
+  if (container) {
+    if (!isDragging) {
+      if (!isHovered) {
+        if (Math.abs(dragVelocity) > 0.1) {
+          container.scrollLeft -= dragVelocity
+          dragVelocity *= 0.96
+        } else {
+          container.scrollLeft -= 1.0 // Moves from left to right (scrollLeft decreases)
+        }
+      } else {
+        if (Math.abs(dragVelocity) > 0.1) {
+          container.scrollLeft -= dragVelocity
+          dragVelocity *= 0.96
+        }
+      }
+
+      const halfWidth = container.scrollWidth / 2
+      if (container.scrollLeft <= 0) {
+        container.scrollLeft += halfWidth
+      } else if (container.scrollLeft >= halfWidth) {
+        container.scrollLeft -= halfWidth
+      }
+    }
+  }
+  animationFrameId = requestAnimationFrame(animateMarquee)
 }
 
 const openDatabase = (url, name) => {
@@ -467,37 +586,41 @@ const getImageUrl = (imageName) => {
 
     <!-- Rest of Home Content inside main wrapper -->
     <div class="home-inner-content">
-      <!-- Section: Nuevas Bases de Datos -->
       <div>
         <div class="home-section-header">
           <div>
             <h2 class="section-title">Nuevas Bases de Datos</h2>
             <p class="section-subtitle">Herramientas premium integradas para investigación clínica avanzada.</p>
           </div>
-          <div class="home-section-nav">
-            <button class="round-nav-btn" @click="slideLeft" title="Desplazar a la izquierda">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            </button>
-            <button class="round-nav-btn" @click="slideRight" title="Desplazar a la derecha">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </button>
-          </div>
         </div>
 
-        <div class="bases-datos-row" ref="basesDatosContainer">
+        <div class="bases-datos-marquee-wrapper">
           <div 
-            v-for="db in databases" 
-            :key="db.id" 
-            class="db-card" 
-            @click="openDatabase(db.url, db.name)"
+            class="bases-datos-row" 
+            ref="basesDatosContainer"
+            @mousedown="startDrag"
+            @mousemove="onDrag"
+            @mouseup="stopDrag"
+            @mouseleave="onMouseLeave"
+            @mouseenter="onMouseEnter"
+            @touchstart="onTouchStart"
+            @touchmove="onTouchMove"
+            @touchend="stopDrag"
           >
-            <div class="db-card-image">
-              <img :src="getImageUrl(db.image)" :alt="db.name" />
-              <div class="badge-db" :style="{ backgroundColor: db.color, zIndex: 1 }">{{ db.provider }}</div>
-            </div>
-            <div class="db-card-content">
-              <h3 class="db-card-title">{{ db.name }}</h3>
-              <p class="db-card-desc">{{ db.description.length > 150 ? db.description.slice(0, 147) + '...' : db.description }}</p>
+            <div 
+              v-for="(db, idx) in doubledDatabases" 
+              :key="`${db.id}-${idx}`" 
+              class="db-card" 
+              @click="handleCardClick(db.url, db.name)"
+            >
+              <div class="db-card-image">
+                <img :src="getImageUrl(db.image)" :alt="db.name" draggable="false" />
+                <div class="badge-db" :style="{ backgroundColor: db.color, zIndex: 1 }">{{ db.provider }}</div>
+              </div>
+              <div class="db-card-content">
+                <h3 class="db-card-title">{{ db.name }}</h3>
+                <p class="db-card-desc">{{ db.description.length > 150 ? db.description.slice(0, 147) + '...' : db.description }}</p>
+              </div>
             </div>
           </div>
         </div>
