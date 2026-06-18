@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
+import * as XLSX from 'xlsx'
 import { API_BASE_URL } from '../config'
 
 // Estado del componente
@@ -8,6 +9,11 @@ const libros = ref([])
 const categorias = ref([])
 const searchQuery = ref('')
 const showModal = ref(false)
+const showImportModal = ref(false)
+const importPreviewData = ref([])
+const currentFileName = ref('')
+const fileInput = ref(null)
+const importLoading = ref(false)
 const currentPage = ref(1)
 const pageSize = 10
 
@@ -368,6 +374,109 @@ const confirmMapSelection = () => {
   showMapSelectorModal.value = false
 }
 
+const handleExcelUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  currentFileName.value = file.name
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const data = new Uint8Array(e.target.result)
+    const workbook = XLSX.read(data, { type: 'array' })
+    const firstSheetName = workbook.SheetNames[0]
+    const worksheet = workbook.Sheets[firstSheetName]
+    const jsonData = XLSX.utils.sheet_to_json(worksheet)
+
+    if (jsonData.length === 0) {
+      alert("El archivo está vacío o no tiene el formato correcto.")
+      return
+    }
+
+    const mappedData = jsonData.map(row => {
+      const newObj = {
+        nroRegistro: '',
+        codigoBarras: '',
+        nroClasificacion: '',
+        titulo: '',
+        autor: '',
+        anio: '',
+        editorial: '',
+        edicion: '',
+        categoria: categorias.value[0]?.nombre || 'Medicina General',
+        idioma: 'Español',
+        paginas: 0,
+        estado: 'Disponible',
+        resumen: '',
+        estante: null,
+        cara: '',
+        piso: null
+      }
+      const keys = Object.keys(row)
+      
+      keys.forEach(k => {
+        const key = k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+        const val = row[k] ? String(row[k]).trim() : ''
+        
+        if (key === 'n registro' || key === 'no registro' || key.includes('nro registro') || key.includes('n registro') || key.includes('n° registro')) 
+          newObj.nroRegistro = val
+        else if (key === 'codigo de barras' || key === 'codigo barras' || key.includes('barras')) 
+          newObj.codigoBarras = val
+        else if (key.includes('clasificacion') || key.includes('nlm')) 
+          newObj.nroClasificacion = val
+        else if (key === 'titulo' || key === 'title') 
+          newObj.titulo = val
+        else if (key === 'autor' || key === 'author') 
+          newObj.autor = val
+        else if (key === 'anio' || key === 'ano' || key === 'año') 
+          newObj.anio = val
+        else if (key === 'editorial' || key === 'publisher') 
+          newObj.editorial = val
+        else if (key === 'edicion' || key === 'edition') 
+          newObj.edicion = val
+        else if (key === 'categoria' || key === 'category') 
+          newObj.categoria = val
+        else if (key === 'idioma' || key === 'language') 
+          newObj.idioma = val
+        else if (key.includes('pagina') || key.includes('pages')) 
+          newObj.paginas = Number(val) || 0
+        else if (key === 'estado' || key === 'status') 
+          newObj.estado = val || 'Disponible'
+        else if (key.includes('resumen') || key.includes('descripcion') || key.includes('detalles')) 
+          newObj.resumen = val
+        else if (key === 'estante' || key === 'shelf') 
+          newObj.estante = val ? parseInt(val, 10) : null
+        else if (key === 'cara' || key === 'side') {
+          newObj.cara = (val.toUpperCase() === 'N/A' || val.trim() === '') ? '' : val
+        }
+        else if (key === 'piso' || key === 'floor') 
+          newObj.piso = val ? parseInt(val, 10) : null
+      })
+      
+      return newObj
+    })
+
+    importPreviewData.value = mappedData
+    showImportModal.value = true
+    event.target.value = '' // Reset input
+  }
+  reader.readAsArrayBuffer(file)
+}
+
+const confirmImport = async () => {
+  importLoading.value = true
+  try {
+    const res = await axios.post(`${API_BASE_URL}/api/Libros/bulk`, importPreviewData.value)
+    alert(`Importación completada:\n- Procesados: ${res.data.procesados}\n- Insertados: ${res.data.insertados}\n- Omitidos (duplicados): ${res.data.omitidos}`)
+    showImportModal.value = false
+    await loadLibros()
+  } catch (error) {
+    console.error("Error en importación de libros", error)
+    alert("Ocurrió un error al cargar los libros.")
+  } finally {
+    importLoading.value = false
+  }
+}
+
 onMounted(() => {
   loadLibros()
   loadCategorias()
@@ -411,7 +520,12 @@ onMounted(() => {
             }"
           >
         </div>
-        <!-- Botón Nuevo -->
+        <!-- Botones de Acción -->
+        <input type="file" ref="fileInput" @change="handleExcelUpload" accept=".xlsx, .xls" style="display: none;">
+        <button class="btn" style="background: #ffffff; color: #16a34a; border: 1px solid #16a34a; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="$refs.fileInput.click()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg>
+          Cargar Excel
+        </button>
         <button class="btn btn-primary" @click="currentLibro = { libroID: null, nroRegistro: '', codigoBarras: '', nroClasificacion: '', titulo: '', autor: '', anio: '', editorial: '', edicion: '', categoria: categorias[0]?.nombre || '', idioma: 'Español', paginas: 0, estado: 'Disponible', resumen: '', portada: '', estante: null, cara: '', piso: null }; showModal = true">Nuevo Libro</button>
       </div>
     </div>
@@ -818,6 +932,81 @@ onMounted(() => {
             <button class="btn btn-secondary" @click="showMapSelectorModal = false">Cancelar</button>
             <button class="btn btn-primary" :disabled="!tempSelectedShelf || !tempSelectedPiso" @click="confirmMapSelection">Confirmar Ubicación</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Vista Previa Excel -->
+    <div v-if="showImportModal" class="modal-backdrop" @click.self="showImportModal = false">
+      <div class="modal-card" style="max-width: 1100px;">
+        <div class="modal-header">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon" style="background: #dcfce7; color: #16a34a;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; line-height: 1;">Vista Previa de Importación de Libros</h3>
+              <span style="font-size: 0.8rem; color: #16a34a; font-weight: 600;">Archivo: {{ currentFileName }}</span>
+            </div>
+          </div>
+          <button class="close-btn" @click="showImportModal = false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 1.5rem;">
+          <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 1rem; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 1rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <div>
+              <div style="color: #0369a1; font-weight: 700; font-size: 0.85rem; margin-bottom: 4px;">RECOMENDACIÓN DE COLUMNAS</div>
+              <p style="color: #0c4a6e; font-size: 0.8rem; margin: 0; line-height: 1.4;">
+                Para una carga correcta, el Excel debe poseer columnas con cabeceras similares a: 
+                <strong style="color: #0369a1;">Título, Autor, N° Registro, Código de Barras, Clasificación, Año, Categoría, Idioma, Editorial, Edición, Páginas, Resumen, Estante, Cara, Piso.</strong>
+              </p>
+            </div>
+          </div>
+
+          <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Se han detectado <strong>{{ importPreviewData.length }}</strong> registros de libros. Revise que la información mapeada sea la adecuada antes de proceder a la carga masiva.</p>
+          
+          <table class="centered-table" style="font-size: 0.75rem;">
+            <thead>
+              <tr style="background: #f8fafc;">
+                <th>N°</th>
+                <th>N° Registro</th>
+                <th>Código Barras</th>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Clasificación</th>
+                <th>Categoría</th>
+                <th>Editorial / Año</th>
+                <th>Ubicación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, idx) in importPreviewData" :key="idx">
+                <td style="color: #94a3b8;">{{ idx + 1 }}</td>
+                <td style="font-weight: 700;">{{ row.nroRegistro || '-' }}</td>
+                <td>{{ row.codigoBarras || '-' }}</td>
+                <td style="text-align: left; font-weight: 600; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ row.titulo || '-' }}</td>
+                <td style="text-align: left; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ row.autor || '-' }}</td>
+                <td>{{ row.nroClasificacion || '-' }}</td>
+                <td><span style="background: #eff6ff; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-weight: 600;">{{ row.categoria }}</span></td>
+                <td>{{ row.editorial || '-' }} ({{ row.anio || '-' }})</td>
+                <td>Estante {{ row.estante || '-' }} - P.{{ row.piso || '-' }} - C.{{ row.cara || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-footer">
+          <span style="margin-right: auto; color: #64748b; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            Los duplicados por N° Registro o Código de Barras se omitirán automáticamente.
+          </span>
+          <button class="btn btn-secondary" @click="showImportModal = false">Cancelar</button>
+          <button class="btn premium-btn" style="background: #16a34a; box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.3);" @click="confirmImport" :disabled="importLoading">
+            {{ importLoading ? 'Procesando...' : 'Procesar e Importar' }}
+          </button>
         </div>
       </div>
     </div>

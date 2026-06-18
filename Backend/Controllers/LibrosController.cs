@@ -121,6 +121,53 @@ namespace ControlLaboratorio.API.Controllers
             return Ok(new { mensaje = "Libro eliminado con éxito" });
         }
 
+        // POST: api/Libros/bulk
+        [HttpPost("bulk")]
+        public async Task<IActionResult> BulkImport(List<Libro> libros)
+        {
+            if (libros == null || libros.Count == 0) return BadRequest(new { mensaje = "Lista vacía" });
+
+            var registrosExistentes = await _context.Libros
+                .Select(l => l.NroRegistro.Trim().ToLower())
+                .ToListAsync();
+
+            var codigosBarrasExistentes = await _context.Libros
+                .Select(l => l.CodigoBarras.Trim().ToLower())
+                .ToListAsync();
+
+            var nuevosLibros = new List<Libro>();
+
+            foreach (var libro in libros)
+            {
+                var reg = libro.NroRegistro?.Trim().ToLower();
+                var cb = libro.CodigoBarras?.Trim().ToLower();
+
+                if (string.IsNullOrEmpty(reg) || string.IsNullOrEmpty(cb))
+                {
+                    continue; 
+                }
+
+                if (!registrosExistentes.Contains(reg) && !codigosBarrasExistentes.Contains(cb))
+                {
+                    nuevosLibros.Add(libro);
+                    registrosExistentes.Add(reg);
+                    codigosBarrasExistentes.Add(cb);
+                }
+            }
+
+            if (nuevosLibros.Count > 0)
+            {
+                _context.Libros.AddRange(nuevosLibros);
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { 
+                procesados = libros.Count, 
+                insertados = nuevosLibros.Count, 
+                omitidos = libros.Count - nuevosLibros.Count 
+            });
+        }
+
         // POST: api/Libros/5/Portada
         [HttpPost("{id}/Portada")]
         public async Task<IActionResult> UploadPortada(int id, IFormFile file)
