@@ -140,6 +140,7 @@ const databases = [
     borderColor: '#f0a060',
     icon: '⏱️',
     tags: ['Decisión Clínica', 'Punto de Atención'],
+    image: '5minuteconsult.jpg',
     description:
       'Herramienta de apoyo clínico basada en evidencia que brinda acceso a más de 2,000 monografías de enfermedades y condiciones, algoritmos diagnósticos, guías de tratamiento, calculadoras clínicas y más de 200 videos de procedimientos. Diseñada para responder preguntas clínicas críticas en minutos.',
     features: ['2,000+ monografías clínicas', 'Algoritmos diagnósticos', 'Calculadoras médicas', 'Información de fármacos A–Z'],
@@ -154,6 +155,7 @@ const databases = [
     borderColor: '#80bbff',
     icon: '📚',
     tags: ['Libros Médicos', 'Español'],
+    image: 'accessmedicine.png',
     description:
       'Plataforma integral de McGraw-Hill con más de 100 títulos de referencia en español, incluyendo Harrison, Goodman & Gilman, y Diagnóstico Clínico y Tratamiento. Incluye recursos multimedia, herramienta Diagnosaurus® para diagnóstico diferencial, base de datos de fármacos, calculadoras clínicas y casos clínicos interactivos.',
     features: ['100+ libros en español', 'Diagnosaurus® diferencial', 'Videos y animaciones 3D', 'Autoevaluación interactiva'],
@@ -168,6 +170,7 @@ const databases = [
     borderColor: '#9090d0',
     icon: '🫀',
     tags: ['Anatomía 3D', 'Visualización'],
+    image: 'biodigital.jpg',
     description:
       'Plataforma de visualización 3D interactiva conocida como el "Google Maps del cuerpo humano". Presenta más de 8,000 estructuras anatómicas seleccionables individualmente, más de 600 condiciones y tratamientos simulados, disponible en 8 idiomas. Ideal para el aprendizaje anatómico y la comunicación médico-paciente.',
     features: ['8,000+ estructuras anatómicas', '600+ condiciones simuladas', 'Modelos 3D interactivos', 'Accesible desde cualquier dispositivo'],
@@ -182,6 +185,7 @@ const databases = [
     borderColor: '#f09090',
     icon: '🏥',
     tags: ['Guías Clínicas', 'Evidencia'],
+    image: 'bjmbestpractice.png',
     description:
       'Herramienta de apoyo a la decisión clínica basada en evidencia del BMJ. Cubre el proceso completo de atención al paciente: evaluación de síntomas, diagnóstico diferencial, tratamiento y seguimiento. Incluye más de 250 calculadoras médicas, videos de procedimientos, miles de guías clínicas y seguimiento automático de créditos CME/CPD.',
     features: ['Diagnóstico diferencial', '250+ calculadoras médicas', 'Algoritmos de tratamiento', 'Hojas educativas para pacientes'],
@@ -196,6 +200,7 @@ const databases = [
     borderColor: '#ffb080',
     icon: '🔑',
     tags: ['Libros & Journals', 'Clínica'],
+    image: 'clinicalkeyespañol.png',
     description:
       'Plataforma de búsqueda clínica de Elsevier en español diseñada para la práctica diaria del médico. Brinda acceso a libros líderes en medicina, journals con revisión por pares, fichas de medicamentos y pautas de práctica clínica. Actualizada continuamente con contenido de más de 1,000 revistas biomédicas de Elsevier.',
     features: ['1,000+ revistas biomédicas', 'Libros clínicos en español', 'Fichas de medicamentos', 'Imágenes y videos clínicos'],
@@ -210,6 +215,7 @@ const databases = [
     borderColor: '#ffa060',
     icon: '🎓',
     tags: ['Estudiantes', 'Autoevaluación'],
+    image: 'clinicalkeystudent.png',
     description:
       'Plataforma educativa de Elsevier para estudiantes de medicina y ciencias de la salud. Incluye los mejores libros de texto como Gray\'s Anatomy for Students, Costanzo Physiology y más. Ofrece tarjetas de estudio (flashcards), miles de preguntas de autoevaluación, análisis de desempeño docente y acceso offline.',
     features: ['Flashcards personalizables', '4,700+ preguntas de examen', 'Notas y marcadores colaborativos', 'Acceso offline móvil'],
@@ -224,6 +230,7 @@ const databases = [
     borderColor: '#70b0e0',
     icon: '⚕️',
     tags: ['Decisión Clínica', 'Fármacos'],
+    image: 'dynamedex.png',
     description:
       'Solución integral de apoyo a la decisión clínica de EBSCO que combina el contenido basado en evidencia de DynaMed con la información farmacológica avanzada de Micromedex. Ofrece búsqueda con IA (Dyna AI), interacciones medicamentosas, compatibilidad IV, calculadoras clínicas, árboles de decisión y actualización diaria de contenido.',
     features: ['Contenido actualizado diariamente', 'Interacciones de medicamentos', 'Integración con EHR (FHIR)', 'Créditos CME/MOC'],
@@ -238,6 +245,7 @@ const databases = [
     borderColor: '#c090e0',
     icon: '📖',
     tags: ['Libros Electrónicos', 'Referencia'],
+    image: 'ovid.jpg',
     description:
       'Plataforma web de libros electrónicos de Wolters Kluwer que reúne miles de textos médicos autorizados en un entorno interligado. Permite búsqueda en lenguaje natural, descarga de capítulos en PDF, anotaciones personales y acceso a colecciones multidisciplinarias de medicina, enfermería, farmacología y salud pública.',
     features: ['Miles de libros de texto médicos', 'Descarga de capítulos en PDF', 'Anotaciones y marcadores', 'Colecciones especializadas'],
@@ -252,6 +260,7 @@ const databases = [
     borderColor: '#70c0a0',
     icon: '🩺',
     tags: ['Rotaciones Clínicas', 'Residentes'],
+    image: 'healthlibrary.jpg',
     description:
       'Colección digital de LWW (Lippincott Williams & Wilkins) diseñada para apoyar al estudiante durante las 6 rotaciones clínicas principales: Medicina Interna, Cirugía, Pediatría, Gineco-Obstetricia, Psiquiatría y Medicina Familiar. Incluye más de 30 libros de las series Blueprints y Step-Up, 150+ casos clínicos y 4,700+ preguntas de autoevaluación.',
     features: ['6 rotaciones clínicas cubiertas', '30+ libros Blueprints/Step-Up', '150+ casos clínicos', '4,700+ preguntas MCQ'],
@@ -266,6 +275,7 @@ const databases = [
     borderColor: '#e09090',
     icon: '📰',
     tags: ['Journal Líder', 'Investigación'],
+    image: 'neom.jpg',
     description:
       'La revista médica de mayor impacto y prestigio en el mundo, publicada semanalmente desde 1812. Con un factor de impacto de 78.5 (2024), publica investigaciones originales, revisiones clínicas, casos y comentarios editoriales que definen las guías de práctica médica global. Tasa de aceptación aproximada del 5%.',
     features: ['Factor de impacto: 78.5', 'Publicación semanal desde 1812', 'Investigación práctica-cambiante', 'Videos y casos interactivos NEJM'],
@@ -280,6 +290,7 @@ const databases = [
     borderColor: '#c090dd',
     icon: '📑',
     tags: ['Journals', 'Texto Completo'],
+    image: 'revistasovid.jpg',
     description:
       'Base de datos bibliográfica agregada de Wolters Kluwer que reúne cientos de revistas de más de 50 editoriales y sociedades científicas, incluyendo el catálogo completo de Lippincott® (LWW). Permite búsqueda de revistas y descarga en PDF o formato completo Ovid.',
     features: ['Cientos de revistas científicas', 'Acceso texto completo LWW', 'Vinculación con MEDLINE', 'Gestión de citas integrada'],
@@ -294,6 +305,7 @@ const databases = [
     borderColor: '#f0b060',
     icon: '🔬',
     tags: ['Investigación', 'Ciencias Biomédicas'],
+    image: 'springerlink.jpg',
     description:
       'Plataforma de acceso de Springer Nature con más de 10 millones de documentos científicos: journals revisados por pares, libros electrónicos, series de libros, obras de referencia, protocolos y actas de congresos. Cubre todas las especialidades médicas y áreas de investigación biomédica, con búsqueda avanzada y contenido semánticamente interligado.',
     features: ['10+ millones de documentos', 'Todas las especialidades médicas', 'E-books y journals integrados', 'Búsqueda avanzada por disciplina'],
@@ -348,6 +360,10 @@ const getShortName = (name) => {
     return `${words[0]}<br>${words[1]}`
   }
   return name
+}
+
+const getImageUrl = (imageName) => {
+  return new URL(`../assets/bases de datos/${imageName}`, import.meta.url).href
 }
 </script>
 
@@ -476,24 +492,8 @@ const getShortName = (name) => {
             @click="openDatabase(db.url, db.name)"
           >
             <div class="db-card-image">
-              <div class="badge-db" :style="{ backgroundColor: db.color }">{{ db.provider }}</div>
-              <div 
-                :style="{ 
-                  background: getGradient(db.color), 
-                  width: '100%', 
-                  height: '100%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: 'white', 
-                  fontWeight: '800', 
-                  fontSize: db.name.length > 25 ? '1.05rem' : '1.2rem', 
-                  textAlign: 'center', 
-                  padding: '1rem', 
-                  letterSpacing: '-0.03em' 
-                }"
-                v-html="getShortName(db.name)"
-              ></div>
+              <img :src="getImageUrl(db.image)" :alt="db.name" />
+              <div class="badge-db" :style="{ backgroundColor: db.color, zIndex: 1 }">{{ db.provider }}</div>
             </div>
             <div class="db-card-content">
               <h3 class="db-card-title">{{ db.name }}</h3>

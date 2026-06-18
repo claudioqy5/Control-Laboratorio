@@ -591,12 +591,18 @@ body {
   height: 160px;
   position: relative;
   background: #cbd5e1;
+  overflow: hidden;
 }
 
 .db-card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.db-card:hover .db-card-image img {
+  transform: scale(1.05);
 }
 
 .badge-db {
