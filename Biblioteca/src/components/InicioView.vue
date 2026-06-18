@@ -127,6 +127,148 @@ onUnmounted(() => {
   if (typingTimeout1) clearTimeout(typingTimeout1)
   if (typingTimeout2) clearTimeout(typingTimeout2)
 })
+
+const basesDatosContainer = ref(null)
+
+const databases = ref([
+  {
+    id: 1,
+    name: '5 Minute Consult',
+    provider: 'Wolters Kluwer',
+    color: '#e07b2a',
+    gradient: 'linear-gradient(135deg, #e07b2a, #b25815)',
+    shortName: '5 Minute<br>Consult',
+    description: 'Herramienta de apoyo clínico basada en evidencia con algoritmos diagnósticos, guías y videos de procedimientos.',
+    url: 'https://loginwolterskluwer.urp.elogim.com/as/authorization.oauth2?client_id=HLRP.MedicalProcedures.Kauri&code_challenge=BFwEbHOyzTOTPCc1Rheulf5jXxml-wsy9b6rR5oVtJk&code_challenge_method=S256&response_type=code&pfidpadapterid=KauriAdapter&response_mode=form_post&scope=openid%20profile%20email&referer=https%3A%2F%2Fmenu.urp.elogim.com%2F&state=20680c61-06a5-4044-a033-f3ed9a183a3e&redirect_uri=https%3A%2F%2Fclinicalcontext.lww.com%2F.sso%2Fcode%2Foneid'
+  },
+  {
+    id: 2,
+    name: 'Access Medicina – Español',
+    provider: 'McGraw-Hill',
+    color: '#0066cc',
+    gradient: 'linear-gradient(135deg, #0066cc, #003f99)',
+    shortName: 'Access<br>Medicina',
+    description: 'Plataforma integral con más de 100 títulos de referencia en español, Diagnosaurus®, videos y casos clínicos.',
+    url: 'https://accessmedicina.urp.elogim.com/'
+  },
+  {
+    id: 3,
+    name: 'BioDigital',
+    provider: 'BioDigital, Inc.',
+    color: '#1a1a2e',
+    gradient: 'linear-gradient(135deg, #1a1a2e, #0f0f1b)',
+    shortName: 'BioDigital',
+    description: 'Visualización interactiva en 3D de anatomía y condiciones médicas. El "Google Maps" del cuerpo humano.',
+    url: 'https://humanbiodigital.urp.elogim.com/login/create?code=URP9XF4H'
+  },
+  {
+    id: 4,
+    name: 'BMJ Best Practice',
+    provider: 'British Medical Journal',
+    color: '#c00000',
+    gradient: 'linear-gradient(135deg, #c00000, #8b0000)',
+    shortName: 'BMJ<br>Best Practice',
+    description: 'Guías de práctica clínica y apoyo a la decisión en el punto de atención con evidencia continuamente actualizada.',
+    url: 'https://bestpracticebmj.urp.elogim.com/info/us/'
+  },
+  {
+    id: 5,
+    name: 'Clinical Key Español',
+    provider: 'Elsevier',
+    color: '#ff6600',
+    gradient: 'linear-gradient(135deg, #ff6600, #c84e00)',
+    shortName: 'ClinicalKey<br>Español',
+    description: 'Búsqueda clínica con acceso a revistas biomédicas, libros de texto de referencia y fichas farmacológicas de Elsevier.',
+    url: 'https://clinicalkey.urp.elogim.com/#!/'
+  },
+  {
+    id: 6,
+    name: 'Clinical Key Student',
+    provider: 'Elsevier',
+    color: '#e05a00',
+    gradient: 'linear-gradient(135deg, #e05a00, #aa4300)',
+    shortName: 'ClinicalKey<br>Student',
+    description: 'Recurso de aprendizaje con libros líderes (Gray, Costanzo), flashcards y banco de preguntas de autoevaluación.',
+    url: 'https://clinicalkeystudent.urp.elogim.com/student/login'
+  },
+  {
+    id: 7,
+    name: 'DynaMedex',
+    provider: 'EBSCO Health',
+    color: '#005f9e',
+    gradient: 'linear-gradient(135deg, #005f9e, #003366)',
+    shortName: 'DynaMedex',
+    description: 'Apoyo a decisiones clínicas de alta velocidad combinado con la información de medicamentos de Micromedex.',
+    url: 'https://dynamedex.urp.elogim.com/'
+  },
+  {
+    id: 8,
+    name: 'Ebooks de Ovid',
+    provider: 'Wolters Kluwer',
+    color: '#4a0072',
+    gradient: 'linear-gradient(135deg, #4a0072, #30004a)',
+    shortName: 'Ovid<br>Ebooks',
+    description: 'Acceso a una amplia colección de libros electrónicos de medicina, enfermería, farmacología y salud pública.',
+    url: 'https://oceovid.urp.elogim.com/booksbrowse?contentLang=spa,eng'
+  },
+  {
+    id: 9,
+    name: 'Health Library Clerkship',
+    provider: 'Wolters Kluwer',
+    color: '#006a4e',
+    gradient: 'linear-gradient(135deg, #006a4e, #004d38)',
+    shortName: 'Health Library<br>Clerkship',
+    description: 'Apoyo para rotaciones clínicas esenciales con libros Step-Up/Blueprints, casos clínicos y preguntas de examen.',
+    url: 'https://clerkship.lwwhealthlibrary.com/index.aspx?rotationId=0'
+  },
+  {
+    id: 10,
+    name: 'New England Journal of Medicine',
+    provider: 'NEJM Group',
+    color: '#b22222',
+    gradient: 'linear-gradient(135deg, #b22222, #801818)',
+    shortName: 'NEJM',
+    description: 'La revista médica más prestigiosa del mundo, con investigaciones originales de alto impacto y factor de impacto de 78.5.',
+    url: 'https://nejm.urp.elogim.com/'
+  },
+  {
+    id: 11,
+    name: 'Revistas Ovid',
+    provider: 'Wolters Kluwer',
+    color: '#7b3f9e',
+    gradient: 'linear-gradient(135deg, #7b3f9e, #53296c)',
+    shortName: 'Ovid<br>Revistas',
+    description: 'Acceso a texto completo de cientos de revistas científicas de alta calidad, incluyendo el catálogo de Lippincott (LWW).',
+    url: 'https://oviddc2.urp.elogim.com/ovid-new-a/ovidweb.cgi?QS2=434f4e1a73d37e8c79e5d8c142641a542280cb57f0416e41d37d53a4d3815bf29da7a83e487343ffffa6718412c0ffea71f57506abe817240749582d80fe2e6fc5f8c2ebcd70909b59ce62630189ba4083fa4dd0d125180a24206cd935bd149dac3b7f1c0aa6bfd342d180eaa7f86eacc822b42709cf3ec2c586abdee77ae0287b547be6903a4dd2f3c534cff5da574e913fec17c05fbc8a1aeab0bc6c07a4e80db9f5e3bf56e2e9ec70bb9df0976e2f23b57f1770a3df8ff3ece399f88f1b69cf541864e834848186735c5b60d7eecd648e142165148443fb0eec92300e1878dbd74a3f7167356feeddef15fc9466f9'
+  },
+  {
+    id: 12,
+    name: 'Springer Link',
+    provider: 'Springer Nature',
+    color: '#d4770a',
+    gradient: 'linear-gradient(135deg, #d4770a, #a05905)',
+    shortName: 'Springer<br>Link',
+    description: 'Acceso a millones de documentos de investigación biomédica, libros y revistas del prestigioso sello Springer Nature.',
+    url: 'https://link.springer.com/journals/browse-subject?subject=HEALTH_SCIENCES'
+  }
+])
+
+const slideLeft = () => {
+  if (basesDatosContainer.value) {
+    basesDatosContainer.value.scrollBy({ left: -340, behavior: 'smooth' })
+  }
+}
+
+const slideRight = () => {
+  if (basesDatosContainer.value) {
+    basesDatosContainer.value.scrollBy({ left: 340, behavior: 'smooth' })
+  }
+}
+
+const openDatabase = (url, name) => {
+  emit('show-toast', `Abriendo ${name}...`, 'success')
+  window.open(url, '_blank')
+}
 </script>
 
 <template>
@@ -237,49 +379,45 @@ onUnmounted(() => {
             <p class="section-subtitle">Herramientas premium integradas para investigación clínica avanzada.</p>
           </div>
           <div class="home-section-nav">
-            <button class="round-nav-btn" @click="emit('show-toast', 'Desplazamiento a la izquierda.', 'info')">
+            <button class="round-nav-btn" @click="slideLeft" title="Desplazar a la izquierda">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
-            <button class="round-nav-btn" @click="emit('show-toast', 'Desplazamiento a la derecha.', 'info')">
+            <button class="round-nav-btn" @click="slideRight" title="Desplazar a la derecha">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
         </div>
 
-        <div class="bases-datos-row">
-          <!-- Card 1: Access Medicina -->
-          <div class="db-card" @click="window.open('https://accessmedicina.urp.elogim.com/', '_blank')">
+        <div class="bases-datos-row" ref="basesDatosContainer">
+          <div 
+            v-for="db in databases" 
+            :key="db.id" 
+            class="db-card" 
+            @click="openDatabase(db.url, db.name)"
+          >
             <div class="db-card-image">
-              <div class="badge-db badge-premium">McGraw-Hill</div>
-              <div style="background: linear-gradient(135deg, #0066cc, #003f99); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.2rem; text-align: center; padding: 1rem; letter-spacing: -0.03em;">Access<br>Medicina</div>
+              <div class="badge-db" :style="{ backgroundColor: db.color }">{{ db.provider }}</div>
+              <div 
+                :style="{ 
+                  background: db.gradient, 
+                  width: '100%', 
+                  height: '100%', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  color: 'white', 
+                  fontWeight: '800', 
+                  fontSize: db.name.length > 25 ? '1.05rem' : '1.2rem', 
+                  textAlign: 'center', 
+                  padding: '1rem', 
+                  letterSpacing: '-0.03em' 
+                }"
+                v-html="db.shortName"
+              ></div>
             </div>
             <div class="db-card-content">
-              <h3 class="db-card-title">Access Medicina – Español</h3>
-              <p class="db-card-desc">Más de 100 títulos en español: Harrison, Goodman &amp; Gilman y más. Incluye Diagnosaurus®, calculadoras clínicas y autoevaluación.</p>
-            </div>
-          </div>
-
-          <!-- Card 2: BMJ Best Practice -->
-          <div class="db-card" @click="window.open('https://bestpracticebmj.urp.elogim.com/info/us/', '_blank')">
-            <div class="db-card-image">
-              <div class="badge-db badge-updated">Actualización Diaria</div>
-              <div style="background: linear-gradient(135deg, #c00000, #8b0000); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.1rem; text-align: center; padding: 1rem;">BMJ<br>Best Practice</div>
-            </div>
-            <div class="db-card-content">
-              <h3 class="db-card-title">BMJ Best Practice</h3>
-              <p class="db-card-desc">Guías clínicas basadas en evidencia del British Medical Journal. Diagnóstico diferencial, algoritmos de tratamiento y 250+ calculadoras médicas.</p>
-            </div>
-          </div>
-
-          <!-- Card 3: DynaMedex -->
-          <div class="db-card" @click="window.open('https://dynamedex.urp.elogim.com/', '_blank')">
-            <div class="db-card-image">
-              <div class="badge-db badge-open">EBSCO Health</div>
-              <div style="background: linear-gradient(135deg, #005f9e, #003366); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.3rem; text-align: center; padding: 1rem;">DynaMedex</div>
-            </div>
-            <div class="db-card-content">
-              <h3 class="db-card-title">DynaMedex</h3>
-              <p class="db-card-desc">Combina DynaMed y Micromedex: evidencia clínica + información farmacológica avanzada. IA integrada, interacciones de medicamentos y actualización diaria.</p>
+              <h3 class="db-card-title">{{ db.name }}</h3>
+              <p class="db-card-desc">{{ db.description }}</p>
             </div>
           </div>
         </div>
@@ -390,7 +528,7 @@ onUnmounted(() => {
           <div class="info-text">
             <h4>Horario de Atención</h4>
             <p>Lunes a Viernes: 08:00 - 21:00</p>
-            <span>Sábados: 09:00 - 13:00</span>
+            <span>Sábados: 08:00 - 15:00</span>
           </div>
         </div>
 
@@ -401,7 +539,7 @@ onUnmounted(() => {
           <div class="info-text">
             <h4>Ubicación</h4>
             <p>Campus URP - Facultad de Medicina</p>
-            <span>Piso 2, Ala Sur</span>
+            <span>Piso 4, Ala Sur</span>
           </div>
         </div>
 
@@ -411,7 +549,7 @@ onUnmounted(() => {
           </div>
           <div class="info-text">
             <h4>Contacto Directo</h4>
-            <p>biblioteca.med@urp.edu.pe</p>
+            <p>fvalero@urp.edu.pe</p>
             <span>Tel: +51 1 708-0000 Anexo 212</span>
           </div>
         </div>
