@@ -84,7 +84,7 @@ const captureAndAnalyze = async () => {
 };
 
 const startAutoScanning = () => {
-  // Escanear cada 4 segundos para reducir el consumo de la API gratuita y dar tiempo de enfocar
+  // Escanear cada 4 segundos para dar tiempo al usuario de posicionar el carnet y evitar escaneos fallidos inmediatos
   scanInterval = setInterval(() => {
     if (scanning.value && videoRef.value?.readyState === 4) {
       captureAndAnalyze();
