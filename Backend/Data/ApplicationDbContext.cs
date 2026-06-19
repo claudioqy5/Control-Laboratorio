@@ -17,6 +17,7 @@ namespace ControlLaboratorio.API.Data
         public DbSet<Favorito> Favoritos { get; set; }
         public DbSet<Multa> Multas { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<ScanLog> ScanLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -2,6 +2,9 @@ using Google.Cloud.Vision.V1;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using ControlLaboratorio.API.Data;
+using ControlLaboratorio.API.Models;
 
 namespace ControlLaboratorio.API.Services
 {
@@ -9,15 +12,27 @@ namespace ControlLaboratorio.API.Services
     {
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<GoogleVisionService> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public GoogleVisionService(IWebHostEnvironment env, ILogger<GoogleVisionService> logger)
+        public GoogleVisionService(IWebHostEnvironment env, ILogger<GoogleVisionService> logger, ApplicationDbContext context)
         {
             _env = env;
             _logger = logger;
+            _context = context;
         }
 
         public async Task<ParsedStudentData?> ScanCarnetAsync(string base64Image)
         {
+            // 1. Validar límite mensual antes de llamar a la API
+            var primerDiaMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            int escaneosEsteMes = await _context.ScanLogs.CountAsync(s => s.Fecha >= primerDiaMes);
+
+            if (escaneosEsteMes >= 950)
+            {
+                _logger.LogWarning($"Se ha alcanzado el límite de seguridad mensual de escaneos (actual: {escaneosEsteMes}). Solicitud bloqueada.");
+                throw new InvalidOperationException("Se ha superado el límite mensual de escaneos permitidos en el sistema.");
+            }
+
             try
             {
                 // Set the credentials environment variable dynamically
@@ -47,6 +62,10 @@ namespace ControlLaboratorio.API.Services
                     _logger.LogWarning("No se detectó ningún texto en la imagen.");
                     return null;
                 }
+
+                // 2. Registrar el escaneo exitoso en la base de datos
+                _context.ScanLogs.Add(new ScanLog());
+                await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"Texto detectado de Vision API:\n{response.Text}");
 
