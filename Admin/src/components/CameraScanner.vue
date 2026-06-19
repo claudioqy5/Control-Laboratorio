@@ -84,12 +84,12 @@ const captureAndAnalyze = async () => {
 };
 
 const startAutoScanning = () => {
-  // Escanear cada 2.5 segundos para no saturar la API gratuita y dar tiempo de respuesta
+  // Escanear cada 4 segundos para reducir el consumo de la API gratuita y dar tiempo de enfocar
   scanInterval = setInterval(() => {
     if (scanning.value && videoRef.value?.readyState === 4) {
       captureAndAnalyze();
     }
-  }, 2500);
+  }, 4000);
 };
 
 onMounted(() => {
