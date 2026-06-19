@@ -26,11 +26,20 @@ const getPeruDate = () => {
 }
 const selectedDate = ref(getPeruDate())
 let refreshInterval = null
+const scanStats = ref({ escaneosEsteMes: 0, limiteMensual: 1000, limiteSeguridad: 950 })
 
 const getDashboardStats = async () => {
   try {
     const res = await axios.get(`${API_BASE_URL}/api/stats/dashboard?date=${selectedDate.value}`)
     dashboardData.value = res.data
+    
+    try {
+      const scanRes = await axios.get(`${API_BASE_URL}/api/reportes/escaneos-stats`)
+      scanStats.value = scanRes.data
+    } catch (scanErr) {
+      console.error("Error cargando estadísticas de escaneos:", scanErr)
+    }
+
     loaded.value = true
   } catch (err) {
     console.error("Error cargando dashboard", err)
@@ -293,6 +302,15 @@ const donutOptions = {
           <div class="stat-value">{{ ocupacionPorcentaje }}%</div>
         </div>
       </div>
+      <div class="stat-card">
+        <div :class="['stat-icon', scanStats.escaneosEsteMes >= scanStats.limiteSeguridad ? 'red' : (scanStats.escaneosEsteMes >= 800 ? 'amber' : 'violet')]">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        </div>
+        <div>
+          <div class="stat-label">Escaneos del Mes</div>
+          <div class="stat-value">{{ scanStats.escaneosEsteMes }} <small>/ {{ scanStats.limiteMensual }}</small></div>
+        </div>
+      </div>
     </div>
 
     <!-- Charts Layout -->
@@ -386,9 +404,21 @@ const donutOptions = {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .stat-card {
@@ -414,6 +444,7 @@ const donutOptions = {
 .stat-icon.green { background: #d1fae5; color: #059669; }
 .stat-icon.amber { background: #fef3c7; color: #d97706; }
 .stat-icon.blue { background: #e0f2fe; color: #0284c7; }
+.stat-icon.violet { background: #f5f3ff; color: #7c3aed; }
 
 .stat-label { color: #6b7280; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
 .stat-value { color: #111827; font-size: 1.25rem; font-weight: 800; }

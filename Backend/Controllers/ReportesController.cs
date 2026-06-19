@@ -57,5 +57,51 @@ namespace ControlLaboratorio.API.Controllers
                 sesiones = sesiones
             });
         }
+
+        [HttpGet("escaneos-stats")]
+        public async Task<IActionResult> GetEscaneosStats()
+        {
+            var primerDiaMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            int escaneosEsteMes = await _context.ScanLogs.CountAsync(s => s.Fecha >= primerDiaMes);
+            return Ok(new
+            {
+                escaneosEsteMes = escaneosEsteMes,
+                limiteMensual = 1000,
+                limiteSeguridad = 950
+            });
+        }
+
+        [HttpGet("escaneos")]
+        public async Task<IActionResult> GetEscaneos([FromQuery] string? fecha)
+        {
+            DateTime fechaConsulta;
+            if (string.IsNullOrEmpty(fecha) || !DateTime.TryParse(fecha, out fechaConsulta))
+            {
+                fechaConsulta = TimeHelper.GetPeruTime().Date;
+            }
+            else
+            {
+                fechaConsulta = fechaConsulta.Date;
+            }
+            var targetDayEnd = fechaConsulta.AddDays(1);
+
+            var escaneos = await _context.ScanLogs
+                .Where(s => s.Fecha >= fechaConsulta && s.Fecha < targetDayEnd)
+                .OrderByDescending(s => s.Fecha)
+                .Select(s => new
+                {
+                    scanLogId = s.ScanLogID,
+                    fecha = s.Fecha,
+                    realizadoPor = s.RealizadoPor ?? "Lector de Carné"
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                fechaConsulta = fechaConsulta,
+                totalEscaneos = escaneos.Count,
+                escaneos = escaneos
+            });
+        }
     }
 }

@@ -2,10 +2,15 @@
 import { ref, onMounted } from 'vue'
 import { API_BASE_URL } from '../config.js'
 
+const activeTab = ref('conexiones') // 'conexiones' o 'escaneos'
 const alumnosGrouped = ref([])
 const totalConexiones = ref(0)
 const loading = ref(true)
 const fechaSeleccionada = ref(new Date().toISOString().split('T')[0]) // Hoy por defecto
+
+// Variables para escaneos
+const escaneos = ref([])
+const totalEscaneos = ref(0)
 
 const fetchReporte = async () => {
   loading.value = true
@@ -54,6 +59,28 @@ const fetchReporte = async () => {
   }
 }
 
+const fetchEscaneos = async () => {
+  loading.value = true
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/reportes/escaneos?fecha=${fechaSeleccionada.value}`)
+    const data = await response.json()
+    totalEscaneos.value = data.totalEscaneos
+    escaneos.value = data.escaneos
+  } catch (error) {
+    console.error("Error cargando reporte de escaneos:", error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleDateOrTabChange = () => {
+  if (activeTab.value === 'conexiones') {
+    fetchReporte()
+  } else {
+    fetchEscaneos()
+  }
+}
+
 const formatTime = (dateString) => {
   if (!dateString) return '-'
   const d = new Date(dateString)
@@ -61,17 +88,58 @@ const formatTime = (dateString) => {
 }
 
 onMounted(() => {
-  fetchReporte()
+  handleDateOrTabChange()
 })
 </script>
 
 <template>
   <div>
+    <!-- Menú de Pestañas -->
+    <div style="display: flex; gap: 1rem; border-bottom: 2px solid #f1f5f9; margin-bottom: 1.5rem;">
+      <button 
+        @click="activeTab = 'conexiones'; handleDateOrTabChange()" 
+        :style="{
+          padding: '0.75rem 1rem', 
+          border: 'none', 
+          background: 'transparent', 
+          color: activeTab === 'conexiones' ? '#6366f1' : '#64748b', 
+          borderBottom: activeTab === 'conexiones' ? '2px solid #6366f1' : '2px solid transparent', 
+          fontWeight: '600', 
+          cursor: 'pointer',
+          fontSize: '0.9rem'
+        }"
+      >
+        Reporte de Conexiones
+      </button>
+      <button 
+        @click="activeTab = 'escaneos'; handleDateOrTabChange()" 
+        :style="{
+          padding: '0.75rem 1rem', 
+          border: 'none', 
+          background: 'transparent', 
+          color: activeTab === 'escaneos' ? '#6366f1' : '#64748b', 
+          borderBottom: activeTab === 'escaneos' ? '2px solid #6366f1' : '2px solid transparent', 
+          fontWeight: '600', 
+          cursor: 'pointer',
+          fontSize: '0.9rem'
+        }"
+      >
+        Reporte de Escaneos (Google Vision)
+      </button>
+    </div>
+
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
       <div>        
-        <h2 style="color: #111827; font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem;">Reporte de Conexiones</h2>
+        <h2 style="color: #111827; font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem;">
+          {{ activeTab === 'conexiones' ? 'Reporte de Conexiones' : 'Reporte de Escaneos de Carné' }}
+        </h2>
         <div style="color: #6b7280; font-size: 0.875rem;">
-          {{ totalConexiones }} Conexiones registradas ({{ alumnosGrouped.length }} alumnos hoy)
+          <template v-if="activeTab === 'conexiones'">
+            {{ totalConexiones }} Conexiones registradas ({{ alumnosGrouped.length }} alumnos hoy)
+          </template>
+          <template v-else>
+            {{ totalEscaneos }} Escaneos de carné con Google Vision realizados en esta fecha
+          </template>
         </div>
       </div>
       <div style="display: flex; gap: 1rem; align-items: center;">
@@ -81,11 +149,11 @@ onMounted(() => {
             type="date" 
             id="fecha" 
             v-model="fechaSeleccionada"
-            @change="fetchReporte"
+            @change="handleDateOrTabChange"
             style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; font-size: 0.875rem; color: #111827;"
           />
           <button 
-            @click="fetchReporte" 
+            @click="handleDateOrTabChange" 
             style="background: #f1f5f9; border: 1px solid #e2e8f0; cursor: pointer; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #475569; display: flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; transition: background 0.2s;"
             onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'"
           >
@@ -100,132 +168,177 @@ onMounted(() => {
       Cargando datos...
     </div>
     
-    <div v-else-if="alumnosGrouped.length === 0" style="padding: 3rem; text-align: center; color: #94a3b8;">
-      No hay conexiones registradas en esta fecha.
-    </div>
-    
-    <table v-else class="centered-table">
-      <thead>
-        <tr>
-          <th style="text-align: left; padding-left: 2rem;">Alumno</th>
-          <th>PC / Equipo</th>
-          <th>Hora Inicio</th>
-          <th>Hora Fin</th>
-          <th>Uso (Mins)</th>
-          <th>Sesión Actual</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <template v-for="alumno in alumnosGrouped" :key="alumno.alumnoCodigo">
-        <tr 
-          :class="{ 'has-multiple': alumno.sesiones.length > 1, 'is-expanded': alumno.isExpanded }"
-          @click="alumno.sesiones.length > 1 ? alumno.isExpanded = !alumno.isExpanded : null"
-          :style="{ cursor: alumno.sesiones.length > 1 ? 'pointer' : 'default' }"
-        >
-          <td style="text-align: left; padding-left: 1.5rem;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <!-- Chevron for multiple sessions -->
-              <div 
-                v-if="alumno.sesiones.length > 1" 
-                class="chevron-icon" 
-                style="display: flex; align-items: center; justify-content: center;"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              </div>
-              <div v-else style="width: 16px;"></div> <!-- Spacer to align names -->
-              
-              <div style="flex: 1;">
-                <div style="font-weight: 600; color: #111827; line-height: 1.2;">{{ alumno.alumnoNombres }}</div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                  <span style="font-size: 0.75rem; color: #6b7280;">{{ alumno.alumnoCodigo }}</span>
-                  <span v-if="alumno.sesiones.length > 1" class="multi-connection-badge">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 2px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    {{ alumno.sesiones.length }} conex.
-                  </span>
+    <template v-else>
+      <!-- VISTA DE CONEXIONES -->
+      <div v-if="activeTab === 'conexiones'">
+        <div v-if="alumnosGrouped.length === 0" style="padding: 3rem; text-align: center; color: #94a3b8;">
+          No hay conexiones registradas en esta fecha.
+        </div>
+        
+        <table v-else class="centered-table">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding-left: 2rem;">Alumno</th>
+              <th>PC / Equipo</th>
+              <th>Hora Inicio</th>
+              <th>Hora Fin</th>
+              <th>Uso (Mins)</th>
+              <th>Sesión Actual</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <template v-for="alumno in alumnosGrouped" :key="alumno.alumnoCodigo">
+            <tr 
+              :class="{ 'has-multiple': alumno.sesiones.length > 1, 'is-expanded': alumno.isExpanded }"
+              @click="alumno.sesiones.length > 1 ? alumno.isExpanded = !alumno.isExpanded : null"
+              :style="{ cursor: alumno.sesiones.length > 1 ? 'pointer' : 'default' }"
+            >
+              <td style="text-align: left; padding-left: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <!-- Chevron for multiple sessions -->
+                  <div 
+                    v-if="alumno.sesiones.length > 1" 
+                    class="chevron-icon" 
+                    style="display: flex; align-items: center; justify-content: center;"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                  <div v-else style="width: 16px;"></div> <!-- Spacer to align names -->
+                  
+                  <div style="flex: 1;">
+                    <div style="font-weight: 600; color: #111827; line-height: 1.2;">{{ alumno.alumnoNombres }}</div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                      <span style="font-size: 0.75rem; color: #6b7280;">{{ alumno.alumnoCodigo }}</span>
+                      <span v-if="alumno.sesiones.length > 1" class="multi-connection-badge">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 2px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        {{ alumno.sesiones.length }} conex.
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </td>
-          <td>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-              <strong :title="alumno.ultimaSesion.equipoRed" style="color: #111827;">{{ alumno.ultimaSesion.equipoAlias || alumno.ultimaSesion.equipoRed }}</strong>
-            </div>
-          </td>
-          <td style="color: #475569;">{{ formatTime(alumno.ultimaSesion.horaInicio) }}</td>
-          <td style="color: #475569;">{{ formatTime(alumno.ultimaSesion.horaFin) }}</td>
-          <td :style="{ color: alumno.ultimaSesion.duracionMinutos > 180 ? '#e11d48' : '#475569', fontWeight: '600' }">
-            {{ alumno.ultimaSesion.duracionMinutos }} min
-          </td>
-          <td>
-            <span style="background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
-              Sesión {{ Math.floor((alumno.ultimaSesion.limiteDiarioSegundos || 10800) / 10800) }}
-            </span>
-          </td>
-          <td>
-            <span v-if="alumno.ultimaSesion.estado === 'En línea'" style="background: #ecfdf5; color: #059669; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-              <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
-              En línea
-            </span>
-            <span v-else style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-              Finalizado
-            </span>
-          </td>
-        </tr>
-        <!-- Nested row for other sessions -->
-        <tr v-if="alumno.isExpanded" class="expanded-row">
-          <td colspan="6" style="background: #f8fafc; padding: 0.75rem 1.5rem 1.25rem 3.5rem; text-align: left; border-bottom: 1px solid #e2e8f0;">
-            <div class="nested-container">
-              <div style="font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                Otras conexiones de este alumno hoy
-              </div>
-              <table class="nested-table">
-                <thead>
-                  <tr>
-                    <th style="text-align: left; padding-left: 1rem;">PC / Equipo</th>
-                    <th>Hora Inicio</th>
-                    <th>Hora Fin</th>
-                    <th>Uso</th>
-                    <th>Sesión Actual</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="ses in alumno.demasSesiones" :key="ses.sesionId">
-                    <td style="text-align: left; padding-left: 1rem;">
-                      <div style="display: flex; align-items: center; gap: 8px;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                        <strong :title="ses.equipoRed" style="color: #475569;">{{ ses.equipoAlias || ses.equipoRed }}</strong>
-                      </div>
-                    </td>
-                    <td style="color: #64748b;">{{ formatTime(ses.horaInicio) }}</td>
-                    <td style="color: #64748b;">{{ formatTime(ses.horaFin) }}</td>
-                    <td :style="{ color: ses.duracionMinutos > 180 ? '#e11d48' : '#64748b', fontWeight: '600' }">
-                      {{ ses.duracionMinutos }} min
-                    </td>
-                    <td>
-                      <span style="background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">
-                        Sesión {{ Math.floor((ses.limiteDiarioSegundos || 10800) / 10800) }}
-                      </span>
-                    </td>
-                    <td>
-                      <span v-if="ses.estado === 'En línea'" style="background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                        <span style="width: 4px; height: 4px; border-radius: 50%; background: #10b981;"></span>
-                        En línea
-                      </span>
-                      <span v-else style="background: #f1f5f9; color: #64748b; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                        Finalizado
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </td>
-        </tr>
-      </template>
-    </table>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                  <strong :title="alumno.ultimaSesion.equipoRed" style="color: #111827;">{{ alumno.ultimaSesion.equipoAlias || alumno.ultimaSesion.equipoRed }}</strong>
+                </div>
+              </td>
+              <td style="color: #475569;">{{ formatTime(alumno.ultimaSesion.horaInicio) }}</td>
+              <td style="color: #475569;">{{ formatTime(alumno.ultimaSesion.horaFin) }}</td>
+              <td :style="{ color: alumno.ultimaSesion.duracionMinutos > 180 ? '#e11d48' : '#475569', fontWeight: '600' }">
+                {{ alumno.ultimaSesion.duracionMinutos }} min
+              </td>
+              <td>
+                <span style="background: #eff6ff; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; white-space: nowrap;">
+                  Sesión {{ Math.floor((alumno.ultimaSesion.limiteDiarioSegundos || 10800) / 10800) }}
+                </span>
+              </td>
+              <td>
+                <span v-if="alumno.ultimaSesion.estado === 'En línea'" style="background: #ecfdf5; color: #059669; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+                  En línea
+                </span>
+                <span v-else style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                  Finalizado
+                </span>
+              </td>
+            </tr>
+            <!-- Nested row for other sessions -->
+            <tr v-if="alumno.isExpanded" class="expanded-row">
+              <td colspan="7" style="background: #f8fafc; padding: 0.75rem 1.5rem 1.25rem 3.5rem; text-align: left; border-bottom: 1px solid #e2e8f0;">
+                <div class="nested-container">
+                  <div style="font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Otras conexiones de este alumno hoy
+                  </div>
+                  <table class="nested-table">
+                    <thead>
+                      <tr>
+                        <th style="text-align: left; padding-left: 1rem;">PC / Equipo</th>
+                        <th>Hora Inicio</th>
+                        <th>Hora Fin</th>
+                        <th>Uso</th>
+                        <th>Sesión Actual</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="ses in alumno.demasSesiones" :key="ses.sesionId">
+                        <td style="text-align: left; padding-left: 1rem;">
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                            <strong :title="ses.equipoRed" style="color: #475569;">{{ ses.equipoAlias || ses.equipoRed }}</strong>
+                          </div>
+                        </td>
+                        <td style="color: #64748b;">{{ formatTime(ses.horaInicio) }}</td>
+                        <td style="color: #64748b;">{{ formatTime(ses.horaFin) }}</td>
+                        <td :style="{ color: ses.duracionMinutos > 180 ? '#e11d48' : '#64748b', fontWeight: '600' }">
+                          {{ ses.duracionMinutos }} min
+                        </td>
+                        <td>
+                          <span style="background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">
+                            Sesión {{ Math.floor((ses.limiteDiarioSegundos || 10800) / 10800) }}
+                          </span>
+                        </td>
+                        <td>
+                          <span v-if="ses.estado === 'En línea'" style="background: #ecfdf5; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                            <span style="width: 4px; height: 4px; border-radius: 50%; background: #10b981;"></span>
+                            En línea
+                          </span>
+                          <span v-else style="background: #f1f5f9; color: #64748b; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                            Finalizado
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </table>
+      </div>
+
+      <!-- VISTA DE ESCANEOS -->
+      <div v-else>
+        <div v-if="escaneos.length === 0" style="padding: 3rem; text-align: center; color: #94a3b8;">
+          No hay escaneos de carné registrados en esta fecha.
+        </div>
+        
+        <table v-else class="centered-table">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding-left: 2rem;">ID de Escaneo</th>
+              <th>Hora de Escaneo</th>
+              <th>Dispositivo / Canal</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="scan in escaneos" :key="scan.scanLogId">
+              <td style="text-align: left; padding-left: 2rem; font-weight: 600; color: #111827;">
+                #{{ scan.scanLogId }}
+              </td>
+              <td style="color: #475569;">
+                {{ formatTime(scan.fecha) }}
+              </td>
+              <td style="color: #475569;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  {{ scan.realizadoPor }}
+                </div>
+              </td>
+              <td>
+                <span style="background: #f5f3ff; color: #7c3aed; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #7c3aed;"></span>
+                  Procesado (OK)
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
   </div>
 </template>
 
