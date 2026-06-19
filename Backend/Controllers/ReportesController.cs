@@ -62,7 +62,8 @@ namespace ControlLaboratorio.API.Controllers
         [HttpGet("escaneos-stats")]
         public async Task<IActionResult> GetEscaneosStats()
         {
-            var primerDiaMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            var peruTime = TimeHelper.GetPeruTime();
+            var primerDiaMes = new DateTime(peruTime.Year, peruTime.Month, 1);
             int escaneosEsteMes = await _context.ScanLogs.CountAsync(s => s.Fecha >= primerDiaMes);
             return Ok(new
             {

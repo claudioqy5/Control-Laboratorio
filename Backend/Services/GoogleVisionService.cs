@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Models;
+using ControlLaboratorio.API.Helpers;
 
 namespace ControlLaboratorio.API.Services
 {
@@ -24,7 +25,8 @@ namespace ControlLaboratorio.API.Services
         public async Task<ParsedStudentData?> ScanCarnetAsync(string base64Image)
         {
             // 1. Validar límite mensual antes de llamar a la API
-            var primerDiaMes = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            var peruTime = TimeHelper.GetPeruTime();
+            var primerDiaMes = new DateTime(peruTime.Year, peruTime.Month, 1);
             int escaneosEsteMes = await _context.ScanLogs.CountAsync(s => s.Fecha >= primerDiaMes);
 
             if (escaneosEsteMes >= 950)

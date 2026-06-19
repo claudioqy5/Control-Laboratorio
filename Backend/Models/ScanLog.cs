@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ControlLaboratorio.API.Helpers;
 
 namespace ControlLaboratorio.API.Models
 {
@@ -8,7 +9,7 @@ namespace ControlLaboratorio.API.Models
         public int ScanLogID { get; set; }
 
         [Required]
-        public DateTime Fecha { get; set; } = DateTime.UtcNow;
+        public DateTime Fecha { get; set; } = TimeHelper.GetPeruTime();
 
         [StringLength(100)]
         public string? RealizadoPor { get; set; }
