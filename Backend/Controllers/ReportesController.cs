@@ -99,7 +99,11 @@ namespace ControlLaboratorio.API.Controllers
                 {
                     scanLogId = s.ScanLogID,
                     fecha = s.Fecha,
-                    realizadoPor = s.RealizadoPor ?? "Lector de Carné"
+                    realizadoPor = s.RealizadoPor ?? "Lector de Carné",
+                    isExitoso = s.IsExitoso,
+                    mensaje = s.Mensaje,
+                    alumnoCodigo = s.AlumnoCodigo,
+                    alumnoNombre = s.AlumnoNombre
                 })
                 .ToListAsync();
 

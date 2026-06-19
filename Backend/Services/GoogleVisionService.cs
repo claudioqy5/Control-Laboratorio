@@ -60,20 +60,59 @@ namespace ControlLaboratorio.API.Services
                 if (response == null || string.IsNullOrEmpty(response.Text))
                 {
                     _logger.LogWarning("No se detectó ningún texto en la imagen.");
+                    _context.ScanLogs.Add(new ScanLog
+                    {
+                        IsExitoso = false,
+                        Mensaje = "No se detectó ningún texto en el carnet."
+                    });
+                    await _context.SaveChangesAsync();
                     return null;
                 }
 
-                // 2. Registrar el escaneo exitoso en la base de datos
-                _context.ScanLogs.Add(new ScanLog());
-                await _context.SaveChangesAsync();
+                var studentData = ParseStudentData(response.Text);
+                if (studentData == null || string.IsNullOrEmpty(studentData.CodigoUniversitario) || string.IsNullOrEmpty(studentData.Nombres))
+                {
+                    _logger.LogWarning("Datos incompletos o ilegibles en el carnet.");
+                    _context.ScanLogs.Add(new ScanLog
+                    {
+                        IsExitoso = false,
+                        Mensaje = "Lectura incompleta (faltan nombres o código)",
+                        AlumnoNombre = studentData != null ? $"{studentData.Nombres} {studentData.Apellidos}".Trim() : null,
+                        AlumnoCodigo = studentData?.CodigoUniversitario
+                    });
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    _context.ScanLogs.Add(new ScanLog
+                    {
+                        IsExitoso = true,
+                        Mensaje = "Escaneo completado exitosamente",
+                        AlumnoCodigo = studentData.CodigoUniversitario,
+                        AlumnoNombre = $"{studentData.Nombres} {studentData.Apellidos}".Trim()
+                    });
+                    await _context.SaveChangesAsync();
+                }
 
                 _logger.LogInformation($"Texto detectado de Vision API:\n{response.Text}");
-
-                return ParseStudentData(response.Text);
+                return studentData;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al escanear carnet con Google Vision API");
+                try
+                {
+                    _context.ScanLogs.Add(new ScanLog
+                    {
+                        IsExitoso = false,
+                        Mensaje = $"Error de procesamiento: {ex.Message}"
+                    });
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception dbEx)
+                {
+                    _logger.LogError(dbEx, "Error al guardar log de error en la BD");
+                }
                 throw;
             }
         }

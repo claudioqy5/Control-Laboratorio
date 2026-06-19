@@ -336,6 +336,7 @@ onMounted(() => {
           <thead>
             <tr>
               <th style="text-align: left; padding-left: 2rem;">ID de Escaneo</th>
+              <th style="text-align: left;">Alumno / Detalle</th>
               <th>{{ verTodosEscaneos ? 'Fecha y Hora de Escaneo' : 'Hora de Escaneo' }}</th>
               <th>Dispositivo / Canal</th>
               <th>Estado</th>
@@ -345,6 +346,17 @@ onMounted(() => {
             <tr v-for="scan in escaneos" :key="scan.scanLogId">
               <td style="text-align: left; padding-left: 2rem; font-weight: 600; color: #111827;">
                 #{{ scan.scanLogId }}
+              </td>
+              <td style="text-align: left;">
+                <div v-if="scan.isExitoso">
+                  <div style="font-weight: 600; color: #111827;">{{ scan.alumnoNombre }}</div>
+                  <div style="font-size: 0.75rem; color: #6b7280; margin-top: 2px;">Código: {{ scan.alumnoCodigo }}</div>
+                </div>
+                <div v-else style="color: #ef4444; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  <span>{{ scan.mensaje || 'Error al leer carnet' }}</span>
+                  <span v-if="scan.alumnoCodigo" style="font-size: 0.75rem; color: #6b7280; font-weight: normal; margin-left: 4px;">({{ scan.alumnoCodigo }})</span>
+                </div>
               </td>
               <td style="color: #475569;">
                 {{ verTodosEscaneos ? formatDateAndTime(scan.fecha) : formatTime(scan.fecha) }}
@@ -356,9 +368,13 @@ onMounted(() => {
                 </div>
               </td>
               <td>
-                <span style="background: #f5f3ff; color: #7c3aed; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #7c3aed;"></span>
-                  Procesado (OK)
+                <span v-if="scan.isExitoso" style="background: #ecfdf5; color: #059669; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+                  Exitoso
+                </span>
+                <span v-else style="background: #fef2f2; color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #ef4444;"></span>
+                  Fallido
                 </span>
               </td>
             </tr>
