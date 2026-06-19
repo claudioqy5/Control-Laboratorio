@@ -11,6 +11,7 @@ const fechaSeleccionada = ref(new Date().toISOString().split('T')[0]) // Hoy por
 // Variables para escaneos
 const escaneos = ref([])
 const totalEscaneos = ref(0)
+const verTodosEscaneos = ref(false)
 
 const fetchReporte = async () => {
   loading.value = true
@@ -62,7 +63,8 @@ const fetchReporte = async () => {
 const fetchEscaneos = async () => {
   loading.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/api/reportes/escaneos?fecha=${fechaSeleccionada.value}`)
+    const paramFecha = verTodosEscaneos.value ? 'all' : fechaSeleccionada.value
+    const response = await fetch(`${API_BASE_URL}/api/reportes/escaneos?fecha=${paramFecha}`)
     const data = await response.json()
     totalEscaneos.value = data.totalEscaneos
     escaneos.value = data.escaneos
@@ -85,6 +87,12 @@ const formatTime = (dateString) => {
   if (!dateString) return '-'
   const d = new Date(dateString)
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+const formatDateAndTime = (dateString) => {
+  if (!dateString) return '-'
+  const d = new Date(dateString)
+  return d.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 onMounted(() => {
@@ -138,13 +146,32 @@ onMounted(() => {
             {{ totalConexiones }} Conexiones registradas ({{ alumnosGrouped.length }} alumnos hoy)
           </template>
           <template v-else>
-            {{ totalEscaneos }} Escaneos de carné con Google Vision realizados en esta fecha
+            {{ totalEscaneos }} Escaneos de carné con Google Vision realizados {{ verTodosEscaneos ? 'en total' : 'en esta fecha' }}
           </template>
         </div>
       </div>
       <div style="display: flex; gap: 1rem; align-items: center;">
-        <label for="fecha" style="font-size: 0.875rem; font-weight: 600; color: #475569;">Filtrar por fecha:</label>
-        <div style="position: relative; display: flex; gap: 0.5rem;">
+        <!-- Botón para ver todo el historial (solo en pestaña de escaneos) -->
+        <button 
+          v-if="activeTab === 'escaneos'"
+          @click="verTodosEscaneos = !verTodosEscaneos; handleDateOrTabChange()"
+          :style="{
+            background: verTodosEscaneos ? '#6366f1' : '#f1f5f9',
+            color: verTodosEscaneos ? 'white' : '#475569',
+            border: '1px solid ' + (verTodosEscaneos ? '#6366f1' : '#e2e8f0'),
+            cursor: 'pointer',
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem',
+            fontWeight: '600',
+            padding: '0.5rem 1rem',
+            transition: 'all 0.2s'
+          }"
+        >
+          {{ verTodosEscaneos ? 'Filtrar por Fecha' : 'Ver Todo el Historial' }}
+        </button>
+
+        <label v-if="activeTab === 'conexiones' || !verTodosEscaneos" for="fecha" style="font-size: 0.875rem; font-weight: 600; color: #475569;">Filtrar por fecha:</label>
+        <div v-if="activeTab === 'conexiones' || !verTodosEscaneos" style="position: relative; display: flex; gap: 0.5rem;">
           <input 
             type="date" 
             id="fecha" 
@@ -302,14 +329,14 @@ onMounted(() => {
       <!-- VISTA DE ESCANEOS -->
       <div v-else>
         <div v-if="escaneos.length === 0" style="padding: 3rem; text-align: center; color: #94a3b8;">
-          No hay escaneos de carné registrados en esta fecha.
+          No hay escaneos de carné registrados.
         </div>
         
         <table v-else class="centered-table">
           <thead>
             <tr>
               <th style="text-align: left; padding-left: 2rem;">ID de Escaneo</th>
-              <th>Hora de Escaneo</th>
+              <th>{{ verTodosEscaneos ? 'Fecha y Hora de Escaneo' : 'Hora de Escaneo' }}</th>
               <th>Dispositivo / Canal</th>
               <th>Estado</th>
             </tr>
@@ -320,7 +347,7 @@ onMounted(() => {
                 #{{ scan.scanLogId }}
               </td>
               <td style="color: #475569;">
-                {{ formatTime(scan.fecha) }}
+                {{ verTodosEscaneos ? formatDateAndTime(scan.fecha) : formatTime(scan.fecha) }}
               </td>
               <td style="color: #475569;">
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">

@@ -1,5 +1,6 @@
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Helpers;
+using ControlLaboratorio.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,19 +75,25 @@ namespace ControlLaboratorio.API.Controllers
         [HttpGet("escaneos")]
         public async Task<IActionResult> GetEscaneos([FromQuery] string? fecha)
         {
-            DateTime fechaConsulta;
-            if (string.IsNullOrEmpty(fecha) || !DateTime.TryParse(fecha, out fechaConsulta))
-            {
-                fechaConsulta = TimeHelper.GetPeruTime().Date;
-            }
-            else
-            {
-                fechaConsulta = fechaConsulta.Date;
-            }
-            var targetDayEnd = fechaConsulta.AddDays(1);
+            IQueryable<ScanLog> query = _context.ScanLogs;
+            bool verTodos = string.Equals(fecha, "all", StringComparison.OrdinalIgnoreCase);
 
-            var escaneos = await _context.ScanLogs
-                .Where(s => s.Fecha >= fechaConsulta && s.Fecha < targetDayEnd)
+            if (!verTodos)
+            {
+                DateTime fechaConsulta;
+                if (string.IsNullOrEmpty(fecha) || !DateTime.TryParse(fecha, out fechaConsulta))
+                {
+                    fechaConsulta = TimeHelper.GetPeruTime().Date;
+                }
+                else
+                {
+                    fechaConsulta = fechaConsulta.Date;
+                }
+                var targetDayEnd = fechaConsulta.AddDays(1);
+                query = query.Where(s => s.Fecha >= fechaConsulta && s.Fecha < targetDayEnd);
+            }
+
+            var escaneos = await query
                 .OrderByDescending(s => s.Fecha)
                 .Select(s => new
                 {
@@ -98,7 +105,7 @@ namespace ControlLaboratorio.API.Controllers
 
             return Ok(new
             {
-                fechaConsulta = fechaConsulta,
+                fechaConsulta = verTodos ? "Todos" : (object)(string.IsNullOrEmpty(fecha) ? DateTime.Today : DateTime.Parse(fecha)),
                 totalEscaneos = escaneos.Count,
                 escaneos = escaneos
             });
