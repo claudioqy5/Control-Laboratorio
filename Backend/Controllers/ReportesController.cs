@@ -63,13 +63,29 @@ namespace ControlLaboratorio.API.Controllers
         public async Task<IActionResult> GetEscaneosStats()
         {
             var peruTime = TimeHelper.GetPeruTime();
-            var primerDiaMes = new DateTime(peruTime.Year, peruTime.Month, 1);
-            int escaneosEsteMes = await _context.ScanLogs.CountAsync(s => s.Fecha >= primerDiaMes);
+            
+            DateTime startPeriod;
+            DateTime nextReset;
+            if (peruTime.Day >= 16)
+            {
+                startPeriod = new DateTime(peruTime.Year, peruTime.Month, 16);
+                nextReset = startPeriod.AddMonths(1);
+            }
+            else
+            {
+                startPeriod = new DateTime(peruTime.Year, peruTime.Month, 16).AddMonths(-1);
+                nextReset = new DateTime(peruTime.Year, peruTime.Month, 16);
+            }
+
+            int escaneosEsteMes = await _context.ScanLogs.CountAsync(s => s.Fecha >= startPeriod);
+            int diasRestantes = (nextReset.Date - peruTime.Date).Days;
+
             return Ok(new
             {
                 escaneosEsteMes = escaneosEsteMes,
                 limiteMensual = 1000,
-                limiteSeguridad = 950
+                limiteSeguridad = 950,
+                diasRestantes = diasRestantes
             });
         }
 

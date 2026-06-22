@@ -26,7 +26,7 @@ const getPeruDate = () => {
 }
 const selectedDate = ref(getPeruDate())
 let refreshInterval = null
-const scanStats = ref({ escaneosEsteMes: 0, limiteMensual: 1000, limiteSeguridad: 950 })
+const scanStats = ref({ escaneosEsteMes: 0, limiteMensual: 1000, limiteSeguridad: 950, diasRestantes: 0 })
 
 const getDashboardStats = async () => {
   try {
@@ -309,6 +309,9 @@ const donutOptions = {
         <div>
           <div class="stat-label">Escaneos del Mes</div>
           <div class="stat-value">{{ scanStats.escaneosEsteMes }} <small>/ {{ scanStats.limiteMensual }}</small></div>
+          <div style="font-size: 0.65rem; color: #6b7280; margin-top: 2px; font-weight: 600; text-transform: uppercase;">
+            Faltan {{ scanStats.diasRestantes }} {{ scanStats.diasRestantes === 1 ? 'día' : 'días' }}
+          </div>
         </div>
       </div>
     </div>
