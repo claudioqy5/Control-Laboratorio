@@ -245,6 +245,40 @@ const donutChartData = computed(() => {
   }
 })
 
+const topAlumnosChartData = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.topAlumnos) return null
+  return {
+    labels: dashboardData.value.topAlumnos.map(a => a.nombreCompleto),
+    datasets: [{
+      label: 'Tiempo (Horas)',
+      data: dashboardData.value.topAlumnos.map(a => Math.round((a.totalMinutos / 60) * 10) / 10),
+      backgroundColor: 'rgba(245, 158, 11, 0.8)',
+      hoverBackgroundColor: 'rgba(217, 119, 6, 1)',
+      borderRadius: 4,
+      barThickness: 14
+    }]
+  }
+})
+
+const topEquiposChartData = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.topEquipos) return null
+  return {
+    labels: dashboardData.value.topEquipos.map(e => e.alias || e.nombreRed),
+    datasets: [{
+      label: 'Tiempo (Horas)',
+      data: dashboardData.value.topEquipos.map(e => Math.round((e.totalMinutos / 60) * 10) / 10),
+      backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#e11d48'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  }
+})
+
+const totalEquiposMinutos = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.topEquipos) return 0
+  return dashboardData.value.topEquipos.reduce((acc, curr) => acc + curr.totalMinutos, 0)
+})
+
 const commonOptions = {
   responsive: true,
   maintainAspectRatio: false,
@@ -252,6 +286,26 @@ const commonOptions = {
   scales: {
     y: { beginAtZero: true, grid: { color: '#f3f4f6', drawBorder: false }, ticks: { font: { size: 10 } } },
     x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+  }
+}
+
+const horizontalBarOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  indexAxis: 'y',
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { beginAtZero: true, grid: { color: '#f3f4f6', drawBorder: false }, ticks: { font: { size: 9 } } },
+    y: { grid: { display: false }, ticks: { font: { size: 9 } } }
+  }
+}
+
+const topEquiposDonutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '70%',
+  plugins: {
+    legend: { display: false }
   }
 }
 
@@ -388,24 +442,29 @@ const donutOptions = {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
           </div>
         </div>
-        <div class="ranking-list">
-          <div v-for="(alumno, index) in dashboardData.topAlumnos" :key="alumno.alumnoID" class="ranking-item">
-            <div :class="['ranking-badge', `rank-${index + 1}`]">{{ index + 1 }}</div>
-            <div style="flex-grow: 1; min-width: 0;">
-              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
-                <span class="ranking-name">{{ alumno.nombreCompleto }}</span>
-                <span class="ranking-time">{{ formatMinutes(alumno.totalMinutos) }} <small style="color: #9ca3af; font-size: 0.7rem; font-weight: 500;">({{ alumno.totalSesiones }} ses.)</small></span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: #6b7280; margin-bottom: 6px;">
-                <span>Código: {{ alumno.codigo }} · {{ alumno.carrera }}</span>
-              </div>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill student-fill" :style="{ width: getPercentage(alumno.totalMinutos, dashboardData.topAlumnos[0]?.totalMinutos) + '%' }"></div>
+        <div class="split-layout">
+          <!-- Left side: Horizontal Bar Chart -->
+          <div class="split-chart">
+            <Bar v-if="topAlumnosChartData" :data="topAlumnosChartData" :options="horizontalBarOptions" />
+          </div>
+          <!-- Right side: List -->
+          <div class="ranking-list split-list">
+            <div v-for="(alumno, index) in dashboardData.topAlumnos" :key="alumno.alumnoID" class="ranking-item">
+              <div :class="['ranking-badge', `rank-${index + 1}`]">{{ index + 1 }}</div>
+              <div style="flex-grow: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                  <span class="ranking-name">{{ alumno.nombreCompleto }}</span>
+                  <span class="ranking-time">{{ formatMinutes(alumno.totalMinutos) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: #6b7280;">
+                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 75%;">{{ alumno.carrera }}</span>
+                  <span style="font-weight: 500; font-size: 0.65rem; color: #9ca3af;">{{ alumno.totalSesiones }} ses.</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div v-if="!dashboardData.topAlumnos || dashboardData.topAlumnos.length === 0" class="empty-state">
-            Sin datos de ranking de alumnos
+            <div v-if="!dashboardData.topAlumnos || dashboardData.topAlumnos.length === 0" class="empty-state">
+              Sin datos de ranking de alumnos
+            </div>
           </div>
         </div>
       </div>
@@ -418,24 +477,36 @@ const donutOptions = {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="12" y1="17" x2="12" y2="21"></line></svg>
           </div>
         </div>
-        <div class="ranking-list">
-          <div v-for="(equipo, index) in dashboardData.topEquipos" :key="equipo.equipoID" class="ranking-item">
-            <div :class="['ranking-badge', `rank-${index + 1}`]">{{ index + 1 }}</div>
-            <div style="flex-grow: 1; min-width: 0;">
-              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
-                <span class="ranking-name">{{ equipo.alias || equipo.nombreRed }}</span>
-                <span class="ranking-time">{{ formatMinutes(equipo.totalMinutos) }} <small style="color: #9ca3af; font-size: 0.7rem; font-weight: 500;">({{ equipo.totalSesiones }} ses.)</small></span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: #6b7280; margin-bottom: 6px;">
-                <span>{{ equipo.alias ? equipo.nombreRed : 'Equipo del Laboratorio' }}</span>
-              </div>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill computer-fill" :style="{ width: getPercentage(equipo.totalMinutos, dashboardData.topEquipos[0]?.totalMinutos) + '%' }"></div>
-              </div>
+        <div class="split-layout">
+          <!-- Left side: Doughnut Chart -->
+          <div class="split-chart donut-container">
+            <Doughnut v-if="topEquiposChartData" :data="topEquiposChartData" :options="topEquiposDonutOptions" />
+            <div class="donut-center-text">
+              <div class="donut-center-title">Total Uso</div>
+              <div class="donut-center-val">{{ formatMinutes(totalEquiposMinutos) }}</div>
             </div>
           </div>
-          <div v-if="!dashboardData.topEquipos || dashboardData.topEquipos.length === 0" class="empty-state">
-            Sin datos de ranking de equipos
+          <!-- Right side: List -->
+          <div class="ranking-list split-list">
+            <div v-for="(equipo, index) in dashboardData.topEquipos" :key="equipo.equipoID" class="ranking-item">
+              <div :class="['ranking-badge', `rank-${index + 1}`]">
+                <span class="color-dot" :style="{ backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#e11d48'][index] }"></span>
+                {{ index + 1 }}
+              </div>
+              <div style="flex-grow: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                  <span class="ranking-name">{{ equipo.alias || equipo.nombreRed }}</span>
+                  <span class="ranking-time">{{ formatMinutes(equipo.totalMinutos) }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: #6b7280;">
+                  <span>{{ equipo.alias ? equipo.nombreRed : 'Equipo Lab' }}</span>
+                  <span style="font-weight: 500; font-size: 0.65rem; color: #9ca3af;">{{ equipo.totalSesiones }} ses.</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="!dashboardData.topEquipos || dashboardData.topEquipos.length === 0" class="empty-state">
+              Sin datos de ranking de equipos
+            </div>
           </div>
         </div>
       </div>
@@ -748,5 +819,68 @@ const donutOptions = {
 
 .progress-bar-fill.computer-fill {
   background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+/* Split layouts for advanced charts */
+.split-layout {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+.split-chart {
+  flex: 1;
+  min-width: 180px;
+  height: 220px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.split-list {
+  flex: 1.25;
+  min-width: 260px;
+}
+
+.donut-container {
+  position: relative;
+}
+
+.donut-center-text {
+  position: absolute;
+  text-align: center;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-center-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+}
+
+.donut-center-val {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #111827;
+  margin-top: 2px;
+}
+
+.color-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  display: inline-block;
+  flex-shrink: 0;
 }
 </style>
