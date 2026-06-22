@@ -231,6 +231,31 @@ const barChartData = computed(() => {
   }
 })
 
+const barHoursChartData = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.afluenciaPorDia) return null
+  return {
+    labels: dashboardData.value.afluenciaPorDia.map(d => d.dia),
+    datasets: [{
+      label: 'Horas de Uso',
+      data: dashboardData.value.afluenciaPorDia.map(d => {
+        const sesiones = Array.isArray(d.sesiones) ? d.sesiones : []
+        const totalMinutos = sesiones.reduce((acc, s) => {
+          const mins = typeof s.duracionMinutos === 'number' ? s.duracionMinutos : 0
+          return acc + mins
+        }, 0)
+        return Math.round((totalMinutos / 60) * 10) / 10
+      }),
+      backgroundColor: 'rgba(16, 185, 129, 0.8)',
+      hoverBackgroundColor: 'rgba(5, 150, 105, 1)',
+      borderRadius: 6,
+      borderSkipped: false,
+      barThickness: 32,
+      borderWidth: 1,
+      borderColor: 'rgba(16, 185, 129, 1)'
+    }]
+  }
+})
+
 const donutChartData = computed(() => {
   if (!dashboardData.value) return null
   const bgColors = ['#e11d48', '#3b82f6', '#eab308', '#10b981', '#8b5cf6', '#f97316']
