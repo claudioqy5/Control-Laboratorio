@@ -111,25 +111,28 @@ const totalEquiposMinutos = computed(() => {
 // Configuración de Gráficos de Carrera
 const careerChartData = computed(() => {
   if (!dashboardData.value || !dashboardData.value.distribucionCarrera30Dias) return null
-  const bgColors = ['#e11d48', '#3b82f6', '#eab308', '#10b981', '#8b5cf6', '#f97316']
   return {
     labels: dashboardData.value.distribucionCarrera30Dias.map(c => c.carrera),
     datasets: [{
       label: 'Cantidad de Sesiones',
       data: dashboardData.value.distribucionCarrera30Dias.map(c => c.cantidad),
-      backgroundColor: bgColors,
-      borderWidth: 0,
-      hoverOffset: 8
+      backgroundColor: 'rgba(16, 185, 129, 0.8)',
+      hoverBackgroundColor: 'rgba(5, 150, 105, 1)',
+      borderRadius: 4,
+      barThickness: 24,
+      borderWidth: 1,
+      borderColor: 'rgba(16, 185, 129, 1)'
     }]
   }
 })
 
-const careerDonutOptions = {
+const verticalBarOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  cutout: '70%',
-  plugins: {
-    legend: { display: false }
+  plugins: { legend: { display: false } },
+  scales: {
+    y: { beginAtZero: true, grid: { color: '#f3f4f6', drawBorder: false }, ticks: { font: { size: 9 } } },
+    x: { grid: { display: false }, ticks: { font: { size: 9 } } }
   }
 }
 
@@ -344,13 +347,9 @@ const downloadEquiposExcel = () => {
           </div>
         </div>
         <div class="split-layout">
-          <!-- Left side: Doughnut Chart -->
-          <div class="split-chart donut-container">
-            <Doughnut v-if="careerChartData" :data="careerChartData" :options="careerDonutOptions" />
-            <div class="donut-center-text">
-              <div class="donut-center-title">Sesiones</div>
-              <div class="donut-center-val">{{ totalCarreraSesiones }}</div>
-            </div>
+          <!-- Left side: Bar Chart -->
+          <div class="split-chart">
+            <Bar v-if="careerChartData" :data="careerChartData" :options="verticalBarOptions" />
           </div>
           <!-- Right side: Legend and Details -->
           <div class="ranking-list split-list">
@@ -769,6 +768,32 @@ const downloadEquiposExcel = () => {
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+.detail-overlay {
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100vw; 
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4); 
+  backdrop-filter: blur(8px);
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  z-index: 9999;
+}
+
+.detail-card { 
+  text-align: left;
+  border: 1px solid #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  animation: modalEnter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalEnter {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
 
 .map-modal-card {
   width: 95vw !important;

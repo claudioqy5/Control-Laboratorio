@@ -231,6 +231,34 @@ const barChartData = computed(() => {
   }
 })
 
+const barHoursChartData = computed(() => {
+  if (!dashboardData.value) return null
+  
+  const data = dashboardData.value.afluenciaPorDia.map(d => {
+    if (!Array.isArray(d.sesiones)) return 0
+    const totalMinutes = d.sesiones.reduce((acc, s) => {
+      const mins = s.duracionMinutos !== null && s.duracionMinutos !== undefined ? s.duracionMinutos : 0
+      return acc + mins
+    }, 0)
+    return Math.round((totalMinutes / 60) * 10) / 10
+  })
+
+  return {
+    labels: dashboardData.value.afluenciaPorDia.map(d => d.dia),
+    datasets: [{
+      label: 'Horas de uso',
+      data: data,
+      backgroundColor: 'rgba(16, 185, 129, 0.8)',
+      hoverBackgroundColor: 'rgba(5, 150, 105, 1)',
+      borderRadius: 6,
+      borderSkipped: false,
+      barThickness: 32,
+      borderWidth: 1,
+      borderColor: 'rgba(16, 185, 129, 1)'
+    }]
+  }
+})
+
 const donutChartData = computed(() => {
   if (!dashboardData.value) return null
   const bgColors = ['#e11d48', '#3b82f6', '#eab308', '#10b981', '#8b5cf6', '#f97316']
@@ -416,6 +444,18 @@ const donutOptions = {
           </div>
           <div class="chart-container">
             <Bar :data="barChartData" :options="commonOptions" />
+          </div>
+        </div>
+
+        <div class="chart-box">
+          <div class="chart-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>Horas de Uso Semanal</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><rect x="18" y="3" width="4" height="18"></rect><rect x="10" y="8" width="4" height="13"></rect><rect x="2" y="13" width="4" height="8"></rect></svg>
+            </div>
+          </div>
+          <div class="chart-container">
+            <Bar :data="barHoursChartData" :options="commonOptions" />
           </div>
         </div>
       </div>
