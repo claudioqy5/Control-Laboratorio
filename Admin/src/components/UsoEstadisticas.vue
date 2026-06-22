@@ -10,7 +10,7 @@ ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale,
 
 const dashboardData = ref(null)
 const loaded = ref(false)
-const viewMode = ref('chart') // 'chart' o 'map'
+const mapModalOpen = ref(false)
 
 // Obtener fecha actual en zona horaria de Perú (UTC-5)
 const getPeruDate = () => {
@@ -108,6 +108,36 @@ const totalEquiposMinutos = computed(() => {
   return dashboardData.value.topEquipos.reduce((acc, curr) => acc + curr.totalMinutos, 0)
 })
 
+// Configuración de Gráficos de Carrera
+const careerChartData = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.distribucionCarrera30Dias) return null
+  const bgColors = ['#e11d48', '#3b82f6', '#eab308', '#10b981', '#8b5cf6', '#f97316']
+  return {
+    labels: dashboardData.value.distribucionCarrera30Dias.map(c => c.carrera),
+    datasets: [{
+      label: 'Cantidad de Sesiones',
+      data: dashboardData.value.distribucionCarrera30Dias.map(c => c.cantidad),
+      backgroundColor: bgColors,
+      borderWidth: 0,
+      hoverOffset: 8
+    }]
+  }
+})
+
+const careerDonutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '70%',
+  plugins: {
+    legend: { display: false }
+  }
+}
+
+const totalCarreraSesiones = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.distribucionCarrera30Dias) return 0
+  return dashboardData.value.distribucionCarrera30Dias.reduce((acc, curr) => acc + curr.cantidad, 0)
+})
+
 // Mapeo exacto de posiciones para el mapa de rendimiento
 const layoutPositions = [
   [2,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[1,10],[1,12],
@@ -168,6 +198,27 @@ const downloadAlumnosExcel = () => {
   XLSX.utils.book_append_sheet(wb, ws, "Reporte Uso Alumnos")
   XLSX.writeFile(wb, `Reporte_Uso_Alumnos_${selectedDate.value}.xlsx`)
 }
+
+// Descargar Excel Equipos
+const downloadEquiposExcel = () => {
+  if (!dashboardData.value || !dashboardData.value.equiposRendimiento) return
+  
+  const dataToExport = dashboardData.value.equiposRendimiento.map((e, idx) => ({
+    'N°': idx + 1,
+    'Nombre de Red': e.nombreRed,
+    'Alias': e.alias || 'N/A',
+    'Ubicación': e.ubicacion || 'N/A',
+    'Total Sesiones': e.totalSesiones,
+    'Minutos de Uso': e.totalMinutos,
+    'Horas de Uso': Math.round((e.totalMinutos / 60) * 10) / 10,
+    'Comentario / Estado': e.comentario || 'OK'
+  }))
+
+  const ws = XLSX.utils.json_to_sheet(dataToExport)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, "Rendimiento Equipos")
+  XLSX.writeFile(wb, `Reporte_Rendimiento_Equipos_${selectedDate.value}.xlsx`)
+}
 </script>
 
 <template>
@@ -225,25 +276,30 @@ const downloadAlumnosExcel = () => {
         </div>
       </div>
 
-      <!-- Top Computadoras / Mapa de Rendimiento -->
+      <!-- Top Computadoras -->
       <div class="chart-box" style="grid-column: span 1;">
         <div class="chart-header">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span>{{ viewMode === 'chart' ? 'Equipos Más Usados' : 'Mapa de Rendimiento de Equipos' }}</span>
+            <span>Equipos Más Usados</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="12" y1="17" x2="12" y2="21"></line></svg>
           </div>
-          <button @click="viewMode = viewMode === 'chart' ? 'map' : 'chart'" class="toggle-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
-              <line x1="9" y1="3" x2="9" y2="18"></line>
-              <line x1="15" y1="6" x2="15" y2="21"></line>
-            </svg>
-            {{ viewMode === 'chart' ? 'Ver en Mapa' : 'Ver Gráfico' }}
-          </button>
+          <div style="display: flex; gap: 8px;">
+            <button @click="mapModalOpen = true" class="toggle-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
+                <line x1="9" y1="3" x2="9" y2="18"></line>
+                <line x1="15" y1="6" x2="15" y2="21"></line>
+              </svg>
+              Ver Mapa
+            </button>
+            <button @click="downloadEquiposExcel" class="export-btn" title="Descargar Excel Completo">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Excel Equipos
+            </button>
+          </div>
         </div>
 
-        <!-- Renderizado Condicional: Gráfico + Leyenda -->
-        <div v-if="viewMode === 'chart'" class="split-layout">
+        <div class="split-layout">
           <!-- Left side: Doughnut Chart -->
           <div class="split-chart donut-container">
             <Doughnut v-if="topEquiposChartData" :data="topEquiposChartData" :options="topEquiposDonutOptions" />
@@ -275,25 +331,85 @@ const downloadAlumnosExcel = () => {
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Renderizado Condicional: Mapa de Calor / Rendimiento -->
-        <div v-else class="perf-map-container">
-          <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; font-size: 0.75rem; font-weight: 600;">
-            <div style="display: flex; align-items: center; gap: 4px;"><span class="legend-color-box" style="background: #f43f5e;"></span> Alta Afluencia (>=75%)</div>
-            <div style="display: flex; align-items: center; gap: 4px;"><span class="legend-color-box" style="background: #f59e0b;"></span> Mediana Afluencia (30% - 75%)</div>
-            <div style="display: flex; align-items: center; gap: 4px;"><span class="legend-color-box" style="background: #3b82f6;"></span> Baja Afluencia (<30%)</div>
-            <div style="display: flex; align-items: center; gap: 4px;"><span class="legend-color-box" style="background: #cbd5e1;"></span> Sin Uso (0 min)</div>
+    <!-- Sección de Afluencia por Carrera (Últimos 30 días) -->
+    <div class="career-section-container" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+      <div class="chart-box">
+        <div class="chart-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Uso por Carrera (Últimos 30 días)</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           </div>
-          
+        </div>
+        <div class="split-layout">
+          <!-- Left side: Doughnut Chart -->
+          <div class="split-chart donut-container">
+            <Doughnut v-if="careerChartData" :data="careerChartData" :options="careerDonutOptions" />
+            <div class="donut-center-text">
+              <div class="donut-center-title">Sesiones</div>
+              <div class="donut-center-val">{{ totalCarreraSesiones }}</div>
+            </div>
+          </div>
+          <!-- Right side: Legend and Details -->
+          <div class="ranking-list split-list">
+            <div v-for="(carrera, index) in dashboardData.distribucionCarrera30Dias" :key="carrera.carrera" class="ranking-item">
+              <div :class="['ranking-badge']" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="color-dot" :style="{ backgroundColor: ['#e11d48', '#3b82f6', '#eab308', '#10b981', '#8b5cf6', '#f97316'][index % 6] }"></span>
+                {{ index + 1 }}
+              </div>
+              <div style="flex-grow: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                  <span class="ranking-name">{{ carrera.carrera }}</span>
+                  <span class="ranking-time" style="color: #10b981;">{{ carrera.cantidad }} <small style="color: #6b7280; font-size: 0.65rem; font-weight: 500;">ses.</small></span>
+                </div>
+                <div class="progress-bar-bg" style="margin-top: 4px;">
+                  <div class="progress-bar-fill" :style="{ width: getPercentage(carrera.cantidad, totalCarreraSesiones) + '%', backgroundColor: ['#e11d48', '#3b82f6', '#eab308', '#10b981', '#8b5cf6', '#f97316'][index % 6] }"></div>
+                </div>
+              </div>
+            </div>
+            <div v-if="!dashboardData.distribucionCarrera30Dias || dashboardData.distribucionCarrera30Dias.length === 0" class="empty-state">
+              Sin datos de carreras en los últimos 30 días
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal del Mapa de Rendimiento Completo -->
+    <div v-if="mapModalOpen" class="detail-overlay" @click="mapModalOpen = false">
+      <div class="card detail-card map-modal-card" @click.stop>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 20px;">
+          <h3 style="margin: 0; color: rgb(17, 24, 39); font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            Mapa de Rendimiento de Computadoras (Últimos 30 días)
+          </h3>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button @click="downloadEquiposExcel" class="export-btn" style="padding: 8px 16px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Descargar Reporte Excel
+            </button>
+            <button @click="mapModalOpen = false" class="close-modal-btn">X</button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; font-size: 0.8rem; font-weight: 700; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #f43f5e; width: 14px; height: 14px;"></span> Alta Afluencia (>=75%)</div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #f59e0b; width: 14px; height: 14px;"></span> Mediana Afluencia (30% - 75%)</div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #3b82f6; width: 14px; height: 14px;"></span> Baja Afluencia (<30%)</div>
+          <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #cbd5e1; width: 14px; height: 14px;"></span> Sin Uso (0 min)</div>
+        </div>
+
+        <div class="perf-map-container" style="background: transparent; border: none; padding: 0; display: flex; justify-content: center;">
           <div class="perf-grid">
             <div v-for="(pos, index) in layoutPositions" :key="index"
                  class="pc-card-wrapper"
                  :style="{ gridRow: pos[0], gridColumn: pos[1] }">
               
-              <!-- Si existe un equipo para este índice, lo mostramos con su color de rendimiento -->
+              <!-- Si existe un equipo -->
               <div v-if="getEquipoAtSlot(index)" 
                    class="pc-card"
-                   style="position: relative;"
                    :title="`${getEquipoAtSlot(index).alias || getEquipoAtSlot(index).nombreRed} - Uso: ${formatMinutes(getEquipoAtSlot(index).totalMinutos)} (${getEquipoAtSlot(index).totalSesiones} ses.)`">
                 <div class="monitor" :style="{ background: getPCOutlineColor(getEquipoAtSlot(index).totalMinutos) }">
                   <div class="screen" :style="{ color: getPCPowerColor(getEquipoAtSlot(index).totalMinutos) }">
@@ -318,6 +434,9 @@ const downloadAlumnosExcel = () => {
           </div>
         </div>
 
+        <div style="margin-top: 20px; text-align: right;">
+          <button class="btn" style="padding: 10px 24px; border-radius: 8px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 700; cursor: pointer;" @click="mapModalOpen = false">Cerrar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -650,4 +769,34 @@ const downloadAlumnosExcel = () => {
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+.map-modal-card {
+  width: 95vw !important;
+  max-width: 1200px !important;
+  max-height: 90vh !important;
+  overflow-y: auto;
+  padding: 2rem;
+  background: #ffffff;
+  border-radius: 20px;
+}
+
+.close-modal-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.close-modal-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
 </style>

@@ -281,6 +281,13 @@ namespace ControlLaboratorio.API.Controllers
                 .OrderByDescending(x => x.totalMinutos)
                 .ToList();
 
+            var distribucionCarrera30Dias = sesionesTops
+                .Where(s => s.Alumno != null && !string.IsNullOrEmpty(s.Alumno.Carrera))
+                .GroupBy(s => s.Alumno!.Carrera)
+                .Select(g => new { Carrera = g.Key, Cantidad = g.Count() })
+                .OrderByDescending(x => x.Cantidad)
+                .ToList();
+
             return Ok(new {
                 sesionesActivas,
                 totalEstaciones,
@@ -292,7 +299,8 @@ namespace ControlLaboratorio.API.Controllers
                 topAlumnos,
                 topEquipos,
                 equiposRendimiento,
-                reporteAlumnos
+                reporteAlumnos,
+                distribucionCarrera30Dias
             });
         }
 
