@@ -233,6 +233,54 @@ namespace ControlLaboratorio.API.Controllers
                 .Take(5)
                 .ToList();
 
+            // Rendimiento total de todas las computadoras para el mapa
+            var todosLosEquipos = await _context.Equipos.ToListAsync();
+            var usoPorEquipo = sesionesTops
+                .GroupBy(s => s.EquipoID)
+                .ToDictionary(
+                    g => g.Key,
+                    g => new {
+                        TotalSesiones = g.Count(),
+                        TotalMinutos = Math.Round(g.Sum(s => s.HoraFin.HasValue 
+                            ? (s.HoraFin.Value - s.HoraInicio).TotalMinutes 
+                            : (peruTimeNow - s.HoraInicio).TotalMinutes))
+                    }
+                );
+
+            var equiposRendimiento = todosLosEquipos.Select(e => {
+                var stats = usoPorEquipo.ContainsKey(e.EquipoID) ? usoPorEquipo[e.EquipoID] : null;
+                return new {
+                    e.EquipoID,
+                    e.NombreRed,
+                    e.Alias,
+                    e.Comentario,
+                    e.Ubicacion,
+                    e.PosicionMapa,
+                    totalSesiones = stats?.TotalSesiones ?? 0,
+                    totalMinutos = stats?.TotalMinutos ?? 0
+                };
+            }).ToList();
+
+            // Reporte completo de alumnos para descargar Excel
+            var reporteAlumnos = sesionesTops
+                .Where(s => s.Alumno != null)
+                .GroupBy(s => s.AlumnoID)
+                .Select(g => new
+                {
+                    alumnoID = g.Key,
+                    codigo = g.First().Alumno!.CodigoUniversitario,
+                    dni = g.First().Alumno.DNI,
+                    nombreCompleto = $"{g.First().Alumno!.Nombres} {g.First().Alumno.ApellidoPaterno} {g.First().Alumno.ApellidoMaterno}".Trim(),
+                    carrera = g.First().Alumno.Carrera,
+                    correoInstitucional = g.First().Alumno.CorreoInstitucional,
+                    totalSesiones = g.Count(),
+                    totalMinutos = Math.Round(g.Sum(s => s.HoraFin.HasValue 
+                        ? (s.HoraFin.Value - s.HoraInicio).TotalMinutes 
+                        : (peruTimeNow - s.HoraInicio).TotalMinutes))
+                })
+                .OrderByDescending(x => x.totalMinutos)
+                .ToList();
+
             return Ok(new {
                 sesionesActivas,
                 totalEstaciones,
@@ -242,7 +290,9 @@ namespace ControlLaboratorio.API.Controllers
                 afluenciaPorDia,
                 distribucionCarrera,
                 topAlumnos,
-                topEquipos
+                topEquipos,
+                equiposRendimiento,
+                reporteAlumnos
             });
         }
 
