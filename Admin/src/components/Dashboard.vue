@@ -18,6 +18,19 @@ const formatHour12 = (h) => {
   return `${hour} ${period}`
 }
 
+const formatMinutes = (minutes) => {
+  if (!minutes) return '0 min'
+  if (minutes < 60) return `${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  const mins = Math.round(minutes % 60)
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+}
+
+const getPercentage = (value, max) => {
+  if (!max || max === 0) return 0
+  return Math.min(100, Math.round((value / max) * 100))
+}
+
 // Obtener fecha actual en zona horaria de Perú (UTC-5)
 const getPeruDate = () => {
   const options = { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' };
@@ -364,6 +377,69 @@ const donutOptions = {
         </div>
       </div>
     </div>
+
+    <!-- Sección de Tops -->
+    <div class="tops-section-grid">
+      <!-- Top Alumnos -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Ranking de Alumnos (Últimos 30 días)</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+          </div>
+        </div>
+        <div class="ranking-list">
+          <div v-for="(alumno, index) in dashboardData.topAlumnos" :key="alumno.alumnoID" class="ranking-item">
+            <div :class="['ranking-badge', `rank-${index + 1}`]">{{ index + 1 }}</div>
+            <div style="flex-grow: 1; min-width: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                <span class="ranking-name">{{ alumno.nombreCompleto }}</span>
+                <span class="ranking-time">{{ formatMinutes(alumno.totalMinutos) }} <small style="color: #9ca3af; font-size: 0.7rem; font-weight: 500;">({{ alumno.totalSesiones }} ses.)</small></span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: #6b7280; margin-bottom: 6px;">
+                <span>Código: {{ alumno.codigo }} · {{ alumno.carrera }}</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill student-fill" :style="{ width: getPercentage(alumno.totalMinutos, dashboardData.topAlumnos[0]?.totalMinutos) + '%' }"></div>
+              </div>
+            </div>
+          </div>
+          <div v-if="!dashboardData.topAlumnos || dashboardData.topAlumnos.length === 0" class="empty-state">
+            Sin datos de ranking de alumnos
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Computadoras -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Equipos Más Usados (Últimos 30 días)</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          </div>
+        </div>
+        <div class="ranking-list">
+          <div v-for="(equipo, index) in dashboardData.topEquipos" :key="equipo.equipoID" class="ranking-item">
+            <div :class="['ranking-badge', `rank-${index + 1}`]">{{ index + 1 }}</div>
+            <div style="flex-grow: 1; min-width: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                <span class="ranking-name">{{ equipo.alias || equipo.nombreRed }}</span>
+                <span class="ranking-time">{{ formatMinutes(equipo.totalMinutos) }} <small style="color: #9ca3af; font-size: 0.7rem; font-weight: 500;">({{ equipo.totalSesiones }} ses.)</small></span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: #6b7280; margin-bottom: 6px;">
+                <span>{{ equipo.alias ? equipo.nombreRed : 'Equipo del Laboratorio' }}</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill computer-fill" :style="{ width: getPercentage(equipo.totalMinutos, dashboardData.topEquipos[0]?.totalMinutos) + '%' }"></div>
+              </div>
+            </div>
+          </div>
+          <div v-if="!dashboardData.topEquipos || dashboardData.topEquipos.length === 0" class="empty-state">
+            Sin datos de ranking de equipos
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div v-else class="loading-overlay">
@@ -557,5 +633,120 @@ const donutOptions = {
 
 .export-btn svg {
   color: #16a34a; /* Color verde para excel */
+}
+
+.tops-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .tops-section-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: #fdfdfd;
+  border: 1px solid #f3f4f6;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ranking-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-color: #e5e7eb;
+  background: #ffffff;
+}
+
+.ranking-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.ranking-badge.rank-1 {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.1);
+}
+
+.ranking-badge.rank-2 {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.ranking-badge.rank-3 {
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.ranking-badge.rank-4,
+.ranking-badge.rank-5 {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+.ranking-name {
+  color: #111827;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ranking-time {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease-in-out;
+}
+
+.progress-bar-fill.student-fill {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.progress-bar-fill.computer-fill {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
 }
 </style>

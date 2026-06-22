@@ -188,6 +188,51 @@ namespace ControlLaboratorio.API.Controllers
                 .Select(g => new { Carrera = g.Key, Cantidad = g.Count() })
                 .ToListAsync();
 
+            // Obtener sesiones para los tops (últimos 30 días)
+            var baseTopDate = targetDate.AddDays(-30);
+            var sesionesTops = await _context.Sesiones
+                .Include(s => s.Alumno)
+                .Include(s => s.Equipo)
+                .Where(s => s.HoraInicio >= baseTopDate && s.HoraInicio < targetDayEnd)
+                .ToListAsync();
+
+            var peruTimeNow = TimeHelper.GetPeruTime();
+
+            var topAlumnos = sesionesTops
+                .Where(s => s.Alumno != null)
+                .GroupBy(s => s.AlumnoID)
+                .Select(g => new
+                {
+                    alumnoID = g.Key,
+                    codigo = g.First().Alumno!.CodigoUniversitario,
+                    nombreCompleto = $"{g.First().Alumno!.Nombres} {g.First().Alumno.ApellidoPaterno}".Trim(),
+                    carrera = g.First().Alumno.Carrera,
+                    totalSesiones = g.Count(),
+                    totalMinutos = Math.Round(g.Sum(s => s.HoraFin.HasValue 
+                        ? (s.HoraFin.Value - s.HoraInicio).TotalMinutes 
+                        : (peruTimeNow - s.HoraInicio).TotalMinutes))
+                })
+                .OrderByDescending(x => x.totalMinutos)
+                .Take(5)
+                .ToList();
+
+            var topEquipos = sesionesTops
+                .Where(s => s.Equipo != null)
+                .GroupBy(s => s.EquipoID)
+                .Select(g => new
+                {
+                    equipoID = g.Key,
+                    nombreRed = g.First().Equipo!.NombreRed,
+                    alias = g.First().Equipo.Alias,
+                    totalSesiones = g.Count(),
+                    totalMinutos = Math.Round(g.Sum(s => s.HoraFin.HasValue 
+                        ? (s.HoraFin.Value - s.HoraInicio).TotalMinutes 
+                        : (peruTimeNow - s.HoraInicio).TotalMinutes))
+                })
+                .OrderByDescending(x => x.totalMinutos)
+                .Take(5)
+                .ToList();
+
             return Ok(new {
                 sesionesActivas,
                 totalEstaciones,
@@ -195,7 +240,9 @@ namespace ControlLaboratorio.API.Controllers
                 tiempoPromedioMinutos = Math.Round(tiempoPromedioMinutos),
                 afluenciaPorHora,
                 afluenciaPorDia,
-                distribucionCarrera
+                distribucionCarrera,
+                topAlumnos,
+                topEquipos
             });
         }
 
