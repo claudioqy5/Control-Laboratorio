@@ -377,67 +377,69 @@ const downloadEquiposExcel = () => {
     </div>
 
     <!-- Modal del Mapa de Rendimiento Completo -->
-    <div v-if="mapModalOpen" class="detail-overlay" @click="mapModalOpen = false">
-      <div class="card detail-card map-modal-card" @click.stop>
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 20px;">
-          <h3 style="margin: 0; color: rgb(17, 24, 39); font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-            Mapa de Rendimiento de Computadoras (Últimos 30 días)
-          </h3>
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <button @click="downloadEquiposExcel" class="export-btn" style="padding: 8px 16px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              Descargar Reporte Excel
-            </button>
-            <button @click="mapModalOpen = false" class="close-modal-btn">X</button>
-          </div>
-        </div>
-
-        <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; font-size: 0.8rem; font-weight: 700; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #f43f5e; width: 14px; height: 14px;"></span> Alta Afluencia (>=75%)</div>
-          <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #f59e0b; width: 14px; height: 14px;"></span> Mediana Afluencia (30% - 75%)</div>
-          <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #3b82f6; width: 14px; height: 14px;"></span> Baja Afluencia (<30%)</div>
-          <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #cbd5e1; width: 14px; height: 14px;"></span> Sin Uso (0 min)</div>
-        </div>
-
-        <div class="perf-map-container" style="background: transparent; border: none; padding: 0; display: flex; justify-content: center;">
-          <div class="perf-grid">
-            <div v-for="(pos, index) in layoutPositions" :key="index"
-                 class="pc-card-wrapper"
-                 :style="{ gridRow: pos[0], gridColumn: pos[1] }">
-              
-              <!-- Si existe un equipo -->
-              <div v-if="getEquipoAtSlot(index)" 
-                   class="pc-card"
-                   :title="`${getEquipoAtSlot(index).alias || getEquipoAtSlot(index).nombreRed} - Uso: ${formatMinutes(getEquipoAtSlot(index).totalMinutos)} (${getEquipoAtSlot(index).totalSesiones} ses.)`">
-                <div class="monitor" :style="{ background: getPCOutlineColor(getEquipoAtSlot(index).totalMinutos) }">
-                  <div class="screen" :style="{ color: getPCPowerColor(getEquipoAtSlot(index).totalMinutos) }">
-                    <span style="font-size: 0.55rem; font-weight: 800; font-family: monospace;">
-                      {{ Math.round((getEquipoAtSlot(index).totalMinutos / 60) * 10) / 10 }}h
-                    </span>
-                  </div>
-                  <div class="stand" :style="{ background: getPCOutlineColor(getEquipoAtSlot(index).totalMinutos) }"></div>
-                </div>
-                <span class="pc-name" style="font-size: 0.65rem;">{{ getEquipoAtSlot(index).alias || getEquipoAtSlot(index).nombreRed }}</span>
-              </div>
-              
-              <!-- Si no hay PC asignada -->
-              <div v-else class="pc-card empty-slot">
-                <div class="monitor" style="background: #f1f5f9; border: 1px dashed #cbd5e1; box-shadow: none;">
-                  <div class="screen" style="background: transparent; border: none; font-size: 0.8rem; color: #cbd5e1; font-weight: 200;">-</div>
-                  <div class="stand" style="background: #cbd5e1;"></div>
-                </div>
-              </div>
-
+    <Teleport to="body">
+      <div v-if="mapModalOpen" class="detail-overlay" @click="mapModalOpen = false">
+        <div class="card detail-card map-modal-card" @click.stop>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: rgb(17, 24, 39); font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+              Mapa de Rendimiento de Computadoras (Últimos 30 días)
+            </h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button @click="downloadEquiposExcel" class="export-btn" style="padding: 8px 16px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Descargar Reporte Excel
+              </button>
+              <button @click="mapModalOpen = false" class="close-modal-btn">X</button>
             </div>
           </div>
-        </div>
 
-        <div style="margin-top: 20px; text-align: right;">
-          <button class="btn" style="padding: 10px 24px; border-radius: 8px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 700; cursor: pointer;" @click="mapModalOpen = false">Cerrar</button>
+          <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; font-size: 0.8rem; font-weight: 700; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #f43f5e; width: 14px; height: 14px;"></span> Alta Afluencia (>=75%)</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #f59e0b; width: 14px; height: 14px;"></span> Mediana Afluencia (30% - 75%)</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #3b82f6; width: 14px; height: 14px;"></span> Baja Afluencia (<30%)</div>
+            <div style="display: flex; align-items: center; gap: 6px;"><span class="legend-color-box" style="background: #cbd5e1; width: 14px; height: 14px;"></span> Sin Uso (0 min)</div>
+          </div>
+
+          <div class="perf-map-container" style="background: transparent; border: none; padding: 0; display: flex; justify-content: center;">
+            <div class="perf-grid">
+              <div v-for="(pos, index) in layoutPositions" :key="index"
+                   class="pc-card-wrapper"
+                   :style="{ gridRow: pos[0], gridColumn: pos[1] }">
+                
+                <!-- Si existe un equipo -->
+                <div v-if="getEquipoAtSlot(index)" 
+                     class="pc-card"
+                     :title="`${getEquipoAtSlot(index).alias || getEquipoAtSlot(index).nombreRed} - Uso: ${formatMinutes(getEquipoAtSlot(index).totalMinutos)} (${getEquipoAtSlot(index).totalSesiones} ses.)`">
+                  <div class="monitor" :style="{ background: getPCOutlineColor(getEquipoAtSlot(index).totalMinutos) }">
+                    <div class="screen" :style="{ color: getPCPowerColor(getEquipoAtSlot(index).totalMinutos) }">
+                      <span style="font-size: 0.55rem; font-weight: 800; font-family: monospace;">
+                        {{ Math.round((getEquipoAtSlot(index).totalMinutos / 60) * 10) / 10 }}h
+                      </span>
+                    </div>
+                    <div class="stand" :style="{ background: getPCOutlineColor(getEquipoAtSlot(index).totalMinutos) }"></div>
+                  </div>
+                  <span class="pc-name" style="font-size: 0.65rem;">{{ getEquipoAtSlot(index).alias || getEquipoAtSlot(index).nombreRed }}</span>
+                </div>
+                
+                <!-- Si no hay PC asignada -->
+                <div v-else class="pc-card empty-slot">
+                  <div class="monitor" style="background: #f1f5f9; border: 1px dashed #cbd5e1; box-shadow: none;">
+                    <div class="screen" style="background: transparent; border: none; font-size: 0.8rem; color: #cbd5e1; font-weight: 200;">-</div>
+                    <div class="stand" style="background: #cbd5e1;"></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; text-align: right;">
+            <button class="btn" style="padding: 10px 24px; border-radius: 8px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 700; cursor: pointer;" @click="mapModalOpen = false">Cerrar</button>
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 
   <div v-else class="loading-overlay">

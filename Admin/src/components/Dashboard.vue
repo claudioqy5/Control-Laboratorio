@@ -402,6 +402,201 @@ const donutOptions = {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
         </div>
         <div>
+}]
+  }
+})
+
+const barChartData = computed(() => {
+  if (!dashboardData.value) return null
+  
+  // Crear un gradiente o usar un color más moderno
+  return {
+    labels: dashboardData.value.afluenciaPorDia.map(d => d.dia),
+    datasets: [{
+      label: 'Sesiones',
+      data: dashboardData.value.afluenciaPorDia.map(d => d.cantidad),
+      backgroundColor: 'rgba(59, 130, 246, 0.8)',
+      hoverBackgroundColor: 'rgba(37, 99, 235, 1)',
+      borderRadius: 6,
+      borderSkipped: false,
+      barThickness: 32,
+      borderWidth: 1,
+      borderColor: 'rgba(59, 130, 246, 1)'
+    }]
+  }
+})
+
+const barHoursChartData = computed(() => {
+  if (!dashboardData.value) return null
+  
+  const data = dashboardData.value.afluenciaPorDia.map(d => {
+    if (!Array.isArray(d.sesiones)) return 0
+    const totalMinutes = d.sesiones.reduce((acc, s) => {
+      const mins = s.duracionMinutos !== null && s.duracionMinutos !== undefined ? s.duracionMinutos : 0
+      return acc + mins
+    }, 0)
+    return Math.round((totalMinutes / 60) * 10) / 10
+  })
+
+  return {
+    labels: dashboardData.value.afluenciaPorDia.map(d => d.dia),
+    datasets: [{
+      label: 'Horas de uso',
+      data: data,
+      backgroundColor: 'rgba(16, 185, 129, 0.8)',
+      hoverBackgroundColor: 'rgba(5, 150, 105, 1)',
+      borderRadius: 6,
+      borderSkipped: false,
+      barThickness: 32,
+      borderWidth: 1,
+      borderColor: 'rgba(16, 185, 129, 1)'
+    }]
+  }
+})
+
+const donutChartData = computed(() => {
+  if (!dashboardData.value) return null
+  const bgColors = ['#e11d48', '#3b82f6', '#eab308', '#10b981', '#8b5cf6', '#f97316']
+  return {
+    labels: dashboardData.value.distribucionCarrera.map(c => c.carrera),
+    datasets: [{
+      data: dashboardData.value.distribucionCarrera.map(c => c.cantidad),
+      backgroundColor: bgColors,
+      borderWidth: 0,
+      hoverOffset: 10
+    }]
+  }
+})
+
+const topAlumnosChartData = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.topAlumnos) return null
+  return {
+    labels: dashboardData.value.topAlumnos.map(a => a.nombreCompleto),
+    datasets: [{
+      label: 'Tiempo (Horas)',
+      data: dashboardData.value.topAlumnos.map(a => Math.round((a.totalMinutos / 60) * 10) / 10),
+      backgroundColor: 'rgba(245, 158, 11, 0.8)',
+      hoverBackgroundColor: 'rgba(217, 119, 6, 1)',
+      borderRadius: 4,
+      barThickness: 14
+    }]
+  }
+})
+
+const topEquiposChartData = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.topEquipos) return null
+  return {
+    labels: dashboardData.value.topEquipos.map(e => e.alias || e.nombreRed),
+    datasets: [{
+      label: 'Tiempo (Horas)',
+      data: dashboardData.value.topEquipos.map(e => Math.round((e.totalMinutos / 60) * 10) / 10),
+      backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#e11d48'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  }
+})
+
+const totalEquiposMinutos = computed(() => {
+  if (!dashboardData.value || !dashboardData.value.topEquipos) return 0
+  return dashboardData.value.topEquipos.reduce((acc, curr) => acc + curr.totalMinutos, 0)
+})
+
+const commonOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    y: { beginAtZero: true, grid: { color: '#f3f4f6', drawBorder: false }, ticks: { font: { size: 10 } } },
+    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+  }
+}
+
+const horizontalBarOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  indexAxis: 'y',
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { beginAtZero: true, grid: { color: '#f3f4f6', drawBorder: false }, ticks: { font: { size: 9 } } },
+    y: { grid: { display: false }, ticks: { font: { size: 9 } } }
+  }
+}
+
+const topEquiposDonutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '70%',
+  plugins: {
+    legend: { display: false }
+  }
+}
+
+const donutOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '75%',
+  plugins: {
+    legend: { position: 'bottom', labels: { boxWidth: 8, usePointStyle: true, font: { size: 11 } } }
+  }
+}
+</script>
+
+<template>
+  <div v-if="loaded" class="dashboard-wrapper">
+    <!-- Header Minimal -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <div>
+          <h2 style="color: #111827; font-size: 1.5rem; font-weight: 800; margin: 0;">Resumen General</h2>
+          <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Control en tiempo real · {{ selectedDate }}</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <input type="date" v-model="selectedDate" @change="getDashboardStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+        </div>
+      </div>
+      <div class="status-pill">
+        <span class="pulse-dot"></span>
+        {{ selectedDate === new Date().toISOString().split('T')[0] ? 'Sistema en línea' : 'Datos Históricos' }}
+      </div>
+    </div>
+
+    <!-- Mini Cards Row -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon red"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+        <div>
+          <div class="stat-label">Sesiones Activas</div>
+          <div class="stat-value">{{ dashboardData.sesionesActivas }} <small>/ {{ dashboardData.totalEstaciones }}</small></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg></div>
+        <div>
+          <div class="stat-label">Ingresos Hoy</div>
+          <div class="stat-value">{{ dashboardData.sesionesHoy }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+        <div>
+          <div class="stat-label">Tiempo Promedio</div>
+          <div class="stat-value">{{ dashboardData.tiempoPromedioMinutos }} <small>min</small></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
+        <div>
+          <div class="stat-label">Ocupación</div>
+          <div class="stat-value">{{ ocupacionPorcentaje }}%</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div :class="['stat-icon', scanStats.escaneosEsteMes >= scanStats.limiteSeguridad ? 'red' : (scanStats.escaneosEsteMes >= 800 ? 'amber' : 'violet')]">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        </div>
+        <div>
           <div class="stat-label">Escaneos del Mes</div>
           <div class="stat-value">{{ scanStats.escaneosEsteMes }} <small>/ {{ scanStats.limiteMensual }}</small></div>
           <div style="font-size: 0.65rem; color: #6b7280; margin-top: 2px; font-weight: 600; text-transform: uppercase;">
@@ -411,56 +606,26 @@ const donutOptions = {
       </div>
     </div>
 
-    <!-- Charts Layout -->
-    <div class="main-charts-grid">
-      <!-- Left Column -->
-      <div class="charts-left">
-        <div class="chart-box">
-          <div class="chart-header">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span>Afluencia por hora</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline></svg>
-            </div>
-            <button @click="exportToExcel('hourly')" class="export-btn" title="Descargar Excel">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              Reporte
-            </button>
+    <!-- Charts Layout Rows -->
+    <div class="charts-row-two">
+      <!-- Left Column: Afluencia por hora -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Afluencia por hora</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline></svg>
           </div>
-          <div class="chart-container">
-            <Line :data="lineChartData" :options="commonOptions" />
-          </div>
+          <button @click="exportToExcel('hourly')" class="export-btn" title="Descargar Excel">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Reporte
+          </button>
         </div>
-        
-        <div class="chart-box">
-          <div class="chart-header">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span>Asistencia Semanal</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="18" y="3" width="4" height="18"></rect><rect x="10" y="8" width="4" height="13"></rect><rect x="2" y="13" width="4" height="8"></rect></svg>
-            </div>
-            <button @click="exportToExcel('weekly')" class="export-btn" title="Descargar Excel">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              Reporte
-            </button>
-          </div>
-          <div class="chart-container">
-            <Bar :data="barChartData" :options="commonOptions" />
-          </div>
-        </div>
-
-        <div class="chart-box">
-          <div class="chart-header">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span>Horas de Uso Semanal</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><rect x="18" y="3" width="4" height="18"></rect><rect x="10" y="8" width="4" height="13"></rect><rect x="2" y="13" width="4" height="8"></rect></svg>
-            </div>
-          </div>
-          <div class="chart-container">
-            <Bar :data="barHoursChartData" :options="commonOptions" />
-          </div>
+        <div class="chart-container">
+          <Line :data="lineChartData" :options="commonOptions" />
         </div>
       </div>
-
-      <!-- Right Column -->
+      
+      <!-- Right Column: Distribución por Carrera -->
       <div class="chart-box donut-box">
         <div class="chart-header">
           <span>Distribución por Carrera</span>
@@ -468,6 +633,38 @@ const donutOptions = {
         <div class="donut-wrapper">
           <Doughnut v-if="donutChartData && donutChartData.labels && donutChartData.labels.length > 0" :data="donutChartData" :options="donutOptions" />
           <div v-else-if="loaded" class="empty-state">Sin datos de carreras</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="charts-row-three">
+      <!-- Left: Asistencia Semanal -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Asistencia Semanal</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="18" y="3" width="4" height="18"></rect><rect x="10" y="8" width="4" height="13"></rect><rect x="2" y="13" width="4" height="8"></rect></svg>
+          </div>
+          <button @click="exportToExcel('weekly')" class="export-btn" title="Descargar Excel">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Reporte
+          </button>
+        </div>
+        <div class="chart-container">
+          <Bar :data="barChartData" :options="commonOptions" />
+        </div>
+      </div>
+
+      <!-- Right: Horas de Uso Semanal -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span>Horas de Uso Semanal</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><rect x="18" y="3" width="4" height="18"></rect><rect x="10" y="8" width="4" height="13"></rect><rect x="2" y="13" width="4" height="8"></rect></svg>
+          </div>
+        </div>
+        <div class="chart-container">
+          <Bar :data="barHoursChartData" :options="commonOptions" />
         </div>
       </div>
     </div>
@@ -560,16 +757,25 @@ const donutOptions = {
 .stat-value { color: #111827; font-size: 1.25rem; font-weight: 800; }
 .stat-value small { font-size: 0.8rem; color: #9ca3af; font-weight: 500; }
 
-.main-charts-grid {
+.charts-row-two {
   display: grid;
   grid-template-columns: 1.8fr 1fr;
   gap: 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
-.charts-left {
-  display: flex;
-  flex-direction: column;
+.charts-row-three {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+  .charts-row-two,
+  .charts-row-three {
+    grid-template-columns: 1fr;
+  }
 }
 
 .chart-box {
@@ -593,7 +799,7 @@ const donutOptions = {
 }
 
 .chart-container {
-  height: 25vh; /* Se adapta a la pantalla de forma responsiva */
+  height: 25vh;
   position: relative;
 }
 
@@ -601,7 +807,7 @@ const donutOptions = {
   display: block; 
 }
 .donut-wrapper {
-  height: 40vh; /* Reducido para que la dona no se vea tan masiva */
+  height: 25vh;
   position: relative;
   width: 100%;
   padding-top: 1rem;
@@ -663,6 +869,6 @@ const donutOptions = {
 }
 
 .export-btn svg {
-  color: #16a34a; /* Color verde para excel */
+  color: #16a34a;
 }
 </style>
