@@ -289,6 +289,23 @@ const commonOptions = {
   }
 }
 
+const barHoursOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    y: { 
+      beginAtZero: true, 
+      grid: { color: '#f3f4f6', drawBorder: false }, 
+      ticks: { 
+        font: { size: 10 },
+        callback: (value) => `${value}h`
+      } 
+    },
+    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+  }
+}
+
 const horizontalBarOptions = {
   responsive: true,
   maintainAspectRatio: false,
@@ -428,7 +445,7 @@ const donutOptions = {
           </button>
         </div>
         <div class="chart-container">
-          <Bar :data="barChartData" :options="commonOptions" />
+          <Bar v-if="barChartData" :data="barChartData" :options="commonOptions" />
         </div>
       </div>
 
@@ -441,7 +458,7 @@ const donutOptions = {
           </div>
         </div>
         <div class="chart-container">
-          <Bar :data="barHoursChartData" :options="commonOptions" />
+          <Bar v-if="barHoursChartData" :data="barHoursChartData" :options="barHoursOptions" />
         </div>
       </div>
     </div>
