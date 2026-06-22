@@ -22,7 +22,7 @@ namespace ControlLaboratorio.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Alumno>>> GetAlumnos()
         {
-            return await _context.Alumnos.ToListAsync();
+            return await _context.Alumnos.OrderByDescending(a => a.AlumnoID).ToListAsync();
         }
 
         [HttpGet("{id}")]

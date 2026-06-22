@@ -128,7 +128,10 @@ const fetchAlumnos = async () => {
 }
 
 const filteredAlumnos = computed(() => {
-  let result = alumnos.value
+  let result = [...alumnos.value]
+
+  // Ordenar por ID descendente para mostrar los agregados recientemente primero
+  result.sort((a, b) => b.alumnoID - a.alumnoID)
 
   if (statusFilter.value !== 'Todos') {
     const isActive = statusFilter.value === 'Activos'
