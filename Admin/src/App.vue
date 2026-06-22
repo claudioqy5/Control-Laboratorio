@@ -14,6 +14,7 @@ import MapaBiblioteca from './components/MapaBiblioteca.vue'
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
 const isSidebarCollapsed = ref(true) // Iniciamos colapsado por defecto
+const isBibliotecaOpen = ref(true) // Sección de biblioteca abierta por defecto
 
 const checkAuth = () => {
   const token = localStorage.getItem('adminToken')
@@ -67,18 +68,6 @@ onMounted(checkAuth)
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         <span v-if="!isSidebarCollapsed">Participantes</span>
       </a>
-      <a href="#" class="nav-item" :class="{ active: currentView === 'libros' }" @click="currentView = 'libros'" :title="isSidebarCollapsed ? 'Libros' : ''">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-        <span v-if="!isSidebarCollapsed">Libros</span>
-      </a>
-      <a href="#" class="nav-item" :class="{ active: currentView === 'categorias' }" @click="currentView = 'categorias'" :title="isSidebarCollapsed ? 'Categorías' : ''">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 6V3M9 6V3M15 6V3"></path></svg>
-        <span v-if="!isSidebarCollapsed">Categorías</span>
-      </a>
-      <a href="#" class="nav-item" :class="{ active: currentView === 'mapa-biblio' }" @click="currentView = 'mapa-biblio'" :title="isSidebarCollapsed ? 'Mapa Biblioteca' : ''">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
-        <span v-if="!isSidebarCollapsed">Mapa Biblioteca</span>
-      </a>
       <a href="#" class="nav-item" :class="{ active: currentView === 'active' }" @click="currentView = 'active'" :title="isSidebarCollapsed ? 'En Línea' : ''">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
         <span v-if="!isSidebarCollapsed">En Línea</span>
@@ -87,6 +76,31 @@ onMounted(checkAuth)
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
         <span v-if="!isSidebarCollapsed">Reportes</span>
       </a>
+
+      <!-- Biblioteca Collapsible Section -->
+      <div>
+        <a href="#" class="nav-item" :class="{ active: ['libros', 'categorias', 'mapa-biblio'].includes(currentView) }" @click="isBibliotecaOpen = !isBibliotecaOpen" :title="isSidebarCollapsed ? 'Biblioteca' : ''" style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <span v-if="!isSidebarCollapsed">Biblioteca</span>
+          </div>
+          <svg v-if="!isSidebarCollapsed" :style="{ transform: isBibliotecaOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </a>
+        <div v-if="!isSidebarCollapsed && isBibliotecaOpen" class="sub-nav-group">
+          <a href="#" class="sub-nav-item" :class="{ active: currentView === 'libros' }" @click="currentView = 'libros'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            Libros
+          </a>
+          <a href="#" class="sub-nav-item" :class="{ active: currentView === 'categorias' }" @click="currentView = 'categorias'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 6V3M9 6V3M15 6V3"></path></svg>
+            Categorías
+          </a>
+          <a href="#" class="sub-nav-item" :class="{ active: currentView === 'mapa-biblio' }" @click="currentView = 'mapa-biblio'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+            Mapa Biblioteca
+          </a>
+        </div>
+      </div>
       
       <div style="margin-top: auto; background: #f9fafb; padding: 1rem; border-radius: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; overflow: hidden;">
         <div v-if="!isSidebarCollapsed">
