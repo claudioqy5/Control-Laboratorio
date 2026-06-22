@@ -15,6 +15,10 @@ const importPreviewData = ref([])
 const currentFileName = ref('')
 const fileInput = ref(null)
 const importLoading = ref(false)
+const showCorreoModal = ref(false)
+const correoAsunto = ref('')
+const correoMensaje = ref('')
+const correoLoading = ref(false)
 const currentAlumno = ref({ 
   codigoUniversitario: '', 
   dni: '', 
@@ -121,6 +125,61 @@ watch(showModal, (newVal) => {
     validationError.value = ''
   }
 })
+
+// Autorellenar correo institucional según el código universitario ingresado (solo para alumnos nuevos)
+watch(() => currentAlumno.value.codigoUniversitario, (newCode) => {
+  if (!currentAlumno.value.alumnoID) {
+    const code = newCode ? newCode.trim() : ''
+    currentAlumno.value.correoInstitucional = code ? `${code}@urp.edu.pe` : ''
+  }
+})
+
+const abrirNuevoAlumno = () => {
+  currentAlumno.value = {
+    codigoUniversitario: '',
+    dni: '',
+    nombres: '',
+    apellidoPaterno: '',
+    apellidoMaterno: '',
+    carrera: 'Medicina Humana',
+    telefono: '',
+    correoInstitucional: '',
+    correoPersonal: '',
+    estado: true
+  }
+  showModal.value = true
+}
+
+const abrirModalCorreo = () => {
+  correoAsunto.value = ''
+  correoMensaje.value = ''
+  showCorreoModal.value = true
+}
+
+const enviarCorreoMasivo = async () => {
+  if (!correoAsunto.value.trim() || !correoMensaje.value.trim()) {
+    showToast('Por favor complete todos los campos.', 'error')
+    return
+  }
+
+  correoLoading.value = true
+  try {
+    const res = await axios.post(`${API_BASE_URL}/api/correo/enviar-masivo`, {
+      asunto: correoAsunto.value,
+      mensaje: correoMensaje.value
+    })
+    
+    showCorreoModal.value = false
+    showToast(`Correos enviados con éxito: ${res.data.enviados} enviados, ${res.data.fallidos} fallidos.`, 'success')
+  } catch (error) {
+    console.error("Error al enviar correos masivos:", error)
+    const errorMsg = error.response?.data?.message || 'Ocurrió un error al intentar enviar el correo. Por favor verifique las credenciales SMTP en appsettings.json.'
+    showToast(errorMsg, 'error')
+  } finally {
+    correoLoading.value = false
+  }
+}
+
 
 const fetchAlumnos = async () => {
   const res = await axios.get(`${API_BASE_URL}/api/alumnos`)
@@ -450,7 +509,11 @@ onUnmounted(() => {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg>
           Cargar Excel
         </button>
-        <button class="btn btn-primary" @click="currentAlumno = { estado: true }; showModal = true">Nuevo</button>
+        <button class="btn" style="background: #ffffff; color: #ea580c; border: 1px solid #ea580c; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="abrirModalCorreo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          Enviar Correo
+        </button>
+        <button class="btn btn-primary" @click="abrirNuevoAlumno">Nuevo</button>
       </div>
     </div>
 
@@ -704,6 +767,54 @@ onUnmounted(() => {
           <button class="btn btn-secondary" @click="showImportModal = false">Cancelar</button>
           <button class="btn premium-btn" style="background: #16a34a;" @click="confirmImport" :disabled="importLoading">
             {{ importLoading ? 'Procesando...' : 'Procesar e Importar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Correo Masivo -->
+    <div v-if="showCorreoModal" class="modal-backdrop" @click.self="showCorreoModal = false">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon" style="background: #ffedd5; color: #ea580c;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+            <h3>Enviar Correo Masivo</h3>
+          </div>
+          <button class="close-btn" @click="showCorreoModal = false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div style="background: #fff7ed; border: 1px solid #ffedd5; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; display: flex; gap: 12px; align-items: flex-start; text-align: left;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <div>
+              <p style="color: #c2410c; font-size: 0.85rem; margin: 0; line-height: 1.4;">
+                Se enviará un correo a todos los participantes <strong>activos</strong> que tengan registrado un correo institucional o personal.
+                El correo remitente configurado es <strong>fvalero@urp.edu.pe</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div class="input-group" style="margin-bottom: 1.25rem; text-align: left;">
+            <label>Asunto *</label>
+            <input v-model="correoAsunto" placeholder="Escriba el asunto del correo..." class="premium-input" style="width: 100%;">
+          </div>
+          
+          <div class="input-group" style="text-align: left;">
+            <label>Mensaje *</label>
+            <textarea v-model="correoMensaje" placeholder="Escriba el contenido del mensaje (se admite texto o código HTML)..." class="premium-input" style="width: 100%; min-height: 200px; resize: vertical; font-family: inherit; padding: 0.75rem;"></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="showCorreoModal = false" :disabled="correoLoading">Cancelar</button>
+          <button class="btn premium-btn" style="background: #ea580c; display: flex; align-items: center; gap: 8px;" @click="enviarCorreoMasivo" :disabled="correoLoading">
+            <svg v-if="!correoLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <svg v-else class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+            {{ correoLoading ? 'Enviando...' : 'Enviar Mensaje' }}
           </button>
         </div>
       </div>
@@ -1037,5 +1148,14 @@ onUnmounted(() => {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
+}
+
+.spin {
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
