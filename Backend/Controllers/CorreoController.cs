@@ -80,6 +80,23 @@ namespace ControlLaboratorio.API.Controllers
                 }
             }
 
+            // Verificar si el logo existe antes de iniciar el ciclo de envío (admite .jpg y .png)
+            string logoPath = Path.Combine(Directory.GetCurrentDirectory(), "assets", "logourp.jpg");
+            if (!System.IO.File.Exists(logoPath))
+            {
+                logoPath = Path.Combine(Directory.GetCurrentDirectory(), "assets", "logourp.png");
+            }
+            if (!System.IO.File.Exists(logoPath))
+            {
+                logoPath = Path.Combine(AppContext.BaseDirectory, "assets", "logourp.jpg");
+            }
+            if (!System.IO.File.Exists(logoPath))
+            {
+                logoPath = Path.Combine(AppContext.BaseDirectory, "assets", "logourp.png");
+            }
+            bool hasLogo = System.IO.File.Exists(logoPath);
+            string contentType = logoPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
+
             int enviados = 0;
             int fallidos = 0;
             var errores = new List<string>();
@@ -98,14 +115,42 @@ namespace ControlLaboratorio.API.Controllers
 
                     try
                     {
-                        using (var mailMessage = new MailMessage
+                        // Personalizar Asunto y Mensaje por cada alumno
+                        string nombreCompleto = $"{alumno.Nombres} {alumno.ApellidoPaterno} {alumno.ApellidoMaterno}".Trim();
+                        string personalizedSubject = request.Asunto
+                            .Replace("{Nombre}", alumno.Nombres)
+                            .Replace("{NombreCompleto}", nombreCompleto);
+
+                        string personalizedBody = request.Mensaje
+                            .Replace("{Nombre}", alumno.Nombres)
+                            .Replace("{NombreCompleto}", nombreCompleto);
+
+                        // Si el mensaje viene en texto plano, cambiar saltos de línea por <br/>
+                        if (!request.Mensaje.Contains("<p>") && !request.Mensaje.Contains("<br/>") && !request.Mensaje.Contains("</div>"))
                         {
-                            From = new MailAddress(senderEmail, senderName),
-                            Subject = request.Asunto,
-                            Body = request.Mensaje,
-                            IsBodyHtml = true
-                        })
+                            personalizedBody = personalizedBody.Replace("\r\n", "<br/>").Replace("\n", "<br/>");
+                        }
+
+                        string logoHtml = hasLogo ? "<br/><img src=\"cid:logourp\" alt=\"Logo URP\" style=\"max-width: 260px; height: auto; margin-top: 12px;\" />" : "";
+
+                        // Estructura de firma institucional
+                        string signatureHtml = $@"
+<br/><br/>
+<hr style=""border: none; border-top: 1px solid #e0e0e0; margin-top: 20px;"" />
+<div style=""font-family: Arial, sans-serif; font-size: 13px; color: #444; line-height: 1.6;"">
+    <strong style=""color: #0b3c5d; font-size: 14px;"">Biblioteca Virtual y Especializada FAMURP</strong><br/>
+    <strong>Teléfono Central:</strong> (01) 708-0000, <strong>Anexo de la Biblioteca:</strong> 6312<br/>
+    <strong>Jefa de Biblioteca:</strong> Lic. Francisca Valero Villaizan<br/>
+    <strong>Horario de atención:</strong> Lunes a Viernes de 8:00 a.m. a 9:00 p.m. / Sábados de 8:00 a.m. to 2:00 p.m.
+    {logoHtml}
+</div>";
+
+                        string fullHtmlBody = personalizedBody + signatureHtml;
+
+                        using (var mailMessage = new MailMessage())
                         {
+                            mailMessage.From = new MailAddress(senderEmail, senderName);
+                            mailMessage.Subject = personalizedSubject;
                             mailMessage.To.Add(destinatario);
 
                             // Agregar adjuntos desde memoria
@@ -114,6 +159,23 @@ namespace ControlLaboratorio.API.Controllers
                                 var ms = new MemoryStream(adjunto.Bytes);
                                 var attachment = new Attachment(ms, adjunto.FileName, adjunto.ContentType);
                                 mailMessage.Attachments.Add(attachment);
+                            }
+
+                            if (hasLogo)
+                            {
+                                // Para imágenes en línea (inline images) usamos AlternateView
+                                var htmlView = AlternateView.CreateAlternateViewFromString(fullHtmlBody, null, "text/html");
+                                var logoResource = new LinkedResource(logoPath, contentType)
+                                {
+                                    ContentId = "logourp"
+                                };
+                                htmlView.LinkedResources.Add(logoResource);
+                                mailMessage.AlternateViews.Add(htmlView);
+                            }
+                            else
+                            {
+                                mailMessage.Body = fullHtmlBody;
+                                mailMessage.IsBodyHtml = true;
                             }
 
                             await smtpClient.SendMailAsync(mailMessage);

@@ -95,7 +95,7 @@ namespace ControlLaboratorio.API.Services
                         double segundosConsumidosHoy = sesionesHoy.Where(s => s.SesionID != sesionId).Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
                         segundosConsumidosHoy += (sesion.HoraFin.Value - sesion.HoraInicio).TotalSeconds;
 
-                        if (segundosConsumidosHoy >= (3 * 3600 - 60))
+                        if (segundosConsumidosHoy >= (sesion.Alumno.LimiteDiarioSegundos - 60))
                         {
                             sesion.Alumno.Estado = false;
                         }
