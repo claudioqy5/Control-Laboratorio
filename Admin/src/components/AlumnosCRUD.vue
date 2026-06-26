@@ -20,6 +20,9 @@ const correoAsunto = ref('')
 const correoMensaje = ref('')
 const correoLoading = ref(false)
 const correoArchivos = ref([])
+const correoTipoDestinatario = ref('todos') // 'todos', 'alumno', 'personalizado'
+const correoSelectedAlumnoID = ref('')
+const correoCustomEmail = ref('')
 const currentAlumno = ref({ 
   codigoUniversitario: '', 
   dni: '', 
@@ -155,6 +158,9 @@ const abrirModalCorreo = () => {
   correoAsunto.value = ''
   correoMensaje.value = ''
   correoArchivos.value = []
+  correoTipoDestinatario.value = 'todos'
+  correoSelectedAlumnoID.value = ''
+  correoCustomEmail.value = ''
   showCorreoModal.value = true
 }
 
@@ -181,12 +187,27 @@ const enviarCorreoMasivo = async () => {
     showToast('Por favor complete todos los campos.', 'error')
     return
   }
+  if (correoTipoDestinatario.value === 'alumno' && !correoSelectedAlumnoID.value) {
+    showToast('Por favor seleccione un alumno.', 'error')
+    return
+  }
+  if (correoTipoDestinatario.value === 'personalizado' && !correoCustomEmail.value.trim()) {
+    showToast('Por favor ingrese un correo válido.', 'error')
+    return
+  }
 
   correoLoading.value = true
   try {
     const formData = new FormData()
     formData.append('asunto', correoAsunto.value)
     formData.append('mensaje', correoMensaje.value)
+    formData.append('tipoDestinatario', correoTipoDestinatario.value)
+    
+    if (correoTipoDestinatario.value === 'alumno') {
+      formData.append('alumnoId', correoSelectedAlumnoID.value)
+    } else if (correoTipoDestinatario.value === 'personalizado') {
+      formData.append('correoPersonalizado', correoCustomEmail.value.trim())
+    }
     
     correoArchivos.value.forEach(file => {
       formData.append('archivos', file)
@@ -820,11 +841,45 @@ onUnmounted(() => {
         </div>
         
         <div class="modal-body" style="padding: 1.5rem;">
+          <!-- Tipo de Destinatario -->
+          <div class="input-group" style="margin-bottom: 1.25rem; text-align: left;">
+            <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin-bottom: 6px; display: block;">DESTINATARIO(S) *</label>
+            <div style="display: flex; gap: 16px; margin-bottom: 10px;">
+              <label style="font-size: 0.85rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="radio" v-model="correoTipoDestinatario" value="todos" style="accent-color: #ea580c;"> Todos
+              </label>
+              <label style="font-size: 0.85rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="radio" v-model="correoTipoDestinatario" value="alumno" style="accent-color: #ea580c;"> Alumno del sistema
+              </label>
+              <label style="font-size: 0.85rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="radio" v-model="correoTipoDestinatario" value="personalizado" style="accent-color: #ea580c;"> Correo personalizado
+              </label>
+            </div>
+
+            <!-- Selector de Alumno -->
+            <div v-if="correoTipoDestinatario === 'alumno'" style="margin-top: 8px;">
+              <select v-model="correoSelectedAlumnoID" class="premium-input" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background-color: #fff;">
+                <option value="" disabled>-- Seleccione un alumno --</option>
+                <option v-for="alum in alumnos" :key="alum.alumnoID" :value="alum.alumnoID">
+                  {{ alum.nombres }} {{ alum.apellidoPaterno }} {{ alum.apellidoMaterno }} ({{ alum.codigoUniversitario }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Entrada de correo personalizado -->
+            <div v-if="correoTipoDestinatario === 'personalizado'" style="margin-top: 8px;">
+              <input v-model="correoCustomEmail" placeholder="ejemplo@correo.com" class="premium-input" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1;">
+            </div>
+          </div>
+
           <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; gap: 12px; align-items: center; text-align: left;">
             <div style="background: #16a34a; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold; font-size: 0.85rem;">i</div>
             <div>
               <p style="color: #14532d; font-size: 0.85rem; margin: 0; line-height: 1.4; font-weight: 500;">
-                Se enviará este correo a todos los participantes <strong>activos</strong>. Remitente: <strong style="text-decoration: underline;">biblioteca.famurp@urp.edu.pe</strong>.
+                <span v-if="correoTipoDestinatario === 'todos'">Se enviará este correo a todos los participantes <strong>activos</strong>.</span>
+                <span v-else-if="correoTipoDestinatario === 'alumno'">Se enviará este correo únicamente al <strong>alumno seleccionado</strong>.</span>
+                <span v-else-if="correoTipoDestinatario === 'personalizado'">Se enviará este correo al <strong>correo ingresado</strong>.</span>
+                Remitente: <strong style="text-decoration: underline;">biblioteca.famurp@urp.edu.pe</strong>.
               </p>
             </div>
           </div>

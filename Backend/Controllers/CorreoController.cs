@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
 using ControlLaboratorio.API.Data;
+using ControlLaboratorio.API.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,14 +35,37 @@ namespace ControlLaboratorio.API.Controllers
                 return BadRequest("El asunto y el mensaje son obligatorios.");
             }
 
-            // Obtener todos los alumnos que tengan algún correo electrónico
-            var alumnos = await _context.Alumnos
-                .Where(a => a.Estado && (!string.IsNullOrEmpty(a.CorreoInstitucional) || !string.IsNullOrEmpty(a.CorreoPersonal)))
-                .ToListAsync();
+            // Obtener destinatarios según el tipo seleccionado
+            var alumnos = new List<Alumno>();
+            if (request.TipoDestinatario == "todos")
+            {
+                alumnos = await _context.Alumnos
+                    .Where(a => a.Estado && (!string.IsNullOrEmpty(a.CorreoInstitucional) || !string.IsNullOrEmpty(a.CorreoPersonal)))
+                    .ToListAsync();
+            }
+            else if (request.TipoDestinatario == "alumno" && request.AlumnoId.HasValue)
+            {
+                var alum = await _context.Alumnos
+                    .FirstOrDefaultAsync(a => a.AlumnoID == request.AlumnoId.Value && a.Estado);
+                if (alum != null)
+                {
+                    alumnos.Add(alum);
+                }
+            }
+            else if (request.TipoDestinatario == "personalizado" && !string.IsNullOrWhiteSpace(request.CorreoPersonalizado))
+            {
+                alumnos.Add(new Alumno
+                {
+                    Nombres = "Usuario",
+                    ApellidoPaterno = "",
+                    ApellidoMaterno = "",
+                    CorreoInstitucional = request.CorreoPersonalizado.Trim()
+                });
+            }
 
             if (!alumnos.Any())
             {
-                return NotFound("No se encontraron alumnos activos con correo registrado.");
+                return NotFound("No se encontraron destinatarios válidos.");
             }
 
             // Obtener configuración SMTP
@@ -210,6 +234,9 @@ namespace ControlLaboratorio.API.Controllers
             public string Asunto { get; set; } = string.Empty;
             public string Mensaje { get; set; } = string.Empty;
             public List<IFormFile>? Archivos { get; set; }
+            public string TipoDestinatario { get; set; } = "todos"; // todos, alumno, personalizado
+            public int? AlumnoId { get; set; }
+            public string? CorreoPersonalizado { get; set; }
         }
     }
 }
