@@ -19,6 +19,7 @@ const showCorreoModal = ref(false)
 const correoAsunto = ref('')
 const correoMensaje = ref('')
 const correoLoading = ref(false)
+const correoArchivos = ref([])
 const currentAlumno = ref({ 
   codigoUniversitario: '', 
   dni: '', 
@@ -153,7 +154,26 @@ const abrirNuevoAlumno = () => {
 const abrirModalCorreo = () => {
   correoAsunto.value = ''
   correoMensaje.value = ''
+  correoArchivos.value = []
   showCorreoModal.value = true
+}
+
+const handleCorreoArchivosChange = (event) => {
+  const files = Array.from(event.target.files)
+  correoArchivos.value = [...correoArchivos.value, ...files]
+  event.target.value = ''
+}
+
+const removeCorreoArchivo = (index) => {
+  correoArchivos.value.splice(index, 1)
+}
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 const enviarCorreoMasivo = async () => {
@@ -164,9 +184,18 @@ const enviarCorreoMasivo = async () => {
 
   correoLoading.value = true
   try {
-    const res = await axios.post(`${API_BASE_URL}/api/correo/enviar-masivo`, {
-      asunto: correoAsunto.value,
-      mensaje: correoMensaje.value
+    const formData = new FormData()
+    formData.append('asunto', correoAsunto.value)
+    formData.append('mensaje', correoMensaje.value)
+    
+    correoArchivos.value.forEach(file => {
+      formData.append('archivos', file)
+    })
+
+    const res = await axios.post(`${API_BASE_URL}/api/correo/enviar-masivo`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     })
     
     showCorreoModal.value = false
@@ -774,47 +803,97 @@ onUnmounted(() => {
 
     <!-- Modal Correo Masivo -->
     <div v-if="showCorreoModal" class="modal-backdrop" @click.self="showCorreoModal = false">
-      <div class="modal-card">
-        <div class="modal-header">
+      <div class="modal-card" style="max-width: 700px;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);">
           <div class="modal-title-wrapper">
-            <div class="modal-icon" style="background: #ffedd5; color: #ea580c;">
+            <div class="modal-icon" style="background: #ea580c; color: white;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </div>
-            <h3>Enviar Correo Masivo</h3>
+            <div>
+              <h3 style="color: #c2410c; margin: 0; font-weight: 800;">Enviar Correo Masivo</h3>
+              <span style="font-size: 0.75rem; color: #ea580c; font-weight: 600;">Comunicación Directa con Alumnos Activos</span>
+            </div>
           </div>
           <button class="close-btn" @click="showCorreoModal = false">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
         
-        <div class="modal-body">
-          <div style="background: #fff7ed; border: 1px solid #ffedd5; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; display: flex; gap: 12px; align-items: flex-start; text-align: left;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <div class="modal-body" style="padding: 1.5rem;">
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; gap: 12px; align-items: center; text-align: left;">
+            <div style="background: #16a34a; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold; font-size: 0.85rem;">i</div>
             <div>
-              <p style="color: #c2410c; font-size: 0.85rem; margin: 0; line-height: 1.4;">
-                Se enviará un correo a todos los participantes <strong>activos</strong> que tengan registrado un correo institucional o personal.
-                El correo remitente configurado es <strong>fvalero@urp.edu.pe</strong>.
+              <p style="color: #14532d; font-size: 0.85rem; margin: 0; line-height: 1.4; font-weight: 500;">
+                Se enviará este correo a todos los participantes <strong>activos</strong>. Remitente: <strong style="text-decoration: underline;">biblioteca.famurp@urp.edu.pe</strong>.
               </p>
             </div>
           </div>
 
+          <!-- Asunto -->
           <div class="input-group" style="margin-bottom: 1.25rem; text-align: left;">
-            <label>Asunto *</label>
-            <input v-model="correoAsunto" placeholder="Escriba el asunto del correo..." class="premium-input" style="width: 100%;">
+            <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin-bottom: 4px; display: block;">ASUNTO DEL MENSAJE *</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input v-model="correoAsunto" placeholder="Escriba el asunto del correo..." class="premium-input" style="width: 100%; padding-left: 2.75rem;">
+              <span style="position: absolute; left: 1rem; color: #94a3b8; display: flex;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              </span>
+            </div>
           </div>
           
-          <div class="input-group" style="text-align: left;">
-            <label>Mensaje *</label>
-            <textarea v-model="correoMensaje" placeholder="Escriba el contenido del mensaje (se admite texto o código HTML)..." class="premium-input" style="width: 100%; min-height: 200px; resize: vertical; font-family: inherit; padding: 0.75rem;"></textarea>
+          <!-- Mensaje -->
+          <div class="input-group" style="margin-bottom: 1.25rem; text-align: left;">
+            <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin-bottom: 4px; display: block;">CONTENIDO DEL MENSAJE (SOPORTA HTML) *</label>
+            <textarea v-model="correoMensaje" placeholder="Escriba el contenido del mensaje. Se admite texto plano o etiquetas HTML si desea darle formato profesional..." class="premium-input" style="width: 100%; min-height: 180px; resize: vertical; font-family: inherit; padding: 0.85rem; line-height: 1.5;"></textarea>
+          </div>
+
+          <!-- Adjuntos -->
+          <div class="input-group" style="text-align: left; margin-bottom: 0.5rem;">
+            <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin-bottom: 6px; display: block;">ARCHIVOS Y FOTOS ADJUNTOS</label>
+            
+            <!-- Zona de Carga -->
+            <div 
+              style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 1.5rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;"
+              @click="$refs.correoFileInput.click()"
+              @dragover.prevent
+              @drop.prevent="(e) => { const files = Array.from(e.dataTransfer.files); correoArchivos = [...correoArchivos, ...files]; }"
+              onmouseover="this.style.borderColor='#ea580c'; this.style.background='#fffaf7';"
+              onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
+            >
+              <input type="file" ref="correoFileInput" @change="handleCorreoArchivosChange" multiple style="display: none;">
+              <div style="color: #ea580c; margin-bottom: 8px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+              </div>
+              <p style="margin: 0; font-size: 0.875rem; font-weight: 600; color: #334155;">
+                Arrastra tus archivos aquí o <span style="color: #ea580c; text-decoration: underline;">haz clic para explorar</span>
+              </p>
+              <span style="font-size: 0.75rem; color: #64748b;">Soporta imágenes, PDFs, documentos de Word, etc.</span>
+            </div>
+            
+            <!-- Lista de Archivos Adjuntados -->
+            <div v-if="correoArchivos.length > 0" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 8px; max-height: 120px; overflow-y: auto; padding-right: 4px;">
+              <div v-for="(file, idx) in correoArchivos" :key="idx" style="display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                  <div style="color: #64748b; flex-shrink: 0; display: flex;">
+                    <svg v-if="file.type.startsWith('image/')" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  </div>
+                  <span style="font-size: 0.8rem; font-weight: 600; color: #334155; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">{{ file.name }}</span>
+                  <span style="font-size: 0.7rem; color: #64748b; font-weight: 500; flex-shrink: 0;">({{ formatFileSize(file.size) }})</span>
+                </div>
+                <button @click="removeCorreoArchivo(idx)" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 2px; border-radius: 50%; display: flex;" title="Eliminar adjunto">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="showCorreoModal = false" :disabled="correoLoading">Cancelar</button>
-          <button class="btn premium-btn" style="background: #ea580c; display: flex; align-items: center; gap: 8px;" @click="enviarCorreoMasivo" :disabled="correoLoading">
+          <button class="btn premium-btn" style="background: #ea580c; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(234, 88, 12, 0.3);" @click="enviarCorreoMasivo" :disabled="correoLoading">
             <svg v-if="!correoLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             <svg v-else class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
-            {{ correoLoading ? 'Enviando...' : 'Enviar Mensaje' }}
+            {{ correoLoading ? 'Enviando a participantes...' : 'Enviar Mensaje' }}
           </button>
         </div>
       </div>
