@@ -23,6 +23,28 @@ const correoArchivos = ref([])
 const correoTipoDestinatario = ref('todos') // 'todos', 'alumno', 'personalizado'
 const correoSelectedAlumnoID = ref('')
 const correoCustomEmail = ref('')
+const correoSearchQuery = ref('')
+
+const filteredCorreoAlumnos = computed(() => {
+  if (!correoSearchQuery.value.trim()) return alumnos.value
+  const query = correoSearchQuery.value.toLowerCase().trim()
+  return alumnos.value.filter(a => {
+    const nombres = (a.nombres || '').toLowerCase()
+    const paterno = (a.apellidoPaterno || '').toLowerCase()
+    const materno = (a.apellidoMaterno || '').toLowerCase()
+    const codigo = (a.codigoUniversitario || '').toLowerCase()
+    const dni = (a.dni || '').toLowerCase()
+    const correoInst = (a.correoInstitucional || '').toLowerCase()
+    const correoPers = (a.correoPersonal || '').toLowerCase()
+    return nombres.includes(query) || 
+           paterno.includes(query) || 
+           materno.includes(query) || 
+           codigo.includes(query) || 
+           dni.includes(query) ||
+           correoInst.includes(query) ||
+           correoPers.includes(query)
+  })
+})
 const currentAlumno = ref({ 
   codigoUniversitario: '', 
   dni: '', 
@@ -161,6 +183,7 @@ const abrirModalCorreo = () => {
   correoTipoDestinatario.value = 'todos'
   correoSelectedAlumnoID.value = ''
   correoCustomEmail.value = ''
+  correoSearchQuery.value = ''
   showCorreoModal.value = true
 }
 
@@ -875,10 +898,13 @@ onUnmounted(() => {
             </div>
 
             <!-- Selector de Alumno -->
-            <div v-if="correoTipoDestinatario === 'alumno'" style="margin-top: 8px;">
+            <div v-if="correoTipoDestinatario === 'alumno'" style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="position: relative; display: flex; align-items: center;">
+                <input v-model="correoSearchQuery" placeholder="🔍 Escribe para buscar por nombre, apellido, código o correo..." class="premium-input" style="width: 100%; padding: 0.6rem;">
+              </div>
               <select v-model="correoSelectedAlumnoID" class="premium-input" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background-color: #fff;">
-                <option value="" disabled>-- Seleccione un alumno --</option>
-                <option v-for="alum in alumnos" :key="alum.alumnoID" :value="alum.alumnoID">
+                <option value="" disabled>-- Seleccione un alumno ({{ filteredCorreoAlumnos.length }} encontrados) --</option>
+                <option v-for="alum in filteredCorreoAlumnos" :key="alum.alumnoID" :value="alum.alumnoID">
                   {{ alum.nombres }} {{ alum.apellidoPaterno }} {{ alum.apellidoMaterno }} ({{ alum.codigoUniversitario }})
                 </option>
               </select>
