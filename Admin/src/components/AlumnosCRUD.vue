@@ -164,6 +164,24 @@ const abrirModalCorreo = () => {
   showCorreoModal.value = true
 }
 
+const insertarVariable = (variable) => {
+  const textarea = document.querySelector('textarea[placeholder*="Escriba el contenido del mensaje"]');
+  if (textarea) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = correoMensaje.value;
+    correoMensaje.value = text.substring(0, start) + variable + text.substring(end);
+    
+    // Restaurar foco y cursor
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + variable.length, start + variable.length);
+    }, 20);
+  } else {
+    correoMensaje.value += variable;
+  }
+}
+
 const handleCorreoArchivosChange = (event) => {
   const files = Array.from(event.target.files)
   correoArchivos.value = [...correoArchivos.value, ...files]
@@ -824,7 +842,7 @@ onUnmounted(() => {
 
     <!-- Modal Correo Masivo -->
     <div v-if="showCorreoModal" class="modal-backdrop" @click.self="showCorreoModal = false">
-      <div class="modal-card" style="max-width: 700px;">
+      <div class="modal-card" style="max-width: 800px;">
         <div class="modal-header" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);">
           <div class="modal-title-wrapper">
             <div class="modal-icon" style="background: #ea580c; color: white;">
@@ -897,7 +915,14 @@ onUnmounted(() => {
           
           <!-- Mensaje -->
           <div class="input-group" style="margin-bottom: 1.25rem; text-align: left;">
-            <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin-bottom: 4px; display: block;">CONTENIDO DEL MENSAJE (SOPORTA HTML) *</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+              <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin: 0; display: block;">CONTENIDO DEL MENSAJE (SOPORTA HTML) *</label>
+              <div style="display: flex; gap: 6px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 3px 8px; border-radius: 6px;">
+                <span style="font-size: 0.65rem; color: #64748b; font-weight: 700;">Haz clic para insertar:</span>
+                <button type="button" @click="insertarVariable('{Nombre}')" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 6px; font-size: 0.65rem; font-weight: 800; cursor: pointer; transition: all 0.2s; outline: none;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">{Nombre}</button>
+                <button type="button" @click="insertarVariable('{NombreCompleto}')" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 6px; font-size: 0.65rem; font-weight: 800; cursor: pointer; transition: all 0.2s; outline: none;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">{NombreCompleto}</button>
+              </div>
+            </div>
             <textarea v-model="correoMensaje" placeholder="Escriba el contenido del mensaje. Se admite texto plano o etiquetas HTML si desea darle formato profesional..." class="premium-input" style="width: 100%; min-height: 180px; resize: vertical; font-family: inherit; padding: 0.85rem; line-height: 1.5;"></textarea>
           </div>
 
