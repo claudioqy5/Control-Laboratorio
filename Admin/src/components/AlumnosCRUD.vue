@@ -894,202 +894,172 @@ onUnmounted(() => {
 
     <!-- Modal Correo Masivo -->
     <div v-if="showCorreoModal" class="modal-backdrop" @click.self="showCorreoModal = false">
-      <div class="modal-card" style="max-width: 1050px; width: 95%;">
-        <div class="modal-header" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);">
+      <div class="modal-card" style="max-width: 850px; width: 90%; min-height: 600px; display: flex; flex-direction: column;">
+        <!-- Header: Barra de título elegante estilo Gmail -->
+        <div class="modal-header" style="background: #f2f6fc; border-bottom: 1px solid #e0e4ec; padding: 0.75rem 1.25rem;">
           <div class="modal-title-wrapper">
-            <div class="modal-icon" style="background: #ea580c; color: white;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <div class="modal-icon" style="background: #ea580c; color: white; width: 32px; height: 32px; border-radius: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </div>
             <div>
-              <h3 style="color: #c2410c; margin: 0; font-weight: 800;">Enviar Correo Masivo</h3>
-              <span style="font-size: 0.75rem; color: #ea580c; font-weight: 600;">Comunicación Directa con Alumnos Activos</span>
+              <h3 style="color: #1f1f1f; margin: 0; font-weight: 700; font-size: 1.05rem;">Mensaje nuevo</h3>
             </div>
           </div>
-          <button class="close-btn" @click="showCorreoModal = false">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <button class="close-btn" @click="showCorreoModal = false" style="padding: 6px; background: transparent;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
         
-        <div class="modal-body" style="padding: 1.5rem; display: grid; grid-template-columns: 1fr 1.25fr; gap: 1.5rem; max-height: 80vh; overflow-y: auto;">
-          <!-- Columna Izquierda: Configuración del Destinatario, Asunto y Adjuntos -->
-          <div style="display: flex; flex-direction: column; gap: 1rem;">
-            
-            <!-- Destinatario -->
-            <div class="input-group" style="text-align: left;">
-              <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin-bottom: 4px; display: block;">DESTINATARIO(S) *</label>
-              <div style="display: flex; gap: 12px; margin-bottom: 6px; flex-wrap: wrap;">
-                <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                  <input type="radio" v-model="correoTipoDestinatario" value="todos" style="accent-color: #ea580c;"> Todos
-                </label>
-                <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                  <input type="radio" v-model="correoTipoDestinatario" value="alumno" style="accent-color: #ea580c;"> Alumno del sistema
-                </label>
-                <label style="font-size: 0.8rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                  <input type="radio" v-model="correoTipoDestinatario" value="personalizado" style="accent-color: #ea580c;"> Personalizado
-                </label>
-              </div>
+        <!-- Body: Campos continuos estilo Gmail -->
+        <div class="modal-body" style="padding: 1rem 1.5rem; flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; gap: 0;">
+          
+          <!-- Destinatarios Row -->
+          <div style="display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 10px 0; gap: 12px; text-align: left;">
+            <span style="font-weight: 700; color: #64748b; font-size: 0.85rem; width: 65px; flex-shrink: 0;">Para:</span>
+            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; flex-grow: 1;">
+              <label style="font-size: 0.85rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                <input type="radio" v-model="correoTipoDestinatario" value="todos" style="accent-color: #ea580c;"> Todos
+              </label>
+              <label style="font-size: 0.85rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                <input type="radio" v-model="correoTipoDestinatario" value="alumno" style="accent-color: #ea580c;"> Alumno del sistema
+              </label>
+              <label style="font-size: 0.85rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                <input type="radio" v-model="correoTipoDestinatario" value="personalizado" style="accent-color: #ea580c;"> Correo personalizado
+              </label>
+            </div>
+          </div>
 
-              <!-- Selector de Alumno Autocomplete -->
-              <div v-if="correoTipoDestinatario === 'alumno'" ref="searchableSelectRef" style="margin-top: 4px; position: relative;">
-                <div style="position: relative; display: flex; align-items: center;">
-                  <input 
-                    v-model="correoSearchQuery" 
-                    @focus="showCorreoDropdown = true"
-                    placeholder="🔍 Buscar por nombre, código o correo..." 
-                    class="premium-input" 
-                    style="width: 100%; padding: 0.55rem 2.2rem 0.55rem 0.55rem; font-size: 0.85rem;"
-                  >
-                  <!-- Clean clear/chevron button on the right -->
-                  <button 
-                    v-if="correoSearchQuery" 
-                    type="button" 
-                    @click="correoSearchQuery = ''; correoSelectedAlumnoID = ''; showCorreoDropdown = true;"
-                    style="position: absolute; right: 8px; background: transparent; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; padding: 4px; z-index: 5;"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  </button>
-                  <span 
-                    v-else
-                    style="position: absolute; right: 10px; color: #94a3b8; pointer-events: none; display: flex; align-items: center; z-index: 5;"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <!-- Selector de Alumno Autocomplete (en línea) -->
+          <div v-if="correoTipoDestinatario === 'alumno'" ref="searchableSelectRef" style="border-bottom: 1px solid #f1f5f9; padding: 8px 0; display: flex; align-items: center; gap: 12px; position: relative; text-align: left;">
+            <span style="font-weight: 700; color: #64748b; font-size: 0.85rem; width: 65px; flex-shrink: 0;">Alumno:</span>
+            <div style="position: relative; flex-grow: 1; display: flex; align-items: center;">
+              <input 
+                v-model="correoSearchQuery" 
+                @focus="showCorreoDropdown = true"
+                placeholder="Escribe el nombre, apellido, código o correo para buscar..." 
+                style="width: 100%; border: none; outline: none; font-size: 0.9rem; padding: 4px 0; background: transparent; color: #1e293b;"
+              >
+              <button 
+                v-if="correoSearchQuery" 
+                type="button" 
+                @click="correoSearchQuery = ''; correoSelectedAlumnoID = ''; showCorreoDropdown = true;"
+                style="position: absolute; right: 4px; background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 2px; z-index: 5;"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            
+            <!-- Autocomplete list popup -->
+            <div 
+              v-if="showCorreoDropdown && filteredCorreoAlumnos.length > 0" 
+              style="position: absolute; top: 100%; left: 77px; right: 0; z-index: 1050; margin-top: 4px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); max-height: 200px; overflow-y: auto;"
+            >
+              <div 
+                v-for="alum in filteredCorreoAlumnos" 
+                :key="alum.alumnoID"
+                @click="selectCorreoAlumno(alum)"
+                style="padding: 0.6rem 0.8rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;"
+                onmouseover="this.style.background='#f2f6fc'; this.style.borderLeft='3px solid #ea580c';"
+                onmouseout="this.style.background='white'; this.style.borderLeft='0px solid transparent';"
+              >
+                <div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; padding-right: 8px;">
+                  <span style="font-size: 0.65rem; font-weight: 700; color: #ea580c; text-transform: uppercase;">
+                    [{{ alum.codigoUniversitario }}]
+                  </span>
+                  <span style="font-size: 0.8rem; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ alum.nombres }} {{ alum.apellidoPaterno }} {{ alum.apellidoMaterno }}
                   </span>
                 </div>
-                
-                <!-- Autocomplete dropdown list -->
-                <div 
-                  v-if="showCorreoDropdown && filteredCorreoAlumnos.length > 0" 
-                  style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1050; margin-top: 4px; background: white; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); max-height: 200px; overflow-y: auto;"
-                >
-                  <div 
-                    v-for="alum in filteredCorreoAlumnos" 
-                    :key="alum.alumnoID"
-                    @click="selectCorreoAlumno(alum)"
-                    style="padding: 0.6rem 0.8rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; text-align: left;"
-                    onmouseover="this.style.background='#fffaf7'; this.style.borderLeft='4px solid #ea580c';"
-                    onmouseout="this.style.background='white'; this.style.borderLeft='0px solid transparent';"
-                  >
-                    <div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; padding-right: 8px;">
-                      <span style="font-size: 0.65rem; font-weight: 700; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em;">
-                        [CÓDIGO: {{ alum.codigoUniversitario }}]
-                      </span>
-                      <span style="font-size: 0.8rem; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        {{ alum.nombres }} {{ alum.apellidoPaterno }} {{ alum.apellidoMaterno }}
-                      </span>
-                    </div>
-                    <div style="flex-shrink: 0; text-align: right;">
-                      <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" :title="alum.carrera">
-                        {{ alum.carrera }}
-                      </span>
-                    </div>
-                  </div>
+                <div style="flex-shrink: 0;">
+                  <span style="font-size: 0.7rem; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">
+                    {{ alum.carrera }}
+                  </span>
                 </div>
-                <div 
-                  v-else-if="showCorreoDropdown && filteredCorreoAlumnos.length === 0"
-                  style="position: absolute; top: 100%; left: 0; right: 0; z-index: 1050; margin-top: 4px; background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 0.75rem; text-align: center; color: #64748b; font-size: 0.8rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);"
-                >
-                  No se encontraron alumnos
-                </div>
-              </div>
-
-              <!-- Entrada de correo personalizado -->
-              <div v-if="correoTipoDestinatario === 'personalizado'" style="margin-top: 4px;">
-                <input v-model="correoCustomEmail" placeholder="ejemplo@correo.com" class="premium-input" style="width: 100%; padding: 0.55rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;">
               </div>
             </div>
-
-            <!-- Info banner -->
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.5rem 0.75rem; display: flex; gap: 8px; align-items: center; text-align: left;">
-              <div style="background: #16a34a; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold; font-size: 0.75rem;">i</div>
-              <div>
-                <p style="color: #14532d; font-size: 0.75rem; margin: 0; line-height: 1.3; font-weight: 500;">
-                  <span v-if="correoTipoDestinatario === 'todos'">Se enviará a todos los participantes <strong>activos</strong>.</span>
-                  <span v-else-if="correoTipoDestinatario === 'alumno'">Se enviará únicamente al <strong>alumno seleccionado</strong>.</span>
-                  <span v-else-if="correoTipoDestinatario === 'personalizado'">Se enviará al <strong>correo ingresado</strong>.</span>
-                  Remitente: <strong style="text-decoration: underline;">biblioteca.famurp@urp.edu.pe</strong>.
-                </p>
-              </div>
-            </div>
-
-            <!-- Asunto -->
-            <div class="input-group" style="text-align: left;">
-              <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin-bottom: 4px; display: block;">ASUNTO DEL MENSAJE *</label>
-              <div style="position: relative; display: flex; align-items: center;">
-                <input v-model="correoAsunto" placeholder="Escriba el asunto del correo..." class="premium-input" style="width: 100%; padding-left: 2.3rem; padding-top: 0.55rem; padding-bottom: 0.55rem; font-size: 0.85rem;">
-                <span style="position: absolute; left: 0.8rem; color: #94a3b8; display: flex;">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                </span>
-              </div>
-            </div>
-
-            <!-- Adjuntos -->
-            <div class="input-group" style="text-align: left;">
-              <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin-bottom: 4px; display: block;">ARCHIVOS Y FOTOS ADJUNTOS</label>
-              
-              <!-- Zona de Carga -->
-              <div 
-                style="border: 2px dashed #cbd5e1; border-radius: 10px; padding: 0.75rem 0.5rem; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;"
-                @click="$refs.correoFileInput.click()"
-                @dragover.prevent
-                @drop.prevent="(e) => { const files = Array.from(e.dataTransfer.files); correoArchivos = [...correoArchivos, ...files]; }"
-                onmouseover="this.style.borderColor='#ea580c'; this.style.background='#fffaf7';"
-                onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
-              >
-                <input type="file" ref="correoFileInput" @change="handleCorreoArchivosChange" multiple style="display: none;">
-                <div style="color: #ea580c; margin-bottom: 4px; display: flex; justify-content: center; align-items: center; gap: 6px;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-                  <p style="margin: 0; font-size: 0.78rem; font-weight: 600; color: #334155;">
-                    Arrastra archivos o <span style="color: #ea580c; text-decoration: underline;">selecciona</span>
-                  </p>
-                </div>
-                <span style="font-size: 0.65rem; color: #64748b;">Soporta imágenes, PDFs, Word, etc.</span>
-              </div>
-              
-              <!-- Lista de Archivos Adjuntados -->
-              <div v-if="correoArchivos.length > 0" style="margin-top: 0.4rem; display: flex; flex-direction: column; gap: 4px; max-height: 80px; overflow-y: auto; padding-right: 4px;">
-                <div v-for="(file, idx) in correoArchivos" :key="idx" style="display: flex; align-items: center; justify-content: space-between; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                  <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; max-width: 85%;">
-                    <div style="color: #64748b; flex-shrink: 0; display: flex;">
-                      <svg v-if="file.type.startsWith('image/')" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                      <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                    </div>
-                    <span style="font-size: 0.7rem; font-weight: 600; color: #334155; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">{{ file.name }}</span>
-                    <span style="font-size: 0.6rem; color: #64748b; font-weight: 500; flex-shrink: 0;">({{ formatFileSize(file.size) }})</span>
-                  </div>
-                  <button @click="removeCorreoArchivo(idx)" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 2px; border-radius: 50%; display: flex;" title="Eliminar adjunto">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  </button>
-                </div>
-              </div>
+            <div 
+              v-else-if="showCorreoDropdown && filteredCorreoAlumnos.length === 0"
+              style="position: absolute; top: 100%; left: 77px; right: 0; z-index: 1050; margin-top: 4px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem; text-align: center; color: #64748b; font-size: 0.8rem;"
+            >
+              No se encontraron alumnos
             </div>
           </div>
-          
-          <!-- Columna Derecha: Contenido del Mensaje -->
-          <div style="display: flex; flex-direction: column; gap: 0.4rem; text-align: left; height: 100%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-              <label style="font-weight: 700; color: #475569; font-size: 0.75rem; margin: 0; display: block;">CONTENIDO DEL MENSAJE (HTML) *</label>
-              <div style="display: flex; gap: 4px; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 2px 6px; border-radius: 5px;">
-                <span style="font-size: 0.6rem; color: #64748b; font-weight: 700;">Insertar:</span>
-                <button type="button" @click="insertarVariable('{Nombre}')" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; transition: all 0.2s; outline: none;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">{Nombre}</button>
-                <button type="button" @click="insertarVariable('{NombreCompleto}')" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 4px; font-size: 0.6rem; font-weight: 800; cursor: pointer; transition: all 0.2s; outline: none;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">{NombreCompleto}</button>
-              </div>
+
+          <!-- Correo Personalizado (en línea) -->
+          <div v-if="correoTipoDestinatario === 'personalizado'" style="border-bottom: 1px solid #f1f5f9; padding: 8px 0; display: flex; align-items: center; gap: 12px; text-align: left;">
+            <span style="font-weight: 700; color: #64748b; font-size: 0.85rem; width: 65px; flex-shrink: 0;">Correo:</span>
+            <input 
+              v-model="correoCustomEmail" 
+              placeholder="ejemplo@correo.com" 
+              style="width: 100%; border: none; outline: none; font-size: 0.9rem; padding: 4px 0; background: transparent; color: #1e293b;"
+            >
+          </div>
+
+          <!-- Asunto Row (sobre el mensaje) -->
+          <div style="display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 10px 0; gap: 12px; text-align: left;">
+            <span style="font-weight: 700; color: #64748b; font-size: 0.85rem; width: 65px; flex-shrink: 0;">Asunto:</span>
+            <input 
+              v-model="correoAsunto" 
+              placeholder="Escriba el asunto del correo..." 
+              style="width: 100%; border: none; outline: none; font-size: 0.95rem; padding: 4px 0; background: transparent; color: #1e293b; font-weight: 500;"
+            >
+          </div>
+
+          <!-- Remitente/Info Banner (como pequeña nota superior sutil) -->
+          <div style="background: #f8fafc; border-bottom: 1px solid #f1f5f9; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; text-align: left; font-size: 0.75rem; color: #64748b;">
+            <div>
+              <span v-if="correoTipoDestinatario === 'todos'">Destinatarios: todos los alumnos <strong>activos</strong>.</span>
+              <span v-else-if="correoTipoDestinatario === 'alumno'">Destinatario: únicamente el <strong>alumno seleccionado</strong>.</span>
+              <span v-else-if="correoTipoDestinatario === 'personalizado'">Destinatario: correo <strong>personalizado</strong>.</span>
             </div>
+            <div>
+              Remitente: <strong style="color: #475569;">biblioteca.famurp@urp.edu.pe</strong>
+            </div>
+          </div>
+
+          <!-- Cuerpo del Mensaje -->
+          <div style="flex-grow: 1; display: flex; flex-direction: column; padding: 12px 0 0 0; min-height: 250px; text-align: left;">
             <textarea 
               v-model="correoMensaje" 
-              placeholder="Escriba el contenido del mensaje. Se admite texto plano o etiquetas HTML..." 
-              class="premium-input" 
-              style="width: 100%; flex-grow: 1; min-height: 290px; resize: none; font-family: inherit; padding: 0.75rem; line-height: 1.4; font-size: 0.85rem;"
+              placeholder="Escriba el cuerpo del mensaje aquí..." 
+              style="width: 100%; flex-grow: 1; border: none; outline: none; resize: none; font-family: inherit; font-size: 0.95rem; line-height: 1.5; color: #1e293b; min-height: 280px; background: transparent;"
             ></textarea>
           </div>
+
+          <!-- Lista de Archivos Adjuntos (encima del pie) -->
+          <div v-if="correoArchivos.length > 0" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; border-top: 1px solid #f1f5f9; text-align: left;">
+            <div v-for="(file, idx) in correoArchivos" :key="idx" style="display: flex; align-items: center; gap: 6px; background: #e8eaed; padding: 4px 12px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; color: #3c4043;">
+              <span>{{ file.name }} ({{ formatFileSize(file.size) }})</span>
+              <button @click="removeCorreoArchivo(idx)" type="button" style="background: transparent; border: none; color: #5f6368; cursor: pointer; font-size: 1rem; display: flex; align-items: center; padding: 0;" title="Quitar archivo">&times;</button>
+            </div>
+          </div>
         </div>
-        
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="showCorreoModal = false" :disabled="correoLoading">Cancelar</button>
-          <button class="btn premium-btn" style="background: #ea580c; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(234, 88, 12, 0.3);" @click="enviarCorreoMasivo" :disabled="correoLoading">
-            <svg v-if="!correoLoading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            <svg v-else class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
-            {{ correoLoading ? 'Enviando...' : 'Enviar Mensaje' }}
-          </button>
+
+        <!-- Footer: Barra de acciones estilo Gmail -->
+        <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e0e4ec; background: white; display: flex; justify-content: space-between; align-items: center;">
+          <!-- Izquierda: Botones de Envío y Cancelación -->
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <button class="btn premium-btn" style="background: #1a73e8; border: none; padding: 10px 28px; border-radius: 20px; color: white; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);" @click="enviarCorreoMasivo" :disabled="correoLoading">
+              {{ correoLoading ? 'Enviando...' : 'Enviar' }}
+            </button>
+            <button class="btn btn-secondary" style="border-radius: 20px; padding: 10px 20px; border: 1px solid #cbd5e1;" @click="showCorreoModal = false" :disabled="correoLoading">Cancelar</button>
+          </div>
+
+          <!-- Derecha: Adjuntar archivo e Insertar Variables -->
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <!-- Icono clip para adjuntos -->
+            <button type="button" @click="$refs.correoFileInput.click()" style="background: transparent; border: none; color: #5f6368; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 50%;" title="Adjuntar archivos" onmouseover="this.style.background='#f1f3f4';" onmouseout="this.style.background='transparent';">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+              <input type="file" ref="correoFileInput" @change="handleCorreoArchivosChange" multiple style="display: none;">
+            </button>
+
+            <!-- Variables -->
+            <div style="display: flex; gap: 6px; align-items: center; background: #f1f3f4; padding: 4px 8px; border-radius: 20px;">
+              <span style="font-size: 0.65rem; color: #5f6368; font-weight: 700;">Insertar:</span>
+              <button type="button" @click="insertarVariable('{Nombre}')" style="background: white; color: #1a73e8; border: 1px solid #dadce0; border-radius: 12px; padding: 2px 8px; font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">{Nombre}</button>
+              <button type="button" @click="insertarVariable('{NombreCompleto}')" style="background: white; color: #1a73e8; border: 1px solid #dadce0; border-radius: 12px; padding: 2px 8px; font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">{NombreCompleto}</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
