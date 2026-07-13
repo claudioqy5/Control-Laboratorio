@@ -3,6 +3,7 @@ using ControlLaboratorio.API.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using ControlLaboratorio.API.Models;
 
 namespace ControlLaboratorio.API.Controllers
 {
@@ -84,7 +85,7 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpGet("dashboard")]
-        public async Task<IActionResult> GetDashboardStats([FromQuery] DateTime? date)
+        public async Task<IActionResult> GetDashboardStats([FromQuery] DateTime? date, [FromQuery] int? month, [FromQuery] int? year)
         {
             var targetDate = date?.Date ?? TimeHelper.GetPeruTime().Date;
             var targetDayEnd = targetDate.AddDays(1);
@@ -188,12 +189,18 @@ namespace ControlLaboratorio.API.Controllers
                 .Select(g => new { Carrera = g.Key, Cantidad = g.Count() })
                 .ToListAsync();
 
-            // Obtener sesiones para los tops (últimos 30 días)
-            var baseTopDate = targetDate.AddDays(-30);
+            // Obtener sesiones para los tops (mes seleccionado o últimos 30 días)
+            var baseTopDate = month.HasValue && year.HasValue 
+                ? new DateTime(year.Value, month.Value, 1) 
+                : targetDate.AddDays(-30);
+            var endTopDate = month.HasValue && year.HasValue
+                ? baseTopDate.AddMonths(1)
+                : targetDayEnd;
+
             var sesionesTops = await _context.Sesiones
                 .Include(s => s.Alumno)
                 .Include(s => s.Equipo)
-                .Where(s => s.HoraInicio >= baseTopDate && s.HoraInicio < targetDayEnd)
+                .Where(s => s.HoraInicio >= baseTopDate && s.HoraInicio < endTopDate)
                 .ToListAsync();
 
             var peruTimeNow = TimeHelper.GetPeruTime();
@@ -359,6 +366,87 @@ namespace ControlLaboratorio.API.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "Comentario actualizado correctamente" });
         }
+
+        [HttpPost("seed-test-data")]
+        public async Task<IActionResult> SeedTestData([FromBody] SeedTestDataRequest request)
+        {
+            if (request.Password != "admin12345")
+            {
+                return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
+            }
+
+            // Crear alumnos de prueba si no hay
+            if (!await _context.Alumnos.AnyAsync())
+            {
+                var alumnos = new List<Alumno>
+                {
+                    new Alumno { CodigoUniversitario = "20201001", DNI = "11111111", Nombres = "Juan", ApellidoPaterno = "Perez", ApellidoMaterno = "Gomez", Carrera = "Medicina Humana" },
+                    new Alumno { CodigoUniversitario = "20201002", DNI = "22222222", Nombres = "Maria", ApellidoPaterno = "Lopez", ApellidoMaterno = "Diaz", Carrera = "Biologia" },
+                    new Alumno { CodigoUniversitario = "20201003", DNI = "33333333", Nombres = "Carlos", ApellidoPaterno = "Ruiz", ApellidoMaterno = "Vega", Carrera = "Medicina Humana" },
+                    new Alumno { CodigoUniversitario = "20201004", DNI = "44444444", Nombres = "Ana", ApellidoPaterno = "Torres", ApellidoMaterno = "Soto", Carrera = "Enfermeria" },
+                    new Alumno { CodigoUniversitario = "20201005", DNI = "55555555", Nombres = "Luis", ApellidoPaterno = "Rojas", ApellidoMaterno = "Luna", Carrera = "Nutricion" }
+                };
+                _context.Alumnos.AddRange(alumnos);
+                await _context.SaveChangesAsync();
+            }
+
+            // Crear equipos si no hay
+            if (!await _context.Equipos.AnyAsync())
+            {
+                var equipos = new List<Equipo>
+                {
+                    new Equipo { NombreRed = "DESKTOP-01", Alias = "PC-01", PosicionMapa = 1 },
+                    new Equipo { NombreRed = "DESKTOP-02", Alias = "PC-02", PosicionMapa = 2 },
+                    new Equipo { NombreRed = "DESKTOP-03", Alias = "PC-03", PosicionMapa = 3 },
+                    new Equipo { NombreRed = "DESKTOP-04", Alias = "PC-04", PosicionMapa = 4 },
+                    new Equipo { NombreRed = "DESKTOP-05", Alias = "PC-05", PosicionMapa = 5 }
+                };
+                _context.Equipos.AddRange(equipos);
+                await _context.SaveChangesAsync();
+            }
+
+            var alumnosList = await _context.Alumnos.ToListAsync();
+            var equiposList = await _context.Equipos.ToListAsync();
+            var random = new Random();
+
+            var sesiones = new List<Sesion>();
+            
+            // Generar datos para los ultimos 6 meses
+            for (int monthOffset = 0; monthOffset < 6; monthOffset++)
+            {
+                var targetMonth = DateTime.Now.AddMonths(-monthOffset);
+                int daysInMonth = DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month);
+                
+                // 35 sesiones por mes
+                for (int i = 0; i < 35; i++)
+                {
+                    var day = random.Next(1, daysInMonth + 1);
+                    var hour = random.Next(8, 20); // 8 AM to 8 PM
+                    var minute = random.Next(0, 60);
+                    
+                    var startTime = new DateTime(targetMonth.Year, targetMonth.Month, day, hour, minute, 0);
+                    var durationMinutes = random.Next(15, 180); // 15 mins to 3 hours
+                    var endTime = startTime.AddMinutes(durationMinutes);
+
+                    var alumno = alumnosList[random.Next(alumnosList.Count)];
+                    var equipo = equiposList[random.Next(equiposList.Count)];
+
+                    sesiones.Add(new Sesion
+                    {
+                        AlumnoID = alumno.AlumnoID,
+                        EquipoID = equipo.EquipoID,
+                        Fecha = startTime.Date,
+                        HoraInicio = startTime,
+                        HoraFin = endTime
+                    });
+                }
+            }
+
+            _context.Sesiones.AddRange(sesiones);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Datos de prueba generados exitosamente. (aprox 210 sesiones creadas)" });
+        }
     }
 
     public class AssignMapSlotRequest
@@ -379,6 +467,11 @@ namespace ControlLaboratorio.API.Controllers
     {
         public int EquipoID { get; set; }
         public string? Comentario { get; set; }
+        public string Password { get; set; } = string.Empty;
+    }
+    
+    public class SeedTestDataRequest
+    {
         public string Password { get; set; } = string.Empty;
     }
 }

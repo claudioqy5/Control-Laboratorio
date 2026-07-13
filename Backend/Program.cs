@@ -41,6 +41,8 @@ using (var scope = app.Services.CreateScope())
         // Crear base de datos y tablas si no existen
         db.Database.EnsureCreated();
 
+        db.Database.EnsureCreated();
+
         db.Database.ExecuteSqlRaw(@"
             IF COL_LENGTH('Sesiones', 'HoraLimite') IS NULL
             BEGIN
@@ -177,30 +179,32 @@ using (var scope = app.Services.CreateScope())
                 var random = new Random();
                 var sesionesMock = new List<Sesion>();
                 
-                // Generar datos para los últimos 7 días
-                for (int diaOffset = -6; diaOffset <= 0; diaOffset++)
+                // Generar datos para los últimos 12 meses
+                for (int monthOffset = 0; monthOffset < 12; monthOffset++)
                 {
-                    var fechaDia = hoy.AddDays(diaOffset);
+                    var baseDate = new DateTime(hoy.Year, hoy.Month, 1).AddMonths(-monthOffset);
+                    int daysInMonth = DateTime.DaysInMonth(baseDate.Year, baseDate.Month);
                     
-                    // Menos afluencia los fines de semana
-                    if (fechaDia.DayOfWeek == DayOfWeek.Saturday || fechaDia.DayOfWeek == DayOfWeek.Sunday)
+                    // Generar al menos 30 sesiones por mes
+                    for (int i = 0; i < 40; i++)
                     {
-                        if (random.Next(0, 3) > 0) continue; // Omitir la mayoría de sábados y domingos
-                    }
+                        var diaAleatorio = random.Next(1, daysInMonth + 1);
+                        var fechaDia = new DateTime(baseDate.Year, baseDate.Month, diaAleatorio);
 
-                    // Cantidad de sesiones para este día (entre 3 y 8)
-                    int cantidadSesiones = random.Next(3, 8);
-                    var horasDisponibles = new[] { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+                        // Omitir fines de semana la mayoría de las veces
+                        if (fechaDia.DayOfWeek == DayOfWeek.Saturday || fechaDia.DayOfWeek == DayOfWeek.Sunday)
+                        {
+                            if (random.Next(0, 3) > 0) continue;
+                        }
 
-                    for (int j = 0; j < cantidadSesiones; j++)
-                    {
+                        var horasDisponibles = new[] { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
                         var hora = horasDisponibles[random.Next(horasDisponibles.Length)];
                         var horaInicio = fechaDia.AddHours(hora).AddMinutes(random.Next(0, 59));
                         var duracion = random.Next(30, 180);
                         var horaFin = horaInicio.AddMinutes(duracion);
                         
-                        // Solo dejar algunas sesiones activas si es el día de hoy
-                        bool esActiva = (diaOffset == 0 && (j == 1 || j == 3));
+                        // Si es el día de hoy, algunas pueden estar activas
+                        bool esActiva = (fechaDia.Date == hoy.Date && i % 5 == 0);
                         
                         sesionesMock.Add(new Sesion
                         {
