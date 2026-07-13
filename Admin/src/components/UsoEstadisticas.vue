@@ -26,9 +26,39 @@ const getPeruDateLabel = () => {
   return formatter.format(new Date());
 }
 
+const currentMonth = new Date().getMonth() + 1
+const currentYear = new Date().getFullYear()
+
+const selectedMonth = ref(currentMonth)
+const selectedYear = ref(currentYear)
+
+const months = [
+  { value: 1, label: 'Enero' },
+  { value: 2, label: 'Febrero' },
+  { value: 3, label: 'Marzo' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Mayo' },
+  { value: 6, label: 'Junio' },
+  { value: 7, label: 'Julio' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Septiembre' },
+  { value: 10, label: 'Octubre' },
+  { value: 11, label: 'Noviembre' },
+  { value: 12, label: 'Diciembre' }
+]
+
+const startYear = 2026;
+const currentSystemYear = new Date().getFullYear();
+const years = Array.from({ length: Math.max(1, currentSystemYear - startYear + 1) }, (_, i) => startYear + i);
+
+const currentPeriodLabel = computed(() => {
+  const m = months.find(x => x.value === selectedMonth.value)?.label || ''
+  return `${m} ${selectedYear.value}`
+})
+
 const getStats = async () => {
   try {
-    const res = await axios.get(`${API_BASE_URL}/api/stats/dashboard?date=${selectedDate.value}`)
+    const res = await axios.get(`${API_BASE_URL}/api/stats/dashboard?date=${selectedDate.value}&month=${selectedMonth.value}&year=${selectedYear.value}`)
     dashboardData.value = res.data
     loaded.value = true
   } catch (err) {
@@ -230,11 +260,22 @@ const downloadEquiposExcel = () => {
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
       <div>
         <h2 style="color: #111827; font-size: 1.5rem; font-weight: 800; margin: 0;">Estadísticas de Uso</h2>
-        <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Análisis del rendimiento e historial acumulado (Últimos 30 días)</p>
+        <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Análisis del rendimiento e historial acumulado ({{ currentPeriodLabel }})</p>
       </div>
-      <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        <input type="date" v-model="selectedDate" @change="getStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          <select v-model="selectedMonth" @change="getStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer; background: transparent;">
+            <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
+          </select>
+          <select v-model="selectedYear" @change="getStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer; background: transparent;">
+            <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+          </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <input type="date" v-model="selectedDate" @change="getStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+        </div>
       </div>
     </div>
 
@@ -337,12 +378,12 @@ const downloadEquiposExcel = () => {
       </div>
     </div>
 
-    <!-- Sección de Afluencia por Carrera (Últimos 30 días) -->
+    <!-- Sección de Afluencia por Carrera -->
     <div class="career-section-container" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
       <div class="chart-box">
         <div class="chart-header">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Uso por Carrera (Últimos 30 días)</span>
+            <span>Uso por Carrera ({{ currentPeriodLabel }})</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           </div>
         </div>
@@ -369,7 +410,7 @@ const downloadEquiposExcel = () => {
               </div>
             </div>
             <div v-if="!dashboardData.distribucionCarrera30Dias || dashboardData.distribucionCarrera30Dias.length === 0" class="empty-state">
-              Sin datos de carreras en los últimos 30 días
+              Sin datos de carreras en {{ currentPeriodLabel }}
             </div>
           </div>
         </div>
@@ -383,7 +424,7 @@ const downloadEquiposExcel = () => {
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 20px;">
             <h3 style="margin: 0; color: rgb(17, 24, 39); font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-              Mapa de Rendimiento de Computadoras (Últimos 30 días)
+              Mapa de Rendimiento de Computadoras ({{ currentPeriodLabel }})
             </h3>
             <div style="display: flex; gap: 10px; align-items: center;">
               <button @click="downloadEquiposExcel" class="export-btn" style="padding: 8px 16px;">
