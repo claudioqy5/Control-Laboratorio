@@ -17,6 +17,11 @@ namespace ControlLaboratorio.Agent
         private DispatcherTimer _pollingTimer;
         private bool _isLoggingOut = false;
         private bool _extendPromptShown = false;
+        // Contador de fallos consecutivos de red.
+        // Si el Agent pierde comunicación con el backend por demasiado tiempo,
+        // cierra la sesión localmente para mantener coherencia con el servidor.
+        private int _consecutivePollFailures = 0;
+        private const int MaxConsecutivePollFailures = 10; // 10 x 3s = 30 segundos sin conexión → logout
 
         public SessionWindow(int sesionId, string userName, double remainingSeconds, MainWindow lockWindow)
         {
@@ -129,6 +134,9 @@ namespace ControlLaboratorio.Agent
                 var response = await _httpClient.GetFromJsonAsync<SessionStatusResponse>($"{MainWindow.ApiUrl}/session-status/{_sesionId}");
                 if (response != null)
                 {
+                    // Conexión exitosa → resetear contador de fallos
+                    _consecutivePollFailures = 0;
+
                     if (response.IsFinished)
                     {
                         _countdownTimer.Stop();
@@ -145,7 +153,21 @@ namespace ControlLaboratorio.Agent
                     }
                 }
             }
-            catch { /* Ignore network errors */ }
+            catch
+            {
+                // Error de red: incrementar contador de fallos consecutivos
+                _consecutivePollFailures++;
+
+                // Si llevamos demasiados fallos seguidos, el backend probablemente ya cerró
+                // la sesión (SessionMonitorService). Cerramos localmente para mantener coherencia
+                // y evitar que la PC quede sin monitoreo.
+                if (_consecutivePollFailures >= MaxConsecutivePollFailures)
+                {
+                    _countdownTimer.Stop();
+                    _pollingTimer.Stop();
+                    ForceLogout();
+                }
+            }
         }
 
         private void UpdateTimerDisplay()

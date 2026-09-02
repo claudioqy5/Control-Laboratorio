@@ -10,9 +10,10 @@ namespace ControlLaboratorio.API.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<SessionMonitorService> _logger;
 
-        // Tolerancia de desconexión (Agent pings every 5 seconds)
-        // Usamos 8 segundos para evitar falsos positivos por lag de red
-        private readonly TimeSpan _timeoutThreshold = TimeSpan.FromSeconds(8);
+        // Tolerancia de desconexión. El Agent hace polling cada 3 segundos,
+        // pero en redes de laboratorio con muchas PCs puede haber picos de latencia.
+        // 30 segundos da suficiente margen sin declarar caídas falsas.
+        private readonly TimeSpan _timeoutThreshold = TimeSpan.FromSeconds(30);
 
         public SessionMonitorService(IServiceProvider serviceProvider, ILogger<SessionMonitorService> logger)
         {

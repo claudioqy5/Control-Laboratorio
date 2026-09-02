@@ -92,25 +92,35 @@ namespace ControlLaboratorio.API.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // Verificar si EL ALUMNO ya tiene una sesión abierta en CUALQUIER otro equipo (Evita bypass del límite)
+            // Verificar si EL ALUMNO ya tiene una sesión abierta en CUALQUIER otro equipo.
+            // En lugar de bloquear el ingreso, cerramos la sesión anterior automáticamente.
+            // El Agent del equipo anterior detectará el cierre en su próximo poll (cada 3s)
+            // y ejecutará ForceLogout(), mostrando la pantalla de bloqueo sin intervención manual.
             var sesionAlumnoActiva = await _context.Sesiones
                 .Include(s => s.Equipo)
                 .FirstOrDefaultAsync(s => s.AlumnoID == alumno.AlumnoID && s.HoraFin == null);
 
             if (sesionAlumnoActiva != null)
             {
-                // Si la sesión activa del alumno es de un día anterior, es una sesión huérfana.
-                // La cerramos automáticamente con su HoraLimite o HoraInicio + 3 horas y guardamos.
-                if (sesionAlumnoActiva.Fecha.Date < TimeHelper.GetPeruTime().Date)
+                var ahora = TimeHelper.GetPeruTime();
+
+                // Si la sesión es de un día anterior, es huérfana: cerrar con HoraLimite para no distorsionar estadísticas.
+                if (sesionAlumnoActiva.Fecha.Date < ahora.Date)
                 {
                     sesionAlumnoActiva.HoraFin = sesionAlumnoActiva.HoraLimite ?? sesionAlumnoActiva.HoraInicio.AddHours(3);
-                    await _context.SaveChangesAsync();
                 }
                 else
                 {
-                    string nombreEquipo = sesionAlumnoActiva.Equipo?.NombreRed ?? "otra computadora";
-                    return Unauthorized(new { message = $"Ya tienes una sesión abierta en el equipo '{nombreEquipo}'. Por favor, ciérrala primero." });
+                    // Sesión activa del mismo día en otro equipo: cerrarla ahora.
+                    // El Agent de ese equipo lo detectará en su próximo poll y bloqueará la pantalla.
+                    sesionAlumnoActiva.HoraFin = ahora;
                 }
+
+                // Remover del diccionario de heartbeats para que el SessionMonitorService
+                // no interfiera con el proceso de cierre que ya estamos haciendo aquí.
+                ActiveSessionPings.TryRemove(sesionAlumnoActiva.SesionID, out _);
+
+                await _context.SaveChangesAsync();
             }
 
             // --- LÓGICA DE BOLSA DE TIEMPO DIARIA ---
