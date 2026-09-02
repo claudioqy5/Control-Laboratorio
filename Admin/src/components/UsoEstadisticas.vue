@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import * as XLSX from 'xlsx'
 import { API_BASE_URL } from '../config'
+import FiltroEstadisticas from './FiltroEstadisticas.vue'
 import { Bar, Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, ArcElement } from 'chart.js'
 
@@ -56,9 +57,26 @@ const currentPeriodLabel = computed(() => {
   return `${m} ${selectedYear.value}`
 })
 
+const filterMode = ref('month')
+const customPeriodLabel = ref('')
+
+const onFilterChange = async (filter) => {
+  selectedMonth.value = filter.month
+  selectedYear.value = filter.year
+  selectedDate.value = filter.date
+  filterMode.value = filter.mode
+  customPeriodLabel.value = filter.label
+  await getStats()
+}
+
 const getStats = async () => {
   try {
-    const res = await axios.get(`${API_BASE_URL}/api/stats/dashboard?date=${selectedDate.value}&month=${selectedMonth.value}&year=${selectedYear.value}`)
+    const queryParams = new URLSearchParams()
+    if (selectedDate.value) queryParams.append('date', selectedDate.value)
+    if (filterMode.value !== 'year' && selectedMonth.value) queryParams.append('month', selectedMonth.value)
+    if (selectedYear.value) queryParams.append('year', selectedYear.value)
+
+    const res = await axios.get(`${API_BASE_URL}/api/stats/dashboard?${queryParams.toString()}`)
     dashboardData.value = res.data
     loaded.value = true
   } catch (err) {
@@ -260,22 +278,15 @@ const downloadEquiposExcel = () => {
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
       <div>
         <h2 style="color: #111827; font-size: 1.5rem; font-weight: 800; margin: 0;">Estadísticas de Uso</h2>
-        <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Análisis del rendimiento e historial acumulado ({{ currentPeriodLabel }})</p>
+        <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Análisis del rendimiento e historial acumulado ({{ customPeriodLabel || currentPeriodLabel }})</p>
       </div>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-          <select v-model="selectedMonth" @change="getStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer; background: transparent;">
-            <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
-          </select>
-          <select v-model="selectedYear" @change="getStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer; background: transparent;">
-            <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-          </select>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-          <input type="date" v-model="selectedDate" @change="getStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
-        </div>
+      <div>
+        <FiltroEstadisticas 
+          :initial-month="selectedMonth"
+          :initial-year="selectedYear"
+          :initial-date="selectedDate"
+          @change="onFilterChange"
+        />
       </div>
     </div>
 
