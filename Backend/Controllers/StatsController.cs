@@ -85,9 +85,14 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpGet("dashboard")]
-        public async Task<IActionResult> GetDashboardStats([FromQuery] DateTime? date, [FromQuery] int? month, [FromQuery] int? year)
+        public async Task<IActionResult> GetDashboardStats([FromQuery] DateTime? date, [FromQuery] int? month, [FromQuery] int? year, [FromQuery] string? mode = null)
         {
             var targetDate = date?.Date ?? TimeHelper.GetPeruTime().Date;
+            if (mode == "year" && year.HasValue)
+            {
+                var peruNow = TimeHelper.GetPeruTime();
+                targetDate = peruNow.Year == year.Value ? peruNow.Date : new DateTime(year.Value, 1, 1);
+            }
             var targetDayEnd = targetDate.AddDays(1);
 
             // Sesiones activas (Solo tiene sentido para hoy)
@@ -189,13 +194,35 @@ namespace ControlLaboratorio.API.Controllers
                 .Select(g => new { Carrera = g.Key, Cantidad = g.Count() })
                 .ToListAsync();
 
-            // Obtener sesiones para los tops (mes seleccionado o últimos 30 días)
-            var baseTopDate = month.HasValue && year.HasValue 
-                ? new DateTime(year.Value, month.Value, 1) 
-                : targetDate.AddDays(-30);
-            var endTopDate = month.HasValue && year.HasValue
-                ? baseTopDate.AddMonths(1)
-                : targetDayEnd;
+            // Determinar rango de fechas para las estadísticas principales (sesionesTops)
+            DateTime baseTopDate;
+            DateTime endTopDate;
+
+            if (mode == "date" || (date.HasValue && !month.HasValue && !year.HasValue))
+            {
+                // Modo Día Exacto: se analizan únicamente las sesiones de ese día exacto
+                baseTopDate = targetDate;
+                endTopDate = targetDayEnd;
+            }
+            else if (mode == "year" || (year.HasValue && !month.HasValue))
+            {
+                // Modo Año Completo: todo el año seleccionado
+                var targetYear = year ?? targetDate.Year;
+                baseTopDate = new DateTime(targetYear, 1, 1);
+                endTopDate = new DateTime(targetYear + 1, 1, 1);
+            }
+            else if (month.HasValue && year.HasValue)
+            {
+                // Modo Mes: mes y año específicos
+                baseTopDate = new DateTime(year.Value, month.Value, 1);
+                endTopDate = baseTopDate.AddMonths(1);
+            }
+            else
+            {
+                // Fallback: últimos 30 días
+                baseTopDate = targetDate.AddDays(-30);
+                endTopDate = targetDayEnd;
+            }
 
             var sesionesTops = await _context.Sesiones
                 .Include(s => s.Alumno)

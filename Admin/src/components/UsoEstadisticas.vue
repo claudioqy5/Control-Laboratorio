@@ -72,9 +72,18 @@ const onFilterChange = async (filter) => {
 const getStats = async () => {
   try {
     const queryParams = new URLSearchParams()
-    if (selectedDate.value) queryParams.append('date', selectedDate.value)
-    if (filterMode.value !== 'year' && selectedMonth.value) queryParams.append('month', selectedMonth.value)
-    if (selectedYear.value) queryParams.append('year', selectedYear.value)
+    queryParams.append('mode', filterMode.value)
+
+    if (filterMode.value === 'date') {
+      queryParams.append('date', selectedDate.value)
+    } else if (filterMode.value === 'year') {
+      queryParams.append('year', selectedYear.value)
+    } else {
+      // Modo mes
+      queryParams.append('month', selectedMonth.value)
+      queryParams.append('year', selectedYear.value)
+      if (selectedDate.value) queryParams.append('date', selectedDate.value)
+    }
 
     const res = await axios.get(`${API_BASE_URL}/api/stats/dashboard?${queryParams.toString()}`)
     dashboardData.value = res.data
@@ -247,7 +256,8 @@ const downloadAlumnosExcel = () => {
   const ws = XLSX.utils.json_to_sheet(dataToExport)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, "Reporte Uso Alumnos")
-  XLSX.writeFile(wb, `Reporte_Uso_Alumnos_${selectedDate.value}.xlsx`)
+  const fileTag = (customPeriodLabel.value || selectedDate.value).replace(/\s+/g, '_')
+  XLSX.writeFile(wb, `Reporte_Uso_Alumnos_${fileTag}.xlsx`)
 }
 
 // Descargar Excel Equipos
@@ -268,7 +278,8 @@ const downloadEquiposExcel = () => {
   const ws = XLSX.utils.json_to_sheet(dataToExport)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, "Rendimiento Equipos")
-  XLSX.writeFile(wb, `Reporte_Rendimiento_Equipos_${selectedDate.value}.xlsx`)
+  const fileTag = (customPeriodLabel.value || selectedDate.value).replace(/\s+/g, '_')
+  XLSX.writeFile(wb, `Reporte_Rendimiento_Equipos_${fileTag}.xlsx`)
 }
 </script>
 
@@ -394,7 +405,7 @@ const downloadEquiposExcel = () => {
       <div class="chart-box">
         <div class="chart-header">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span>Uso por Carrera ({{ currentPeriodLabel }})</span>
+            <span>Uso por Carrera ({{ customPeriodLabel || currentPeriodLabel }})</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           </div>
         </div>
