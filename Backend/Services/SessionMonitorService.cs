@@ -12,8 +12,8 @@ namespace ControlLaboratorio.API.Services
 
         // Tolerancia de desconexión. El Agent hace polling cada 3 segundos,
         // pero en redes de laboratorio con muchas PCs puede haber picos de latencia.
-        // 30 segundos da suficiente margen sin declarar caídas falsas.
-        private readonly TimeSpan _timeoutThreshold = TimeSpan.FromSeconds(30);
+        // 90 segundos da suficiente margen para tolerar micro-cortes y parpadeos de red sin cerrar la sesión en BD.
+        private readonly TimeSpan _timeoutThreshold = TimeSpan.FromSeconds(90);
 
         public SessionMonitorService(IServiceProvider serviceProvider, ILogger<SessionMonitorService> logger)
         {

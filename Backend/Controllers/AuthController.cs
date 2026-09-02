@@ -79,8 +79,33 @@ namespace ControlLaboratorio.API.Controllers
 
             if (sesionActiva != null)
             {
-                // Como el equipo está en la pantalla de Login, cualquier sesión activa es huérfana (el agente se reinició o cerró mal)
-                // Cerramos la sesión activa huérfana automáticamente.
+                // Si la sesión activa en este mismo equipo pertenece al MISMO alumno y se creó hace menos de 3 minutos,
+                // significa que la respuesta de su login previo se perdió por parpadeo de red y volvió a hacer clic en Ingresar.
+                // Reutilizamos la sesión en lugar de cerrarla como huérfana de 0 minutos.
+                if (sesionActiva.AlumnoID == alumno.AlumnoID && (TimeHelper.GetPeruTime() - sesionActiva.HoraInicio).TotalMinutes < 3)
+                {
+                    ActiveSessionPings[sesionActiva.SesionID] = TimeHelper.GetPeruTime();
+                    double remSeconds = 0;
+                    if (sesionActiva.HoraLimite.HasValue)
+                    {
+                        remSeconds = (sesionActiva.HoraLimite.Value - TimeHelper.GetPeruTime()).TotalSeconds;
+                        if (remSeconds < 0) remSeconds = 0;
+                    }
+
+                    return Ok(new
+                    {
+                        sesionId = sesionActiva.SesionID,
+                        horaLimite = sesionActiva.HoraLimite,
+                        remainingSeconds = remSeconds,
+                        alumno = new
+                        {
+                            nombres = alumno.Nombres,
+                            apellidos = $"{alumno.ApellidoPaterno} {alumno.ApellidoMaterno}"
+                        }
+                    });
+                }
+
+                // Como el equipo está en la pantalla de Login y es otra sesión o más antigua, es huérfana. La cerramos.
                 sesionActiva.HoraFin = TimeHelper.GetPeruTime();
                 
                 // Asegurar que no exceda el límite del día si era de ayer
