@@ -530,9 +530,11 @@ onUnmounted(() => {
 <style scoped>
 .pc-map-container {
   background: #fdfdfd;
-  padding: 3rem;
+  padding: 1.75rem 1.5rem;
   border-radius: 16px;
   border: 1px dashed #e2e8f0;
+  display: flex;
+  justify-content: center;
   overflow-x: auto;
 }
 .pc-grid {
@@ -541,6 +543,7 @@ onUnmounted(() => {
   grid-template-rows: repeat(9, 100px);
   gap: 45px;
   justify-content: center;
+  zoom: 0.70;
 }
 .pc-card-wrapper {
   display: flex;
@@ -615,6 +618,10 @@ onUnmounted(() => {
   padding: 2px 6px;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
+  text-align: center;
+  max-width: 72px;
+  word-break: break-word;
+  line-height: 1.15;
 }
 .empty-slot {
   opacity: 0.4;
