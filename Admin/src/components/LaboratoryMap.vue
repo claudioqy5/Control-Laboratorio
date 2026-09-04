@@ -282,6 +282,22 @@ const sendUnlockAllCommand = async (onlyFree) => {
   }
 }
 
+// Control de Zoom interactivo
+const zoomLevel = ref(Number(localStorage.getItem('lab_map_zoom')) || 1.0)
+
+const changeZoom = (delta) => {
+  const newZoom = Math.round((zoomLevel.value + delta) * 10) / 10
+  if (newZoom >= 0.4 && newZoom <= 1.5) {
+    zoomLevel.value = newZoom
+    localStorage.setItem('lab_map_zoom', newZoom.toString())
+  }
+}
+
+const resetZoom = () => {
+  zoomLevel.value = 1.0
+  localStorage.setItem('lab_map_zoom', '1.0')
+}
+
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
   if (clockIntervalId) clearInterval(clockIntervalId)
@@ -301,6 +317,15 @@ onUnmounted(() => {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
           APAGAR TODO
         </button>
+        <!-- Control de Zoom interactivo -->
+        <div class="zoom-controls">
+          <span class="zoom-label">ZOOM:</span>
+          <button class="zoom-btn" @click="changeZoom(-0.1)" title="Alejar (-10%)" :disabled="zoomLevel <= 0.4">−</button>
+          <span class="zoom-value" @click="resetZoom" title="Click para restablecer al 100%">{{ Math.round(zoomLevel * 100) }}%</span>
+          <button class="zoom-btn" @click="changeZoom(0.1)" title="Acercar (+10%)" :disabled="zoomLevel >= 1.5">+</button>
+          <button class="zoom-btn reset-btn" @click="resetZoom" title="Restablecer (100%)">↺</button>
+        </div>
+
         <div style="background: #f0fdfa; padding: 10px 20px; border-radius: 8px; border: 1px solid #99f6e4; display: flex; align-items: center; height: 42px; box-sizing: border-box;">
           <span style="color: #64748b; font-size: 0.85rem; margin-right: 10px;">HORA ACTUAL:</span>
           <span style="color: #0f766e; font-size: 1.2rem; font-weight: bold; font-family: Consolas;">{{ currentTime }}</span>
@@ -309,7 +334,7 @@ onUnmounted(() => {
     </div>
     
     <div class="pc-map-container">
-      <div class="pc-grid">
+      <div class="pc-grid" :style="{ zoom: zoomLevel }">
         <!-- Renderizamos cada posición del mapa -->
         <div v-for="(pos, index) in layoutPositions" :key="index"
              class="pc-card-wrapper"
@@ -533,14 +558,38 @@ onUnmounted(() => {
   padding: 3rem;
   border-radius: 16px;
   border: 1px dashed #e2e8f0;
-  overflow-x: auto;
+  overflow: auto; /* Barras de scroll vertical y horizontal */
+  max-height: calc(100vh - 230px);
+  min-height: 480px;
+  position: relative;
 }
+
+/* Estilos de barras de scroll limpias y modernas */
+.pc-map-container::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.pc-map-container::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 8px;
+}
+.pc-map-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+  border: 2px solid #f8fafc;
+}
+.pc-map-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 .pc-grid {
   display: grid;
   grid-template-columns: repeat(12, 75px);
   grid-template-rows: repeat(9, 100px);
   gap: 45px;
   justify-content: center;
+  width: max-content;
+  margin: 0 auto;
 }
 .pc-card-wrapper {
   display: flex;
@@ -615,6 +664,76 @@ onUnmounted(() => {
   padding: 2px 6px;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
+  text-align: center;
+  max-width: 80px;
+  word-break: break-word;
+  line-height: 1.15;
+}
+
+/* Control de Zoom */
+.zoom-controls {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 8px;
+  gap: 6px;
+  box-sizing: border-box;
+}
+.zoom-label {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-right: 2px;
+  user-select: none;
+}
+.zoom-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.zoom-btn:hover:not(:disabled) {
+  background: #0ea5e9;
+  color: white;
+  border-color: #0284c7;
+}
+.zoom-btn:active:not(:disabled) {
+  transform: scale(0.93);
+}
+.zoom-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.zoom-value {
+  font-family: Consolas, monospace;
+  font-weight: 700;
+  color: #0f766e;
+  font-size: 0.95rem;
+  min-width: 46px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.zoom-value:hover {
+  background: #e2e8f0;
+}
+.reset-btn {
+  font-size: 0.9rem;
 }
 .empty-slot {
   opacity: 0.4;
