@@ -208,12 +208,59 @@ const abrirModalCorreo = () => {
   showCorreoModal.value = true
 }
 
+const STORAGE_KEY_LOTES = 'control_lab_lotes_copiados'
+const STORAGE_KEY_TAMANIO = 'control_lab_tamanio_lote'
+
+const getSavedTamanio = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_TAMANIO)
+    return saved ? Number(saved) : 250
+  } catch (e) {
+    return 250
+  }
+}
+
+const getSavedLotes = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_LOTES)
+    return saved ? JSON.parse(saved) : []
+  } catch (e) {
+    return []
+  }
+}
+
 const copiadoFeedback = ref(false)
 const showLotesModal = ref(false)
-const tamanioLote = ref(250)
+const tamanioLote = ref(getSavedTamanio())
 const loteCopiadoIndex = ref(null)
-const lotesCopiados = ref([])
+const lotesCopiados = ref(getSavedLotes())
 const correosUrpLista = ref([])
+
+watch(tamanioLote, (newVal, oldVal) => {
+  try {
+    localStorage.setItem(STORAGE_KEY_TAMANIO, String(newVal))
+  } catch (e) {}
+  if (oldVal !== undefined && newVal !== oldVal) {
+    lotesCopiados.value = []
+    try {
+      localStorage.removeItem(STORAGE_KEY_LOTES)
+    } catch (e) {}
+  }
+})
+
+watch(lotesCopiados, (newVal) => {
+  try {
+    localStorage.setItem(STORAGE_KEY_LOTES, JSON.stringify(newVal))
+  } catch (e) {}
+}, { deep: true })
+
+const limpiarMarcasLotes = () => {
+  lotesCopiados.value = []
+  try {
+    localStorage.removeItem(STORAGE_KEY_LOTES)
+  } catch (e) {}
+  showToast('Marcas de lotes reiniciadas.', 'info')
+}
 
 const obtenerCorreosUrp = () => {
   const esUrp = (email) => {
@@ -1356,7 +1403,7 @@ onUnmounted(() => {
               type="button" 
               class="btn" 
               style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;"
-              @click="lotesCopiados = []"
+              @click="limpiarMarcasLotes"
               title="Limpiar marcas de lotes ya copiados"
             >
               Limpiar marcas ({{ lotesCopiados.length }}/{{ lotesCalculados.length }})
