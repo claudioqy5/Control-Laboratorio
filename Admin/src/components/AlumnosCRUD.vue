@@ -367,6 +367,11 @@ const lotesCalculados = computed(() => {
   return lotes
 })
 
+const porcentajeProgreso = computed(() => {
+  if (lotesCalculados.value.length === 0) return 0
+  return Math.round((lotesCopiados.value.length / lotesCalculados.value.length) * 100)
+})
+
 const copiarLote = async (lote) => {
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1375,137 +1380,179 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Modal Copiar Correos por Lotes para Gmail -->
-    <div v-if="showLotesModal" class="modal-backdrop" @click.self="showLotesModal = false" style="z-index: 1100;">
-      <div class="modal-card" style="max-width: 820px; width: 92%; max-height: 88vh; display: flex; flex-direction: column;">
-        <!-- Header -->
-        <div class="modal-header" style="background: #fff7ed; border-bottom: 1px solid #fed7aa; padding: 1rem 1.5rem;">
-          <div class="modal-title-wrapper">
-            <div class="modal-icon" style="background: #ea580c; color: white; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+    <!-- Modal Copiar Correos por Lotes para Gmail (Rediseño Premium Moderno) -->
+    <div v-if="showLotesModal" class="modal-backdrop" @click.self="showLotesModal = false" style="z-index: 1100; backdrop-filter: blur(5px); background: rgba(15, 23, 42, 0.48);">
+      <div class="modal-card" style="max-width: 860px; width: 92%; max-height: 88vh; display: flex; flex-direction: column; border-radius: 16px; border: 1px solid rgba(226, 232, 240, 0.9); box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); background: #ffffff; overflow: hidden;">
+        
+        <!-- Header Minimalista y Elegante -->
+        <div class="modal-header" style="background: #ffffff; border-bottom: 1px solid #f1f5f9; padding: 1.25rem 1.75rem; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 42px; height: 42px; border-radius: 12px; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.12);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             </div>
             <div>
-              <h3 style="color: #9a3412; margin: 0; font-weight: 800; font-size: 1.15rem;">Copiar Correos por Lotes para Gmail</h3>
-              <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #c2410c;">Divide los correos en bloques seguros para evitar el bloqueo anti-spam de Google.</p>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 style="color: #0f172a; margin: 0; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em;">Lotes de Correo para Gmail</h3>
+                <span style="font-size: 0.65rem; font-weight: 700; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.05em; text-transform: uppercase;">Anti-Spam</span>
+              </div>
+              <p style="margin: 3px 0 0 0; font-size: 0.82rem; color: #64748b; font-weight: 500;">Divide los destinatarios en bloques seguros para no saturar las políticas de Google.</p>
             </div>
           </div>
-          <button class="close-btn" @click="showLotesModal = false" style="padding: 6px; background: transparent;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <button class="close-btn" @click="showLotesModal = false" style="padding: 8px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; cursor: pointer; color: #64748b; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='#f8fafc'; this.style.color='#64748b';">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
 
-        <!-- Barra de Configuración y Resumen -->
-        <div style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-            <div>
-              <span style="font-size: 0.72rem; color: #64748b; font-weight: 700; display: block; text-transform: uppercase;">Total correos URP:</span>
-              <strong style="font-size: 1.15rem; color: #0f172a;">{{ correosUrpLista.length.toLocaleString() }}</strong>
+        <!-- Dashboard Bar: Métricas y Barra de Progreso -->
+        <div style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 1rem 1.75rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <!-- Contadores clave -->
+            <div style="display: flex; align-items: center; gap: 20px;">
+              <div>
+                <span style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; display: block;">Destinatarios</span>
+                <span style="font-size: 1.2rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">{{ correosUrpLista.length.toLocaleString() }} <small style="font-size: 0.72rem; color: #64748b; font-weight: 600;">@urp.edu.pe</small></span>
+              </div>
+              <div style="height: 32px; width: 1px; background: #e2e8f0;"></div>
+              <div>
+                <span style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; display: block;">Lotes</span>
+                <span style="font-size: 1.2rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">{{ lotesCalculados.length }} <small style="font-size: 0.72rem; color: #64748b; font-weight: 600;">totales</small></span>
+              </div>
+              <div style="height: 32px; width: 1px; background: #e2e8f0;"></div>
+              <div>
+                <span style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; display: block;">Tamaño de bloque</span>
+                <select v-model.number="tamanioLote" style="padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 0.8rem; color: #0f172a; background: white; outline: none; cursor: pointer; margin-top: 2px;">
+                  <option :value="150">150 / bloque</option>
+                  <option :value="200">200 / bloque</option>
+                  <option :value="250">250 / bloque (Óptimo)</option>
+                  <option :value="300">300 / bloque</option>
+                  <option :value="400">400 / bloque</option>
+                  <option :value="500">500 / bloque</option>
+                </select>
+              </div>
             </div>
-            <div style="height: 28px; width: 1px; background: #cbd5e1;"></div>
+
+            <!-- Acciones de barra -->
             <div style="display: flex; align-items: center; gap: 8px;">
-              <label style="font-size: 0.82rem; font-weight: 700; color: #334155;">Tamaño de lote:</label>
-              <select v-model.number="tamanioLote" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 0.85rem; color: #0f172a; background: white; outline: none; cursor: pointer;">
-                <option :value="150">150 correos</option>
-                <option :value="200">200 correos</option>
-                <option :value="250">250 correos (Recomendado)</option>
-                <option :value="300">300 correos</option>
-                <option :value="400">400 correos</option>
-                <option :value="500">500 correos</option>
-              </select>
-            </div>
-            <div style="height: 28px; width: 1px; background: #cbd5e1;"></div>
-            <div>
-              <span style="font-size: 0.72rem; color: #64748b; font-weight: 700; display: block; text-transform: uppercase;">Lotes generados:</span>
-              <strong style="font-size: 1.15rem; color: #ea580c;">{{ lotesCalculados.length }} lotes</strong>
+              <button 
+                type="button" 
+                style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8';"
+                onmouseout="this.style.background='#ffffff'; this.style.borderColor='#cbd5e1';"
+                @click="descargarLotesTxt"
+                title="Descargar archivo .txt con todos los lotes organizados"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Descargar TXT</span>
+              </button>
+
+              <button 
+                v-if="lotesCopiados.length > 0"
+                type="button" 
+                style="background: transparent; color: #94a3b8; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.color='#ef4444'; this.style.borderColor='#ef4444'; this.style.background='#fef2f2';"
+                onmouseout="this.style.color='#94a3b8'; this.style.borderColor='#cbd5e1'; this.style.background='transparent';"
+                @click="limpiarMarcasLotes"
+                title="Reiniciar las marcas de lotes para volver a empezar"
+              >
+                Reiniciar marcas
+              </button>
             </div>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button 
-              type="button" 
-              class="btn" 
-              style="background: #ffffff; color: #0284c7; border: 1px solid #0284c7; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer;"
-              @click="descargarLotesTxt"
-              title="Descargar archivo de texto con todos los lotes organizados para abrirlos en el Bloc de Notas"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              Descargar .TXT
-            </button>
-
-            <button 
-              v-if="lotesCopiados.length > 0"
-              type="button" 
-              class="btn" 
-              style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;"
-              @click="limpiarMarcasLotes"
-              title="Limpiar marcas de lotes ya copiados"
-            >
-              Limpiar marcas ({{ lotesCopiados.length }}/{{ lotesCalculados.length }})
-            </button>
+          <!-- Barra de Progreso Elegante -->
+          <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.75rem;">
+              <span style="color: #64748b; font-weight: 600;">
+                Progreso: <strong style="color: #0f172a;">{{ lotesCopiados.length }}</strong> de {{ lotesCalculados.length }} lotes enviados
+              </span>
+              <span style="font-weight: 800; color: #059669;">{{ porcentajeProgreso }}% completado</span>
+            </div>
+            <div style="width: 100%; height: 7px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+              <div 
+                style="height: 100%; border-radius: 999px; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(90deg, #10b981 0%, #059669 100%);"
+                :style="{ width: `${porcentajeProgreso}%` }"
+              ></div>
+            </div>
           </div>
         </div>
 
-        <!-- Banner de Instrucciones Importantes para Gmail -->
-        <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 10px 16px; margin: 12px 20px 0 20px; border-radius: 6px; font-size: 0.78rem; color: #1e40af; line-height: 1.45;">
-          <strong>💡 Recomendaciones clave para Gmail:</strong>
-          <ul style="margin: 4px 0 0 18px; padding: 0;">
-            <li>Pega los correos copiados en el campo <strong>CCO (Copia Oculta)</strong> para proteger la privacidad entre alumnos.</li>
-            <li><strong>Límite diario de Google Workspace:</strong> Máximo <strong>2,000 destinatarios cada 24 horas</strong>. Para enviar los {{ correosUrpLista.length.toLocaleString() }} correos con total seguridad y evitar bloqueos temporales, envía hoy los primeros 7-8 lotes y mañana los restantes.</li>
-          </ul>
+        <!-- Banner Discreto de Regla Gmail (Minimalista y profesional) -->
+        <div style="padding: 8px 1.75rem; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; font-size: 0.76rem; color: #64748b;">
+          <span style="background: #e0f2fe; color: #0369a1; font-weight: 800; font-size: 0.65rem; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">Tip Gmail</span>
+          <span>Pega cada lote en el campo <strong>CCO (Copia Oculta)</strong>. Límite de Google Workspace: 2,000 destinatarios al día.</span>
         </div>
 
-        <!-- Lista de Lotes (Grid) -->
-        <div style="flex-grow: 1; overflow-y: auto; padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; align-content: start;">
+        <!-- Grilla de Lotes: Tarjetas Limpias y Refinadas -->
+        <div style="flex-grow: 1; overflow-y: auto; padding: 1.25rem 1.75rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 10px; align-content: start; background: #fafafa;">
           <div 
             v-for="lote in lotesCalculados" 
             :key="lote.numero"
-            style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);"
-            :style="lotesCopiados.includes(lote.numero) ? 'border-color: #86efac; background: #f0fdf4;' : ''"
+            style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);"
+            :style="lotesCopiados.includes(lote.numero) 
+              ? 'border-color: #a7f3d0; background: #f0fdf4; box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08);' 
+              : 'box-shadow: 0 1px 2px rgba(0,0,0,0.03);'"
+            onmouseover="if (!this.style.background.includes('f0fdf4')) { this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 4px 6px -1px rgba(0,0,0,0.06)'; }"
+            onmouseout="if (!this.style.background.includes('f0fdf4')) { this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 1px 2px rgba(0,0,0,0.03)'; }"
           >
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-weight: 800; font-size: 0.95rem; color: #0f172a;">Lote {{ lote.numero }}</span>
-                <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;" :style="lotesCopiados.includes(lote.numero) ? 'background: #dcfce7; color: #15803d;' : 'background: #ffedd5; color: #c2410c;'">
+                <span style="font-weight: 800; font-size: 0.92rem;" :style="lotesCopiados.includes(lote.numero) ? 'color: #065f46;' : 'color: #0f172a;'">
+                  Lote {{ String(lote.numero).padStart(2, '0') }}
+                </span>
+                <span 
+                  style="font-size: 0.7rem; padding: 1px 7px; border-radius: 6px; font-weight: 700;" 
+                  :style="lotesCopiados.includes(lote.numero) 
+                    ? 'background: #d1fae5; color: #047857;' 
+                    : 'background: #f1f5f9; color: #475569;'"
+                >
                   {{ lote.cantidad }} correos
                 </span>
               </div>
-              <div style="font-size: 0.75rem; color: #64748b; margin-top: 3px;">
-                Alumnos del {{ lote.desde.toLocaleString() }} al {{ lote.hasta.toLocaleString() }}
+              <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 3px; font-weight: 500;">
+                Alumnos {{ lote.desde.toLocaleString() }} – {{ lote.hasta.toLocaleString() }}
               </div>
             </div>
 
             <div>
               <button 
                 type="button" 
-                class="btn" 
+                style="border-radius: 8px; padding: 6px 14px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;"
                 :style="lotesCopiados.includes(lote.numero) 
-                  ? 'background: #16a34a; color: white; border: 1px solid #16a34a;' 
-                  : 'background: #fff7ed; color: #ea580c; border: 1px solid #ea580c;'"
-                style="border-radius: 8px; padding: 7px 14px; font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;"
+                  ? 'background: #dcfce7; color: #166534; border: 1px solid #86efac;' 
+                  : 'background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.04);'"
+                onmouseover="if (!this.style.background.includes('dcfce7')) { this.style.background='#0f172a'; this.style.color='#ffffff'; this.style.borderColor='#0f172a'; }"
+                onmouseout="if (!this.style.background.includes('dcfce7')) { this.style.background='#ffffff'; this.style.color='#0f172a'; this.style.borderColor='#cbd5e1'; }"
                 @click="copiarLote(lote)"
                 :title="`Copiar los ${lote.cantidad} correos del Lote ${lote.numero}`"
               >
-                <svg v-if="lotesCopiados.includes(lote.numero)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                <span>{{ loteCopiadoIndex === lote.numero ? '¡Copiado! ✓' : (lotesCopiados.includes(lote.numero) ? 'Copiado ✓' : `Copiar Lote ${lote.numero}`) }}</span>
+                <svg v-if="lotesCopiados.includes(lote.numero)" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>{{ loteCopiadoIndex === lote.numero ? '¡Copiado!' : (lotesCopiados.includes(lote.numero) ? 'Copiado ✓' : `Copiar Lote ${lote.numero}`) }}</span>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Footer -->
-        <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <!-- Footer Limpio -->
+        <div class="modal-footer" style="padding: 1rem 1.75rem; border-top: 1px solid #e2e8f0; background: #ffffff; display: flex; justify-content: space-between; align-items: center;">
           <button 
             type="button" 
-            class="btn" 
-            style="background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.78rem; font-weight: 600; padding: 6px 12px; cursor: pointer;"
+            style="background: transparent; border: none; color: #94a3b8; font-size: 0.76rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 4px;"
+            onmouseover="this.style.color='#475569';"
+            onmouseout="this.style.color='#94a3b8';"
             @click="copiarTodosSinLotes"
-            title="Copiar todos los correos de una sola vez sin dividir (no recomendado para Gmail por límites anti-spam)"
+            title="Copiar todos los correos en un solo bloque (puede ser rechazado por Gmail)"
           >
             Copiar todos de una vez ({{ correosUrpLista.length.toLocaleString() }})
           </button>
 
-          <button class="btn btn-secondary" @click="showLotesModal = false" style="border-radius: 8px; padding: 8px 22px;">
+          <button 
+            class="btn" 
+            @click="showLotesModal = false" 
+            style="background: #0f172a; color: white; border: none; border-radius: 8px; padding: 8px 22px; font-size: 0.84rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+            onmouseover="this.style.background='#1e293b';"
+            onmouseout="this.style.background='#0f172a';"
+          >
             Cerrar
           </button>
         </div>
