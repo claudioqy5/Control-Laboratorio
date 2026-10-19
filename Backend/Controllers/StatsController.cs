@@ -12,10 +12,18 @@ namespace ControlLaboratorio.API.Controllers
     public class StatsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public StatsController(ApplicationDbContext context)
+        public StatsController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
+        }
+
+        private bool IsAuthorizedAction(string password)
+        {
+            var expected = _configuration["AdminSettings:ActionPassword"] ?? "admin12345";
+            return password == expected;
         }
 
         [HttpGet("usage")]
@@ -341,7 +349,7 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("assign-map-slot")]
         public async Task<IActionResult> AssignMapSlot([FromBody] AssignMapSlotRequest request)
         {
-            if (request.Password != "admin12345")
+            if (!IsAuthorizedAction(request.Password))
             {
                 return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
             }
@@ -366,7 +374,7 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("set-alias")]
         public async Task<IActionResult> SetAlias([FromBody] SetAliasRequest request)
         {
-            if (request.Password != "admin12345")
+            if (!IsAuthorizedAction(request.Password))
             {
                 return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
             }
@@ -381,7 +389,7 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("set-comentario")]
         public async Task<IActionResult> SetComentario([FromBody] SetComentarioRequest request)
         {
-            if (request.Password != "admin12345")
+            if (!IsAuthorizedAction(request.Password))
             {
                 return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
             }
@@ -397,7 +405,7 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("seed-test-data")]
         public async Task<IActionResult> SeedTestData([FromBody] SeedTestDataRequest request)
         {
-            if (request.Password != "admin12345")
+            if (!IsAuthorizedAction(request.Password))
             {
                 return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
             }

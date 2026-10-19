@@ -30,11 +30,24 @@ ehthumbs.db
 Desktop.ini
 Backend/wwwroot/updates/ControlLaboratorio.Agent.exe
 
-# Google Credentials
-Backend/google-credentials.json
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# Google Credentials and secrets
+Backend/google-credentials.*
+*.credentials.json
+*.credentials.txt
+base64.txt
+
+# Publish folders
+publish/
+publish_exe/
+publish_release/
+Backend/publish_release/
 
 # Conversation/chat export files (may contain secrets)
 Reviewing*.md
 Integración*.md
-*.credentials.txt
-base64.txt

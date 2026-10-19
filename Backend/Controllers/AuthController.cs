@@ -15,11 +15,12 @@ namespace ControlLaboratorio.API.Controllers
         public static readonly ConcurrentDictionary<int, DateTime> ActiveSessionPings = new ConcurrentDictionary<int, DateTime>();
         
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
-
-        public AuthController(ApplicationDbContext context)
+        public AuthController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpPost("register-equipment")]
@@ -277,8 +278,10 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("admin-login")]
         public IActionResult AdminLogin([FromBody] AdminLoginRequest request)
         {
-            // Credenciales de administrador fijas (puedes cambiarlas aquí)
-            if (request.Username == "admin" && request.Password == "admin123")
+            var expectedUsername = _configuration["AdminSettings:Username"] ?? "admin";
+            var expectedPassword = _configuration["AdminSettings:Password"] ?? "admin123";
+
+            if (request.Username == expectedUsername && request.Password == expectedPassword)
             {
                 return Ok(new { token = "fake-jwt-token-for-now", message = "Bienvenido Administrador" });
             }

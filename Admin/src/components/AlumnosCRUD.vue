@@ -208,6 +208,63 @@ const abrirModalCorreo = () => {
   showCorreoModal.value = true
 }
 
+const copiadoFeedback = ref(false)
+
+const copiarCorreosGmail = async () => {
+  let correos = []
+
+  if (correoTipoDestinatario.value === 'alumno' && correoSelectedAlumnoID.value) {
+    const alum = alumnos.value.find(a => a.alumnoID === correoSelectedAlumnoID.value)
+    if (alum) {
+      const email = (alum.correoInstitucional || alum.correoPersonal || '').trim()
+      if (email) correos.push(email)
+    }
+  } else if (correoTipoDestinatario.value === 'personalizado' && correoCustomEmail.value.trim()) {
+    correos.push(correoCustomEmail.value.trim())
+  } else {
+    // Por defecto o 'todos': alumnos activos con correo (prioriza institucional, sino personal)
+    let lista = alumnos.value.filter(a => a.estado && (a.correoInstitucional || a.correoPersonal))
+    if (lista.length === 0) {
+      lista = alumnos.value.filter(a => a.correoInstitucional || a.correoPersonal)
+    }
+    correos = lista.map(a => (a.correoInstitucional || a.correoPersonal).trim()).filter(Boolean)
+  }
+
+  const correosUnicos = [...new Set(correos)]
+
+  if (correosUnicos.length === 0) {
+    showToast('No se encontraron correos válidos para copiar.', 'error')
+    return
+  }
+
+  const textoParaGmail = correosUnicos.join(', ')
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(textoParaGmail)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = textoParaGmail
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+
+    copiadoFeedback.value = true
+    setTimeout(() => {
+      copiadoFeedback.value = false
+    }, 3000)
+
+    showToast(`✓ Se copiaron ${correosUnicos.length} correos al portapapeles. ¡Listos para pegar en Gmail!`, 'success')
+  } catch (err) {
+    console.error('Error al copiar correos al portapapeles:', err)
+    showToast('No se pudo copiar automáticamente. Intente nuevamente.', 'error')
+  }
+}
+
 const insertarVariable = (variable) => {
   const textarea = document.querySelector('textarea[placeholder*="Escriba el contenido del mensaje"]');
   if (textarea) {
@@ -1006,11 +1063,23 @@ onUnmounted(() => {
           </div>
 
           <!-- Remitente/Info Banner (como pequeña nota superior sutil) -->
-          <div style="background: #f8fafc; border-bottom: 1px solid #f1f5f9; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; text-align: left; font-size: 0.75rem; color: #64748b;">
-            <div>
+          <div style="background: #f8fafc; border-bottom: 1px solid #f1f5f9; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; text-align: left; font-size: 0.75rem; color: #64748b; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
               <span v-if="correoTipoDestinatario === 'todos'">Destinatarios: todos los alumnos <strong>activos</strong>.</span>
               <span v-else-if="correoTipoDestinatario === 'alumno'">Destinatario: únicamente el <strong>alumno seleccionado</strong>.</span>
               <span v-else-if="correoTipoDestinatario === 'personalizado'">Destinatario: correo <strong>personalizado</strong>.</span>
+              
+              <button 
+                type="button" 
+                @click="copiarCorreosGmail" 
+                style="background: #ffffff; color: #ea580c; border: 1px solid #ea580c; border-radius: 6px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;"
+                onmouseover="this.style.background='#fff7ed'"
+                onmouseout="this.style.background='#ffffff'"
+                title="Copiar lista de correos separados por comas para pegar directamente en Gmail"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>{{ copiadoFeedback ? '¡Copiado! ✓' : 'Copiar correos para Gmail' }}</span>
+              </button>
             </div>
             <div>
               Remitente: <strong style="color: #475569;">biblioteca.famurp@urp.edu.pe</strong>
@@ -1038,11 +1107,24 @@ onUnmounted(() => {
         <!-- Footer: Barra de acciones estilo Gmail -->
         <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e0e4ec; background: white; display: flex; justify-content: space-between; align-items: center;">
           <!-- Izquierda: Botones de Envío y Cancelación -->
-          <div style="display: flex; gap: 12px; align-items: center;">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <button class="btn premium-btn" style="background: #1a73e8; border: none; padding: 10px 28px; border-radius: 20px; color: white; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);" @click="enviarCorreoMasivo" :disabled="correoLoading">
               {{ correoLoading ? 'Enviando...' : 'Enviar' }}
             </button>
             <button class="btn btn-secondary" style="border-radius: 20px; padding: 10px 20px; border: 1px solid #cbd5e1;" @click="showCorreoModal = false" :disabled="correoLoading">Cancelar</button>
+            
+            <button 
+              type="button" 
+              class="btn" 
+              style="border-radius: 20px; padding: 9px 16px; border: 1px solid #ea580c; color: #ea580c; background: #fff7ed; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;"
+              onmouseover="this.style.background='#ffedd5'"
+              onmouseout="this.style.background='#fff7ed'"
+              @click="copiarCorreosGmail"
+              title="Copiar todos los correos de alumnos separados por comas para pegar directamente en Gmail"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>{{ copiadoFeedback ? '¡Copiado al portapapeles! ✓' : 'Copiar para Gmail' }}</span>
+            </button>
           </div>
 
           <!-- Derecha: Adjuntar archivo e Insertar Variables -->
