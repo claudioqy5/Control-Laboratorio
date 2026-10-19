@@ -112,10 +112,13 @@ const buscarPorEscaneo = async () => {
   const codigo = searchQuery.value?.trim()
   if (!codigo) return
 
-  // ¿Ya existe en el sistema local?
+  // ¿Ya existe en el sistema local o la búsqueda ya arrojó resultados?
   const existe = alumnos.value.some(
-    a => a.codigoUniversitario?.toLowerCase() === codigo.toLowerCase()
-  )
+    a => a.codigoUniversitario?.toLowerCase() === codigo.toLowerCase() ||
+         a.dni?.toLowerCase() === codigo.toLowerCase() ||
+         a.correoInstitucional?.toLowerCase() === codigo.toLowerCase() ||
+         a.correoPersonal?.toLowerCase() === codigo.toLowerCase()
+  ) || filteredAlumnos.value.length > 0
   if (existe) {
     // El filtro del buscador ya lo muestra → no hacer nada más
     return
@@ -599,7 +602,7 @@ const filteredAlumnos = computed(() => {
   if (searchQuery.value) {
     const queryWords = searchQuery.value.toLowerCase().split(/\s+/).filter(Boolean)
     result = result.filter(a => {
-      const studentString = `${a.nombres} ${a.apellidoPaterno} ${a.apellidoMaterno} ${a.codigoUniversitario} ${a.dni || ''}`.toLowerCase()
+      const studentString = `${a.nombres || ''} ${a.apellidoPaterno || ''} ${a.apellidoMaterno || ''} ${a.codigoUniversitario || ''} ${a.dni || ''} ${a.correoInstitucional || ''} ${a.correoPersonal || ''}`.toLowerCase()
       return queryWords.every(word => studentString.includes(word))
     })
   }
@@ -895,12 +898,12 @@ onUnmounted(() => {
             v-model="searchQuery"
             @input="currentPage = 1"
             @keyup.enter="buscarPorEscaneo"
-            placeholder="Buscar o escanear código de barras..."
+            placeholder="Buscar por código, nombre, DNI o correo..."
             :style="{
               padding: '0.5rem 1rem 0.5rem 2rem',
               borderRadius: '0.5rem',
               border: '1px solid #e5e7eb',
-              width: '280px',
+              width: '320px',
               fontSize: '0.875rem',
               color: '#111827',
               outline: 'none'
