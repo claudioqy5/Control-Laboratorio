@@ -210,6 +210,7 @@ const abrirModalCorreo = () => {
 
 const STORAGE_KEY_LOTES = 'control_lab_lotes_copiados'
 const STORAGE_KEY_TAMANIO = 'control_lab_tamanio_lote'
+const STORAGE_KEY_BASE_MAX_ID = 'control_lab_base_max_id'
 
 const getSavedTamanio = () => {
   try {
@@ -229,11 +230,21 @@ const getSavedLotes = () => {
   }
 }
 
+const getSavedBaseMaxId = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_BASE_MAX_ID)
+    return saved ? Number(saved) : null
+  } catch (e) {
+    return null
+  }
+}
+
 const copiadoFeedback = ref(false)
 const showLotesModal = ref(false)
 const tamanioLote = ref(getSavedTamanio())
 const loteCopiadoIndex = ref(null)
 const lotesCopiados = ref(getSavedLotes())
+const baseMaxAlumnoId = ref(getSavedBaseMaxId())
 const correosUrpLista = ref([])
 
 watch(tamanioLote, (newVal, oldVal) => {
@@ -242,8 +253,10 @@ watch(tamanioLote, (newVal, oldVal) => {
   } catch (e) {}
   if (oldVal !== undefined && newVal !== oldVal) {
     lotesCopiados.value = []
+    baseMaxAlumnoId.value = null
     try {
       localStorage.removeItem(STORAGE_KEY_LOTES)
+      localStorage.removeItem(STORAGE_KEY_BASE_MAX_ID)
     } catch (e) {}
   }
 })
@@ -256,8 +269,10 @@ watch(lotesCopiados, (newVal) => {
 
 const limpiarMarcasLotes = () => {
   lotesCopiados.value = []
+  baseMaxAlumnoId.value = null
   try {
     localStorage.removeItem(STORAGE_KEY_LOTES)
+    localStorage.removeItem(STORAGE_KEY_BASE_MAX_ID)
   } catch (e) {}
   showToast('Marcas de lotes reiniciadas.', 'info')
 }
@@ -294,7 +309,26 @@ const obtenerCorreosUrp = () => {
     if (lista.length === 0) {
       lista = alumnos.value.filter(a => getUrpEmail(a))
     }
-    correos = lista.map(a => getUrpEmail(a)).filter(Boolean)
+
+    // Asegurar que los alumnos existentes mantengan exactamente el orden de la campaña inicial
+    // y que los nuevos alumnos que se agreguen posteriormente se ubiquen al final (Lote 17 en adelante).
+    const currentMaxId = lista.reduce((max, a) => Math.max(max, a.alumnoID || 0), 0)
+    if (!baseMaxAlumnoId.value || baseMaxAlumnoId.value === 0) {
+      baseMaxAlumnoId.value = currentMaxId
+      try {
+        localStorage.setItem(STORAGE_KEY_BASE_MAX_ID, String(currentMaxId))
+      } catch (e) {}
+    }
+
+    const maxBase = baseMaxAlumnoId.value
+    const alumnosBase = lista.filter(a => (a.alumnoID || 0) <= maxBase)
+    const alumnosNuevos = lista.filter(a => (a.alumnoID || 0) > maxBase)
+
+    alumnosBase.sort((a, b) => (b.alumnoID || 0) - (a.alumnoID || 0))
+    alumnosNuevos.sort((a, b) => (a.alumnoID || 0) - (b.alumnoID || 0))
+
+    const listaFinal = [...alumnosBase, ...alumnosNuevos]
+    correos = listaFinal.map(a => getUrpEmail(a)).filter(Boolean)
   }
 
   return [...new Set(correos.filter(esUrp))]

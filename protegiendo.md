@@ -96,6 +96,9 @@ En el módulo administrativo de alumnos (`Admin/src/components/AlumnosCRUD.vue`)
    * **Barra de Herramientas Principal de Alumnos:** Botón directo `[📋 Copiar Correos (Lotes)]` (no requiere abrir el redactor del sistema).
    * **Banner Superior del Modal "Mensaje nuevo":** Botón `[📋 Copiar por lotes para Gmail]`.
    * **Barra de Acciones Inferior (Footer):** Botón `[📋 Copiar por lotes para Gmail]`.
+4. **Persistencia en LocalStorage y Estabilidad de Lotes:**
+   * Almacena las marcas de lotes copiados en el almacenamiento del navegador (`control_lab_lotes_copiados`).
+   * Guarda el ID máximo de la tanda inicial (`control_lab_base_max_id`). Si se registran alumnos nuevos entre hoy y mañana, se anexan automáticamente al final (Lote 17 en adelante) sin alterar ni desfasar los lotes 1 al 8 ya enviados.
 
 ---
 
