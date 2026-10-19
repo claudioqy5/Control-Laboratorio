@@ -76,20 +76,26 @@ Se modificaron los servicios `cl-db` y `cl-backend` para que consuman dinámicam
 
 ---
 
-## 4. Nueva Funcionalidad: Copiar Correos para Gmail
+## 4. Nueva Funcionalidad: Copiar Correos para Gmail por Lotes
 
 En el módulo administrativo de alumnos (`Admin/src/components/AlumnosCRUD.vue`):
 
-1. **Lógica de Extracción (`copiarCorreosGmail`):**
-   * Filtra los alumnos según el modo seleccionado (por defecto todos los alumnos activos).
-   * **Filtro estricto de dominio:** Solo incluye correos que terminen en `@urp.edu.pe` (prioriza el institucional y, si no, el personal si tiene dicho dominio).
+1. **Lógica de Extracción y Filtro de Dominio (`obtenerCorreosUrp`):**
+   * Filtra los alumnos activos con correo institucional o personal que termine en `@urp.edu.pe`.
+   * **Filtro estricto de dominio:** Solo incluye correos válidos terminados en `@urp.edu.pe`.
    * Elimina duplicados de manera automática y normaliza a minúsculas.
-   * Une los correos separados por coma y espacio: `correo1@urp.edu.pe, correo2@urp.edu.pe, ...`, que es el formato exacto requerido por el campo **Para** o **CCO** de Gmail.
-   * Utiliza el API `navigator.clipboard.writeText` con respaldo para navegadores antiguos (`document.execCommand`).
-2. **Interfaz de Usuario (Modal "Mensaje nuevo"):**
-   * **Banner Superior de Destinatarios:** Botón integrado `[📋 Copiar correos para Gmail]`.
-   * **Barra de Acciones Inferior (Footer):** Botón estilizado `[📋 Copiar para Gmail]` junto a Enviar y Cancelar.
-   * **Feedback Visual:** El botón cambia temporalmente su texto a `¡Copiado! ✓` y emite una notificación Toast en pantalla indicando la cantidad exacta de correos copiados.
+2. **División Inteligente en Lotes (`lotesCalculados`):**
+   * Permite configurar el tamaño del lote (150, 200, **250 recomendado**, 300, 400 o 500 correos).
+   * Para bases de datos masivas (como los más de 4,100 alumnos), genera tarjetas de lotes individuales:
+     * *Lote 1 (Alumnos 1 al 250)*
+     * *Lote 2 (Alumnos 251 al 500)*, etc.
+   * Botón de copiado independiente por cada lote que cambia a `✓ Copiado` para no perder el orden del envío.
+   * Opción para descargar todos los lotes organizados en un archivo de texto `.txt`.
+   * Protección automática: Si la lista supera los 300 correos, abre automáticamente el asistente de lotes para prevenir que Gmail rebote el correo por exceder el límite anti-spam de destinatarios simultáneos.
+3. **Puntos de Acceso en la Interfaz de Usuario:**
+   * **Barra de Herramientas Principal de Alumnos:** Botón directo `[📋 Copiar Correos (Lotes)]` (no requiere abrir el redactor del sistema).
+   * **Banner Superior del Modal "Mensaje nuevo":** Botón `[📋 Copiar por lotes para Gmail]`.
+   * **Barra de Acciones Inferior (Footer):** Botón `[📋 Copiar por lotes para Gmail]`.
 
 ---
 

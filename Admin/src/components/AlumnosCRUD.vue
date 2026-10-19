@@ -209,13 +209,18 @@ const abrirModalCorreo = () => {
 }
 
 const copiadoFeedback = ref(false)
+const showLotesModal = ref(false)
+const tamanioLote = ref(250)
+const loteCopiadoIndex = ref(null)
+const lotesCopiados = ref([])
+const correosUrpLista = ref([])
 
-const copiarCorreosGmail = async () => {
-  let correos = []
-
+const obtenerCorreosUrp = () => {
   const esUrp = (email) => {
     return typeof email === 'string' && email.trim().toLowerCase().endsWith('@urp.edu.pe')
   }
+
+  let correos = []
 
   if (correoTipoDestinatario.value === 'alumno' && correoSelectedAlumnoID.value) {
     const alum = alumnos.value.find(a => a.alumnoID === correoSelectedAlumnoID.value)
@@ -245,11 +250,134 @@ const copiarCorreosGmail = async () => {
     correos = lista.map(a => getUrpEmail(a)).filter(Boolean)
   }
 
-  // Filtrado estricto por dominio @urp.edu.pe y eliminación de duplicados
-  const correosUnicos = [...new Set(correos.filter(esUrp))]
+  return [...new Set(correos.filter(esUrp))]
+}
+
+const abrirModalLotes = () => {
+  const lista = obtenerCorreosUrp()
+  if (lista.length === 0) {
+    showToast('No se encontraron correos que terminen en @urp.edu.pe para copiar.', 'error')
+    return
+  }
+  correosUrpLista.value = lista
+  showLotesModal.value = true
+}
+
+const lotesCalculados = computed(() => {
+  const total = correosUrpLista.value.length
+  const step = Number(tamanioLote.value) || 250
+  const lotes = []
+
+  for (let i = 0; i < total; i += step) {
+    const slice = correosUrpLista.value.slice(i, i + step)
+    const numero = Math.floor(i / step) + 1
+    const desde = i + 1
+    const hasta = Math.min(i + step, total)
+    lotes.push({
+      numero,
+      desde,
+      hasta,
+      cantidad: slice.length,
+      correos: slice,
+      texto: slice.join(', ')
+    })
+  }
+
+  return lotes
+})
+
+const copiarLote = async (lote) => {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(lote.texto)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = lote.texto
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+
+    if (!lotesCopiados.value.includes(lote.numero)) {
+      lotesCopiados.value.push(lote.numero)
+    }
+    loteCopiadoIndex.value = lote.numero
+    setTimeout(() => {
+      if (loteCopiadoIndex.value === lote.numero) {
+        loteCopiadoIndex.value = null
+      }
+    }, 2500)
+
+    showToast(`✓ Lote ${lote.numero} copiado (${lote.cantidad} correos). ¡Listo para pegar en CCO en Gmail!`, 'success')
+  } catch (err) {
+    console.error('Error al copiar lote:', err)
+    showToast('No se pudo copiar automáticamente. Intente nuevamente.', 'error')
+  }
+}
+
+const descargarLotesTxt = () => {
+  if (lotesCalculados.value.length === 0) return
+  let contenido = `LISTA DE CORREOS INSTITUCIONALES (@urp.edu.pe) DIVIDIDA EN LOTES PARA GMAIL\n`
+  contenido += `Total de correos: ${correosUrpLista.value.length}\n`
+  contenido += `Tamaño por lote: ${tamanioLote.value} correos\n`
+  contenido += `Total de lotes generados: ${lotesCalculados.value.length}\n`
+  contenido += `Recomendación: Pegar en el campo CCO (Copia Oculta) de Gmail. Límite diario de Google: 2,000 destinatarios al día.\n`
+  contenido += `================================================================================\n\n`
+
+  lotesCalculados.value.forEach(lote => {
+    contenido += `--- LOTE ${lote.numero} (Alumnos ${lote.desde} al ${lote.hasta} | ${lote.cantidad} correos) ---\n`
+    contenido += `${lote.texto}\n\n`
+  })
+
+  const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `Correos_URP_Lotes_${tamanioLote.value}.txt`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+  showToast('✓ Archivo de lotes descargado correctamente.', 'success')
+}
+
+const copiarTodosSinLotes = async () => {
+  const textoParaGmail = correosUrpLista.value.join(', ')
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(textoParaGmail)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = textoParaGmail
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    showToast(`✓ Se copiaron ${correosUrpLista.value.length} correos. Advertencia: Gmail puede rebotarlos si son más de 400.`, 'warning')
+  } catch (err) {
+    showToast('Error al copiar correos.', 'error')
+  }
+}
+
+const copiarCorreosGmail = async () => {
+  const correosUnicos = obtenerCorreosUrp()
 
   if (correosUnicos.length === 0) {
     showToast('No se encontraron correos que terminen en @urp.edu.pe para copiar.', 'error')
+    return
+  }
+
+  // Si son más de 300 correos, abrir automáticamente el modal de lotes para evitar que Gmail los rebote
+  if (correosUnicos.length > 300) {
+    correosUrpLista.value = correosUnicos
+    showLotesModal.value = true
+    showToast(`Hay ${correosUnicos.length} correos. Se abrió la herramienta de lotes para evitar el rechazo de Gmail.`, 'info')
     return
   }
 
@@ -702,6 +830,10 @@ onUnmounted(() => {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 12 15 15"></polyline></svg>
           Cargar Excel
         </button>
+        <button class="btn" style="background: #ffffff; color: #ea580c; border: 1px solid #ea580c; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="abrirModalLotes" title="Copiar lista de correos @urp.edu.pe por lotes seguros para Gmail">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copiar Correos (Lotes)
+        </button>
         <button class="btn" style="background: #ffffff; color: #ea580c; border: 1px solid #ea580c; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 8px;" @click="abrirModalCorreo">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
           Enviar Correo
@@ -1087,14 +1219,14 @@ onUnmounted(() => {
               
               <button 
                 type="button" 
-                @click="copiarCorreosGmail" 
+                @click="abrirModalLotes" 
                 style="background: #ffffff; color: #ea580c; border: 1px solid #ea580c; border-radius: 6px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;"
                 onmouseover="this.style.background='#fff7ed'"
                 onmouseout="this.style.background='#ffffff'"
-                title="Copiar lista de correos separados por comas para pegar directamente en Gmail"
+                title="Copiar correos divididos en lotes seguros para Gmail (evita rechazos por límite anti-spam)"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                <span>{{ copiadoFeedback ? '¡Copiado! ✓' : 'Copiar correos para Gmail' }}</span>
+                <span>Copiar por lotes para Gmail</span>
               </button>
             </div>
             <div>
@@ -1135,11 +1267,11 @@ onUnmounted(() => {
               style="border-radius: 20px; padding: 9px 16px; border: 1px solid #ea580c; color: #ea580c; background: #fff7ed; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;"
               onmouseover="this.style.background='#ffedd5'"
               onmouseout="this.style.background='#fff7ed'"
-              @click="copiarCorreosGmail"
-              title="Copiar todos los correos de alumnos separados por comas para pegar directamente en Gmail"
+              @click="abrirModalLotes"
+              title="Copiar lista de correos en lotes seguros de 200 a 300 para pegar en Gmail"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              <span>{{ copiadoFeedback ? '¡Copiado al portapapeles! ✓' : 'Copiar para Gmail' }}</span>
+              <span>Copiar por lotes para Gmail</span>
             </button>
           </div>
 
@@ -1158,6 +1290,143 @@ onUnmounted(() => {
               <button type="button" @click="insertarVariable('{NombreCompleto}')" style="background: white; color: #1a73e8; border: 1px solid #dadce0; border-radius: 12px; padding: 2px 8px; font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">{NombreCompleto}</button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Copiar Correos por Lotes para Gmail -->
+    <div v-if="showLotesModal" class="modal-backdrop" @click.self="showLotesModal = false" style="z-index: 1100;">
+      <div class="modal-card" style="max-width: 820px; width: 92%; max-height: 88vh; display: flex; flex-direction: column;">
+        <!-- Header -->
+        <div class="modal-header" style="background: #fff7ed; border-bottom: 1px solid #fed7aa; padding: 1rem 1.5rem;">
+          <div class="modal-title-wrapper">
+            <div class="modal-icon" style="background: #ea580c; color: white; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </div>
+            <div>
+              <h3 style="color: #9a3412; margin: 0; font-weight: 800; font-size: 1.15rem;">Copiar Correos por Lotes para Gmail</h3>
+              <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #c2410c;">Divide los correos en bloques seguros para evitar el bloqueo anti-spam de Google.</p>
+            </div>
+          </div>
+          <button class="close-btn" @click="showLotesModal = false" style="padding: 6px; background: transparent;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <!-- Barra de Configuración y Resumen -->
+        <div style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <div>
+              <span style="font-size: 0.72rem; color: #64748b; font-weight: 700; display: block; text-transform: uppercase;">Total correos URP:</span>
+              <strong style="font-size: 1.15rem; color: #0f172a;">{{ correosUrpLista.length.toLocaleString() }}</strong>
+            </div>
+            <div style="height: 28px; width: 1px; background: #cbd5e1;"></div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="font-size: 0.82rem; font-weight: 700; color: #334155;">Tamaño de lote:</label>
+              <select v-model.number="tamanioLote" style="padding: 5px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 0.85rem; color: #0f172a; background: white; outline: none; cursor: pointer;">
+                <option :value="150">150 correos</option>
+                <option :value="200">200 correos</option>
+                <option :value="250">250 correos (Recomendado)</option>
+                <option :value="300">300 correos</option>
+                <option :value="400">400 correos</option>
+                <option :value="500">500 correos</option>
+              </select>
+            </div>
+            <div style="height: 28px; width: 1px; background: #cbd5e1;"></div>
+            <div>
+              <span style="font-size: 0.72rem; color: #64748b; font-weight: 700; display: block; text-transform: uppercase;">Lotes generados:</span>
+              <strong style="font-size: 1.15rem; color: #ea580c;">{{ lotesCalculados.length }} lotes</strong>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button 
+              type="button" 
+              class="btn" 
+              style="background: #ffffff; color: #0284c7; border: 1px solid #0284c7; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer;"
+              @click="descargarLotesTxt"
+              title="Descargar archivo de texto con todos los lotes organizados para abrirlos en el Bloc de Notas"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Descargar .TXT
+            </button>
+
+            <button 
+              v-if="lotesCopiados.length > 0"
+              type="button" 
+              class="btn" 
+              style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer;"
+              @click="lotesCopiados = []"
+              title="Limpiar marcas de lotes ya copiados"
+            >
+              Limpiar marcas ({{ lotesCopiados.length }}/{{ lotesCalculados.length }})
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner de Instrucciones Importantes para Gmail -->
+        <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 10px 16px; margin: 12px 20px 0 20px; border-radius: 6px; font-size: 0.78rem; color: #1e40af; line-height: 1.45;">
+          <strong>💡 Recomendaciones clave para Gmail:</strong>
+          <ul style="margin: 4px 0 0 18px; padding: 0;">
+            <li>Pega los correos copiados en el campo <strong>CCO (Copia Oculta)</strong> para proteger la privacidad entre alumnos.</li>
+            <li><strong>Límite diario de Google Workspace:</strong> Máximo <strong>2,000 destinatarios cada 24 horas</strong>. Para enviar los {{ correosUrpLista.length.toLocaleString() }} correos con total seguridad y evitar bloqueos temporales, envía hoy los primeros 7-8 lotes y mañana los restantes.</li>
+          </ul>
+        </div>
+
+        <!-- Lista de Lotes (Grid) -->
+        <div style="flex-grow: 1; overflow-y: auto; padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; align-content: start;">
+          <div 
+            v-for="lote in lotesCalculados" 
+            :key="lote.numero"
+            style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);"
+            :style="lotesCopiados.includes(lote.numero) ? 'border-color: #86efac; background: #f0fdf4;' : ''"
+          >
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 800; font-size: 0.95rem; color: #0f172a;">Lote {{ lote.numero }}</span>
+                <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;" :style="lotesCopiados.includes(lote.numero) ? 'background: #dcfce7; color: #15803d;' : 'background: #ffedd5; color: #c2410c;'">
+                  {{ lote.cantidad }} correos
+                </span>
+              </div>
+              <div style="font-size: 0.75rem; color: #64748b; margin-top: 3px;">
+                Alumnos del {{ lote.desde.toLocaleString() }} al {{ lote.hasta.toLocaleString() }}
+              </div>
+            </div>
+
+            <div>
+              <button 
+                type="button" 
+                class="btn" 
+                :style="lotesCopiados.includes(lote.numero) 
+                  ? 'background: #16a34a; color: white; border: 1px solid #16a34a;' 
+                  : 'background: #fff7ed; color: #ea580c; border: 1px solid #ea580c;'"
+                style="border-radius: 8px; padding: 7px 14px; font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;"
+                @click="copiarLote(lote)"
+                :title="`Copiar los ${lote.cantidad} correos del Lote ${lote.numero}`"
+              >
+                <svg v-if="lotesCopiados.includes(lote.numero)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>{{ loteCopiadoIndex === lote.numero ? '¡Copiado! ✓' : (lotesCopiados.includes(lote.numero) ? 'Copiado ✓' : `Copiar Lote ${lote.numero}`) }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <button 
+            type="button" 
+            class="btn" 
+            style="background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.78rem; font-weight: 600; padding: 6px 12px; cursor: pointer;"
+            @click="copiarTodosSinLotes"
+            title="Copiar todos los correos de una sola vez sin dividir (no recomendado para Gmail por límites anti-spam)"
+          >
+            Copiar todos de una vez ({{ correosUrpLista.length.toLocaleString() }})
+          </button>
+
+          <button class="btn btn-secondary" @click="showLotesModal = false" style="border-radius: 8px; padding: 8px 22px;">
+            Cerrar
+          </button>
         </div>
       </div>
     </div>
