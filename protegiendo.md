@@ -69,6 +69,11 @@ Se modificaron los servicios `cl-db` y `cl-backend` para que consuman dinámicam
 ### 3.7. Preservación del Agente de Escritorio (`Agent`)
 * **Intacto:** La autenticación de emergencia (`ADMIN_MASTER_99` y `masterfamurp`) en `Agent/MainWindow.xaml.cs` se mantuvo exactamente igual por solicitud del usuario, garantizando que los ejecutables ya instalados en las computadoras del laboratorio sigan funcionando con normalidad.
 
+### 3.8. Sanitización Automática de Espacios en Blanco (`.Trim()`)
+* **`AuthController.cs`:** Se aplica `.Trim()` a `CodigoUniversitario`, `DNI` y `NombreRed` al momento del inicio de sesión, y se consulta en base de datos comparando con campos limpios (`a.CodigoUniversitario.Trim()` y `a.DNI.Trim()`). Esto tolera espacios accidentales al inicio o final de las credenciales de los estudiantes. También se limpia `Username` y `Password` en el login de administrador.
+* **`AlumnosController.cs`:** Se limpian los espacios en blanco de todos los campos de texto (`CodigoUniversitario`, `DNI`, nombres, etc.) al crear, editar o importar masivamente alumnos.
+* **`Agent/MainWindow.xaml.cs`:** Se añadió limpieza previa con `.Trim()` antes de enviar la petición de login.
+
 ---
 
 ## 4. Nueva Funcionalidad: Copiar Correos para Gmail
@@ -77,8 +82,8 @@ En el módulo administrativo de alumnos (`Admin/src/components/AlumnosCRUD.vue`)
 
 1. **Lógica de Extracción (`copiarCorreosGmail`):**
    * Filtra los alumnos según el modo seleccionado (por defecto todos los alumnos activos).
-   * Prioriza el `correoInstitucional` de cada estudiante; si no existe, toma el `correoPersonal`.
-   * Elimina duplicados de manera automática.
+   * **Filtro estricto de dominio:** Solo incluye correos que terminen en `@urp.edu.pe` (prioriza el institucional y, si no, el personal si tiene dicho dominio).
+   * Elimina duplicados de manera automática y normaliza a minúsculas.
    * Une los correos separados por coma y espacio: `correo1@urp.edu.pe, correo2@urp.edu.pe, ...`, que es el formato exacto requerido por el campo **Para** o **CCO** de Gmail.
    * Utiliza el API `navigator.clipboard.writeText` con respaldo para navegadores antiguos (`document.execCommand`).
 2. **Interfaz de Usuario (Modal "Mensaje nuevo"):**

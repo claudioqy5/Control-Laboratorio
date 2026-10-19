@@ -45,8 +45,16 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
+            var codigo = request.CodigoUniversitario?.Trim() ?? string.Empty;
+            var dni = request.DNI?.Trim() ?? string.Empty;
+            var nombreRed = request.NombreRed?.Trim() ?? string.Empty;
+
+            request.CodigoUniversitario = codigo;
+            request.DNI = dni;
+            request.NombreRed = nombreRed;
+
             var alumno = await _context.Alumnos
-                .FirstOrDefaultAsync(a => a.CodigoUniversitario == request.CodigoUniversitario && a.DNI == request.DNI);
+                .FirstOrDefaultAsync(a => a.CodigoUniversitario.Trim() == codigo && a.DNI.Trim() == dni);
 
             if (alumno == null)
             {
@@ -278,10 +286,12 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("admin-login")]
         public IActionResult AdminLogin([FromBody] AdminLoginRequest request)
         {
+            var username = request.Username?.Trim() ?? string.Empty;
+            var password = request.Password?.Trim() ?? string.Empty;
             var expectedUsername = _configuration["AdminSettings:Username"] ?? "admin";
             var expectedPassword = _configuration["AdminSettings:Password"] ?? "admin123";
 
-            if (request.Username == expectedUsername && request.Password == expectedPassword)
+            if (username == expectedUsername && password == expectedPassword)
             {
                 return Ok(new { token = "fake-jwt-token-for-now", message = "Bienvenido Administrador" });
             }

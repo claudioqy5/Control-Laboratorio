@@ -213,27 +213,43 @@ const copiadoFeedback = ref(false)
 const copiarCorreosGmail = async () => {
   let correos = []
 
+  const esUrp = (email) => {
+    return typeof email === 'string' && email.trim().toLowerCase().endsWith('@urp.edu.pe')
+  }
+
   if (correoTipoDestinatario.value === 'alumno' && correoSelectedAlumnoID.value) {
     const alum = alumnos.value.find(a => a.alumnoID === correoSelectedAlumnoID.value)
     if (alum) {
-      const email = (alum.correoInstitucional || alum.correoPersonal || '').trim()
-      if (email) correos.push(email)
+      if (esUrp(alum.correoInstitucional)) {
+        correos.push(alum.correoInstitucional.trim().toLowerCase())
+      } else if (esUrp(alum.correoPersonal)) {
+        correos.push(alum.correoPersonal.trim().toLowerCase())
+      }
     }
   } else if (correoTipoDestinatario.value === 'personalizado' && correoCustomEmail.value.trim()) {
-    correos.push(correoCustomEmail.value.trim())
-  } else {
-    // Por defecto o 'todos': alumnos activos con correo (prioriza institucional, sino personal)
-    let lista = alumnos.value.filter(a => a.estado && (a.correoInstitucional || a.correoPersonal))
-    if (lista.length === 0) {
-      lista = alumnos.value.filter(a => a.correoInstitucional || a.correoPersonal)
+    if (esUrp(correoCustomEmail.value)) {
+      correos.push(correoCustomEmail.value.trim().toLowerCase())
     }
-    correos = lista.map(a => (a.correoInstitucional || a.correoPersonal).trim()).filter(Boolean)
+  } else {
+    // Por defecto o 'todos': alumnos activos con correo @urp.edu.pe (prioriza institucional, sino personal)
+    const getUrpEmail = (a) => {
+      if (esUrp(a.correoInstitucional)) return a.correoInstitucional.trim().toLowerCase()
+      if (esUrp(a.correoPersonal)) return a.correoPersonal.trim().toLowerCase()
+      return null
+    }
+
+    let lista = alumnos.value.filter(a => a.estado && getUrpEmail(a))
+    if (lista.length === 0) {
+      lista = alumnos.value.filter(a => getUrpEmail(a))
+    }
+    correos = lista.map(a => getUrpEmail(a)).filter(Boolean)
   }
 
-  const correosUnicos = [...new Set(correos)]
+  // Filtrado estricto por dominio @urp.edu.pe y eliminación de duplicados
+  const correosUnicos = [...new Set(correos.filter(esUrp))]
 
   if (correosUnicos.length === 0) {
-    showToast('No se encontraron correos válidos para copiar.', 'error')
+    showToast('No se encontraron correos que terminen en @urp.edu.pe para copiar.', 'error')
     return
   }
 
@@ -258,7 +274,7 @@ const copiarCorreosGmail = async () => {
       copiadoFeedback.value = false
     }, 3000)
 
-    showToast(`✓ Se copiaron ${correosUnicos.length} correos al portapapeles. ¡Listos para pegar en Gmail!`, 'success')
+    showToast(`✓ Se copiaron ${correosUnicos.length} correos (@urp.edu.pe) al portapapeles. ¡Listos para pegar en Gmail!`, 'success')
   } catch (err) {
     console.error('Error al copiar correos al portapapeles:', err)
     showToast('No se pudo copiar automáticamente. Intente nuevamente.', 'error')

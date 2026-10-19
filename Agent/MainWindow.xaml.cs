@@ -167,9 +167,12 @@ namespace ControlLaboratorio.Agent
         private async void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
             lblError.Visibility = Visibility.Collapsed;
+
+            var codigoInput = txtCodigo.Text?.Trim() ?? string.Empty;
+            var dniInput = txtDNI.Password?.Trim() ?? string.Empty;
             
             // LOGICA DE EMERGENCIA (SUPERADMINISTRADOR)
-            if (txtCodigo.Text == "ADMIN_MASTER_99" && txtDNI.Password == "masterfamurp")
+            if (codigoInput == "ADMIN_MASTER_99" && dniInput == "masterfamurp")
             {
                 // Intentar registrar el equipo silenciosamente por si hay conexión
                 try
@@ -193,8 +196,8 @@ namespace ControlLaboratorio.Agent
             {
                 var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/login", new
                 {
-                    CodigoUniversitario = txtCodigo.Text,
-                    DNI = txtDNI.Password,
+                    CodigoUniversitario = codigoInput,
+                    DNI = dniInput,
                     NombreRed = Environment.MachineName
                 });
 
