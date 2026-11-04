@@ -1,0 +1,12 @@
+**/.git
+**/.github
+**/node_modules
+**/dist
+**/coverage
+**/__tests__/**
+**/*.spec.js
+**/*.spec.ts
+**/*.test.js
+**/*.test.ts
+**/*.md
+**/.vscode

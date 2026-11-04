@@ -1,0 +1,13 @@
+**/.git
+**/.github
+**/bin/
+**/obj/
+**/publish/
+**/publish_release/
+**/.vs
+**/.vscode
+**/*.user
+**/*.suo
+**/[Tt]est*/
+**/*[Tt]est*.cs
+**/*.md
