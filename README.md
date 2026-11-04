@@ -166,7 +166,17 @@ Esta arquitectura de backend centralizado aporta las siguientes ventajas operati
 
 ---
 
-## 6. CONTACTO Y SEDE INSTITUCIONAL
+## 6. CALIDAD DE SOFTWARE, SUITE DE PRUEBAS Y DOCUMENTACIÓN TÉCNICA
+
+El proyecto cuenta con un ecosistema de integración continua (CI/CD) y una suite integral de 86 pruebas automatizadas que verifican el cumplimiento funcional, la integridad de datos y la seguridad institucional:
+
+- **Suite de Pruebas Automatizadas:** 78 pruebas de backend en .NET 8 (xUnit, Moq, InMemory) y 8 pruebas de componentes web en Vue 3 (Vitest, JSDOM).
+- **Especificación Funcional y Criterios Gherkin (BDD):** La documentación detallada de cada caso de prueba estructurada en Historias de Usuario con escenarios Given-When-Then y trazabilidad a código se encuentra en [`docs/TESTS_SPECIFICATION.md`](docs/TESTS_SPECIFICATION.md).
+- **Flujo de Integración Continua (CI/CD Quality Gate):** Cada pull request o cambio a ramas principales ejecuta automáticamente la compilación estricta y la totalidad de las pruebas en entornos aislados antes de autorizar cualquier despliegue.
+
+---
+
+## 7. CONTACTO Y SEDE INSTITUCIONAL
 
 - **Biblioteca Virtual y Especializada (BVE-FAMURP)**  
   Facultad de Medicina Humana "Manuel Velasco Suárez"  
