@@ -247,8 +247,8 @@ namespace ControlLaboratorio.API.Controllers
                 {
                     alumnoID = g.Key,
                     codigo = g.First().Alumno!.CodigoUniversitario,
-                    nombreCompleto = $"{g.First().Alumno!.Nombres} {g.First().Alumno.ApellidoPaterno}".Trim(),
-                    carrera = g.First().Alumno.Carrera,
+                    nombreCompleto = $"{g.First().Alumno!.Nombres} {g.First().Alumno!.ApellidoPaterno}".Trim(),
+                    carrera = g.First().Alumno!.Carrera,
                     totalSesiones = g.Count(),
                     totalMinutos = Math.Round(g.Sum(s => s.HoraFin.HasValue 
                         ? (s.HoraFin.Value - s.HoraInicio).TotalMinutes 
@@ -265,7 +265,7 @@ namespace ControlLaboratorio.API.Controllers
                 {
                     equipoID = g.Key,
                     nombreRed = g.First().Equipo!.NombreRed,
-                    alias = g.First().Equipo.Alias,
+                    alias = g.First().Equipo!.Alias,
                     totalSesiones = g.Count(),
                     totalMinutos = Math.Round(g.Sum(s => s.HoraFin.HasValue 
                         ? (s.HoraFin.Value - s.HoraInicio).TotalMinutes 
@@ -311,10 +311,10 @@ namespace ControlLaboratorio.API.Controllers
                 {
                     alumnoID = g.Key,
                     codigo = g.First().Alumno!.CodigoUniversitario,
-                    dni = g.First().Alumno.DNI,
-                    nombreCompleto = $"{g.First().Alumno!.Nombres} {g.First().Alumno.ApellidoPaterno} {g.First().Alumno.ApellidoMaterno}".Trim(),
-                    carrera = g.First().Alumno.Carrera,
-                    correoInstitucional = g.First().Alumno.CorreoInstitucional,
+                    dni = g.First().Alumno!.DNI,
+                    nombreCompleto = $"{g.First().Alumno!.Nombres} {g.First().Alumno!.ApellidoPaterno} {g.First().Alumno!.ApellidoMaterno}".Trim(),
+                    carrera = g.First().Alumno!.Carrera,
+                    correoInstitucional = g.First().Alumno!.CorreoInstitucional,
                     totalSesiones = g.Count(),
                     totalMinutos = Math.Round(g.Sum(s => s.HoraFin.HasValue 
                         ? (s.HoraFin.Value - s.HoraInicio).TotalMinutes 

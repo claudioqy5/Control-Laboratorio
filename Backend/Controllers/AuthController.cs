@@ -169,7 +169,7 @@ namespace ControlLaboratorio.API.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
+            double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
             double segundosLimite = alumno.LimiteDiarioSegundos;
             double segundosRestantes;
 
@@ -266,7 +266,7 @@ namespace ControlLaboratorio.API.Controllers
                     .Where(s => s.AlumnoID == sesion.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
                     .ToListAsync();
 
-                double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
+                double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
                 
                 // Si consumió su límite diario (con un pequeño margen de 1 minuto por retrasos de red)
                 if (segundosConsumidosHoy >= (sesion.Alumno.LimiteDiarioSegundos - 60))
@@ -517,7 +517,7 @@ namespace ControlLaboratorio.API.Controllers
                         .Where(s => s.AlumnoID == sesionActiva.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
                         .ToListAsync();
 
-                    double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin.Value - s.HoraInicio).TotalSeconds);
+                    double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
                     
                     if (segundosConsumidosHoy >= (sesionActiva.Alumno.LimiteDiarioSegundos - 60))
                     {
