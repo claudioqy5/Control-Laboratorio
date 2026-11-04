@@ -1,0 +1,80 @@
+name: CI/CD Quality Gate & Deploy Pipeline
+
+on:
+  push:
+    branches: [ main, master, 'feature/**' ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-backend:
+    name: Backend Tests (.NET 8)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore ControlLaboratorio.sln
+
+      - name: Build solution
+        run: dotnet build ControlLaboratorio.sln --no-restore --configuration Release
+
+      - name: Run backend tests
+        run: dotnet test ControlLaboratorio.sln --no-build --configuration Release --verbosity normal
+
+  test-frontend:
+    name: Frontend Tests (Vue 3 / Vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Admin
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run frontend tests
+        run: npm test
+
+      - name: Build frontend
+        run: npm run build
+
+  deploy:
+    name: Deploy to VPS
+    needs: [test-backend, test-frontend]
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST || secrets.SSH_HOST }}
+          username: ${{ secrets.VPS_USER || secrets.SSH_USER }}
+          password: ${{ secrets.VPS_PASSWORD || secrets.SSH_PASSWORD }}
+          key: ${{ secrets.VPS_SSH_KEY || secrets.SSH_PRIVATE_KEY }}
+          script: |
+            mkdir -p /var/www/bve-famurp
+            cd /var/www/bve-famurp
+            if [ -d .git ]; then
+              git pull origin main || git pull origin master
+            else
+              git clone https://github.com/claudioqy5/Control-Laboratorio.git .
+            fi
+            docker compose up -d --build
+            docker image prune -f
