@@ -8,9 +8,6 @@ publish_exe/
 node_modules/
 dist/
 
-# Docker
-.dockerignore
-
 # IDEs
 .vs/
 .vscode/
