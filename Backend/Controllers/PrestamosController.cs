@@ -65,134 +65,146 @@ namespace ControlLaboratorio.API.Controllers
         [HttpPost("SincronizarAbsys")]
         public async Task<IActionResult> SincronizarAbsys([FromBody] SincronizarAbsysDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.CodigoBarrasLibro))
+            try
             {
-                return BadRequest(new { mensaje = "El código de barras del libro es obligatorio" });
-            }
-
-            var operacion = (dto.TipoOperacion ?? "PRESTAMO").Trim().ToUpper();
-
-            // 1. Buscar o registrar automáticamente el Libro si no existe
-            var libro = await _context.Libros.FirstOrDefaultAsync(l => l.CodigoBarras == dto.CodigoBarrasLibro.Trim());
-            if (libro == null)
-            {
-                libro = new Libro
+                if (string.IsNullOrWhiteSpace(dto.CodigoBarrasLibro))
                 {
-                    CodigoBarras = dto.CodigoBarrasLibro.Trim(),
-                    NroRegistro = dto.CodigoBarrasLibro.Trim(),
-                    NroClasificacion = "S/C",
-                    Titulo = !string.IsNullOrWhiteSpace(dto.TituloLibro) ? dto.TituloLibro.Trim() : $"Libro {dto.CodigoBarrasLibro}",
-                    Autor = "Registrado vía AbsysNet",
-                    Categoria = "Medicina",
-                    Estado = operacion == "PRESTAMO" ? "Prestado" : "Disponible"
-                };
-                _context.Libros.Add(libro);
-                await _context.SaveChangesAsync();
-            }
+                    return BadRequest(new { mensaje = "El código de barras del libro es obligatorio" });
+                }
 
-            // 2. Operación de DEVOLUCIÓN
-            if (operacion == "DEVOLUCION")
-            {
-                var prestamoActivo = await _context.Prestamos
-                    .Include(p => p.Libro)
-                    .Include(p => p.Alumno)
-                    .Where(p => p.LibroID == libro.LibroID && (p.Estado == "Activo" || p.Estado == "Renovado"))
-                    .OrderByDescending(p => p.FechaPrestamo)
-                    .FirstOrDefaultAsync();
+                var operacion = (dto.TipoOperacion ?? "PRESTAMO").Trim().ToUpper();
 
-                if (prestamoActivo != null)
+                // 1. Buscar o registrar automáticamente el Libro si no existe
+                var libro = await _context.Libros.FirstOrDefaultAsync(l => l.CodigoBarras == dto.CodigoBarrasLibro.Trim());
+                if (libro == null)
                 {
-                    prestamoActivo.FechaEntregado = DateTime.Now;
-                    prestamoActivo.Estado = "Devuelto";
-                    libro.Estado = "Disponible";
-
-                    await _context.SaveChangesAsync();
-                    return Ok(new
+                    libro = new Libro
                     {
-                        mensaje = "Devolución registrada con éxito en Control-Laboratorio",
-                        prestamoId = prestamoActivo.PrestamoID,
-                        alumno = prestamoActivo.Alumno != null ? prestamoActivo.Alumno.CodigoUniversitario : "N/A",
-                        libro = libro.Titulo
-                    });
-                }
-                else
-                {
-                    libro.Estado = "Disponible";
+                        CodigoBarras = dto.CodigoBarrasLibro.Trim(),
+                        NroRegistro = dto.CodigoBarrasLibro.Trim(),
+                        NroClasificacion = "S/C",
+                        Titulo = !string.IsNullOrWhiteSpace(dto.TituloLibro) ? dto.TituloLibro.Trim() : $"Libro {dto.CodigoBarrasLibro}",
+                        Autor = "Registrado vía AbsysNet",
+                        Categoria = "Medicina",
+                        Estado = operacion == "PRESTAMO" ? "Prestado" : "Disponible"
+                    };
+                    _context.Libros.Add(libro);
                     await _context.SaveChangesAsync();
-                    return Ok(new { mensaje = "El libro no tenía un préstamo activo pendiente, su estado se actualizó a Disponible" });
                 }
-            }
 
-            // 3. Operación de PRÉSTAMO
-            if (string.IsNullOrWhiteSpace(dto.CodigoAlumno))
-            {
-                return BadRequest(new { mensaje = "El código de alumno es requerido para registrar un préstamo" });
-            }
-
-            var codLimpio = dto.CodigoAlumno.Trim();
-            var alumno = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == codLimpio || a.DNI == codLimpio);
-
-            if (alumno == null)
-            {
-                // Auto-crear alumno preliminar si aún no estaba en la base de datos de laboratorio
-                var nombreParts = (dto.NombreAlumno ?? "Estudiante URP").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                var nombres = nombreParts.Length > 0 ? nombreParts[0] : "Estudiante";
-                var apPaterno = nombreParts.Length > 1 ? nombreParts[1] : "URP";
-                var apMaterno = nombreParts.Length > 2 ? nombreParts[2] : "";
-
-                alumno = new Alumno
+                // 2. Operación de DEVOLUCIÓN
+                if (operacion == "DEVOLUCION")
                 {
-                    CodigoUniversitario = codLimpio,
-                    DNI = codLimpio.Length == 8 ? codLimpio : "00000000",
-                    Nombres = nombres,
-                    ApellidoPaterno = apPaterno,
-                    ApellidoMaterno = apMaterno,
-                    Carrera = "Medicina Humana",
-                    Estado = true
+                    var prestamoActivo = await _context.Prestamos
+                        .Include(p => p.Libro)
+                        .Include(p => p.Alumno)
+                        .Where(p => p.LibroID == libro.LibroID && (p.Estado == "Activo" || p.Estado == "Renovado"))
+                        .OrderByDescending(p => p.FechaPrestamo)
+                        .FirstOrDefaultAsync();
+
+                    if (prestamoActivo != null)
+                    {
+                        prestamoActivo.FechaEntregado = DateTime.Now;
+                        prestamoActivo.Estado = "Devuelto";
+                        libro.Estado = "Disponible";
+
+                        await _context.SaveChangesAsync();
+                        return Ok(new
+                        {
+                            mensaje = "Devolución registrada con éxito en Control-Laboratorio",
+                            prestamoId = prestamoActivo.PrestamoID,
+                            alumno = prestamoActivo.Alumno != null ? prestamoActivo.Alumno.CodigoUniversitario : "N/A",
+                            libro = libro.Titulo
+                        });
+                    }
+                    else
+                    {
+                        libro.Estado = "Disponible";
+                        await _context.SaveChangesAsync();
+                        return Ok(new { mensaje = "El libro no tenía un préstamo activo pendiente, su estado se actualizó a Disponible" });
+                    }
+                }
+
+                // 3. Operación de PRÉSTAMO
+                if (string.IsNullOrWhiteSpace(dto.CodigoAlumno))
+                {
+                    return BadRequest(new { mensaje = "El código de alumno es requerido para registrar un préstamo" });
+                }
+
+                var codLimpio = dto.CodigoAlumno.Trim();
+                var alumno = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == codLimpio || a.DNI == codLimpio);
+
+                if (alumno == null)
+                {
+                    // Auto-crear alumno preliminar si aún no estaba en la base de datos de laboratorio
+                    var nombreParts = (dto.NombreAlumno ?? "Estudiante URP").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var nombres = nombreParts.Length > 0 ? nombreParts[0] : "Estudiante";
+                    var apPaterno = nombreParts.Length > 1 ? nombreParts[1] : "URP";
+                    var apMaterno = nombreParts.Length > 2 ? nombreParts[2] : "";
+
+                    alumno = new Alumno
+                    {
+                        CodigoUniversitario = codLimpio,
+                        DNI = codLimpio.Length == 8 ? codLimpio : "00000000",
+                        Nombres = nombres,
+                        ApellidoPaterno = apPaterno,
+                        ApellidoMaterno = apMaterno,
+                        Carrera = "Medicina Humana",
+                        Estado = true
+                    };
+                    _context.Alumnos.Add(alumno);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Evitar préstamos duplicados si el script envía la misma lectura en los últimos 2 minutos
+                var haceDosMinutos = DateTime.Now.AddMinutes(-2);
+                var yaExiste = await _context.Prestamos.AnyAsync(p => 
+                    p.AlumnoID == alumno.AlumnoID && 
+                    p.LibroID == libro.LibroID && 
+                    p.Estado == "Activo" && 
+                    p.FechaPrestamo >= haceDosMinutos);
+
+                if (yaExiste)
+                {
+                    return Ok(new { mensaje = "El préstamo ya fue registrado previamente", libro = libro.Titulo, alumno = alumno.CodigoUniversitario });
+                }
+
+                // Fecha de devolución (3 días hábiles o la fecha enviada de AbsysNet)
+                var fechaDev = dto.FechaDevolucion.HasValue && dto.FechaDevolucion.Value > DateTime.Now 
+                    ? dto.FechaDevolucion.Value 
+                    : DateTime.Now.AddDays(3);
+
+                var nuevoPrestamo = new Prestamo
+                {
+                    AlumnoID = alumno.AlumnoID,
+                    LibroID = libro.LibroID,
+                    FechaPrestamo = DateTime.Now,
+                    FechaDevolucion = fechaDev,
+                    Estado = "Activo"
                 };
-                _context.Alumnos.Add(alumno);
+
+                libro.Estado = "Prestado";
+                _context.Prestamos.Add(nuevoPrestamo);
                 await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    mensaje = "Préstamo sincronizado con éxito desde AbsysNet",
+                    prestamoId = nuevoPrestamo.PrestamoID,
+                    alumno = $"{alumno.CodigoUniversitario} - {alumno.Nombres} {alumno.ApellidoPaterno}",
+                    libro = $"{libro.CodigoBarras} - {libro.Titulo}",
+                    fechaDevolucion = nuevoPrestamo.FechaDevolucion
+                });
             }
-
-            // Evitar préstamos duplicados si el script envía la misma lectura en los últimos 2 minutos
-            var haceDosMinutos = DateTime.Now.AddMinutes(-2);
-            var yaExiste = await _context.Prestamos.AnyAsync(p => 
-                p.AlumnoID == alumno.AlumnoID && 
-                p.LibroID == libro.LibroID && 
-                p.Estado == "Activo" && 
-                p.FechaPrestamo >= haceDosMinutos);
-
-            if (yaExiste)
+            catch (Exception ex)
             {
-                return Ok(new { mensaje = "El préstamo ya fue registrado previamente", libro = libro.Titulo, alumno = alumno.CodigoUniversitario });
+                return StatusCode(500, new 
+                { 
+                    error = "Error al sincronizar con AbsysNet", 
+                    detalle = ex.Message, 
+                    inner = ex.InnerException?.Message 
+                });
             }
-
-            // Fecha de devolución (3 días hábiles o la fecha enviada de AbsysNet)
-            var fechaDev = dto.FechaDevolucion.HasValue && dto.FechaDevolucion.Value > DateTime.Now 
-                ? dto.FechaDevolucion.Value 
-                : DateTime.Now.AddDays(3);
-
-            var nuevoPrestamo = new Prestamo
-            {
-                AlumnoID = alumno.AlumnoID,
-                LibroID = libro.LibroID,
-                FechaPrestamo = DateTime.Now,
-                FechaDevolucion = fechaDev,
-                Estado = "Activo"
-            };
-
-            libro.Estado = "Prestado";
-            _context.Prestamos.Add(nuevoPrestamo);
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                mensaje = "Préstamo sincronizado con éxito desde AbsysNet",
-                prestamoId = nuevoPrestamo.PrestamoID,
-                alumno = $"{alumno.CodigoUniversitario} - {alumno.Nombres} {alumno.ApellidoPaterno}",
-                libro = $"{libro.CodigoBarras} - {libro.Titulo}",
-                fechaDevolucion = nuevoPrestamo.FechaDevolucion
-            });
         }
 
         // GET: api/Prestamos/Alumno/5

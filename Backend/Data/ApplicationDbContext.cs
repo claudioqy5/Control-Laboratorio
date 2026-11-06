@@ -71,13 +71,13 @@ namespace ControlLaboratorio.API.Data
 
             modelBuilder.Entity<Prestamo>()
                 .HasOne(p => p.Libro)
-                .WithMany()
+                .WithMany(l => l.Prestamos)
                 .HasForeignKey(p => p.LibroID)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<Multa>()
                 .HasOne(m => m.Prestamo)
-                .WithMany()
+                .WithMany(p => p.Multas)
                 .HasForeignKey(m => m.PrestamoID)
                 .OnDelete(DeleteBehavior.NoAction);
         }
