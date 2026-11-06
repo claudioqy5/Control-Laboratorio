@@ -91,6 +91,17 @@ namespace ControlLaboratorio.API.Controllers
                     _context.Libros.Add(libro);
                     await _context.SaveChangesAsync();
                 }
+                else
+                {
+                    // Actualizar el título si el libro tenía un título genérico o de prueba
+                    if (!string.IsNullOrWhiteSpace(dto.TituloLibro) && 
+                        !dto.TituloLibro.Contains("Material Bibliográfico") &&
+                        (libro.Titulo.Contains("Prueba") || libro.Titulo.StartsWith("Libro ") || libro.Titulo != dto.TituloLibro.Trim()))
+                    {
+                        libro.Titulo = dto.TituloLibro.Trim();
+                        await _context.SaveChangesAsync();
+                    }
+                }
 
                 // 2. Operación de DEVOLUCIÓN
                 if (operacion == "DEVOLUCION")

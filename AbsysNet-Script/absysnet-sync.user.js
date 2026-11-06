@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AbsysNet -> Control Laboratorio & Biblioteca URP Sync
 // @namespace    https://medicina.urp.edu.pe/bve
-// @version      1.3.0
+// @version      1.4.0
 // @description  Captura automática de préstamos y devoluciones en AbsysNet y sincronización en tiempo real con Control-Laboratorio.
 // @author       Facultad de Medicina Humana - URP
 // @match        https://biblioteca.urp.edu.pe/abnet/*
@@ -40,144 +40,143 @@
     // OBTENER TODOS LOS DOCUMENTOS (FRAMES / FRAMESETS)
     // ========================================================
     function getAllDocuments() {
-        const docs = [document];
+        const docs = [];
         try {
-            const rootWin = window.top || window;
-            if (rootWin && rootWin.document && !docs.includes(rootWin.document)) {
-                docs.push(rootWin.document);
-            }
             function inspectWin(w) {
                 try {
-                    for (let i = 0; i < w.frames.length; i++) {
-                        const subWin = w.frames[i];
-                        try {
-                            if (subWin && subWin.document && !docs.includes(subWin.document)) {
-                                docs.push(subWin.document);
-                                inspectWin(subWin);
-                            }
-                        } catch (e) {}
+                    if (w && w.document && !docs.includes(w.document)) {
+                        docs.push(w.document);
+                    }
+                    if (w.frames) {
+                        for (let i = 0; i < w.frames.length; i++) {
+                            inspectWin(w.frames[i]);
+                        }
                     }
                 } catch (e) {}
             }
-            if (rootWin) inspectWin(rootWin);
-        } catch (e) {}
+            inspectWin(window.top || window);
+        } catch (e) {
+            docs.push(document);
+        }
         return docs;
     }
 
     // ========================================================
-    // WIDGET FLOTANTE VISIBLE SOBRE TODOS LOS MARCOS (FRAMES)
+    // WIDGET FLOTANTE VISIBLE SOBRE LOS MARCOS DE ABSYSNET
     // ========================================================
     function createWidget() {
         try {
-            // Colocar en el documento superior (window.top) para que no quede atrapado en ningún frame
-            const topDoc = (window.top && window.top.document) ? window.top.document : document;
-            if (topDoc.getElementById('bve-sync-widget')) return;
+            const allDocs = getAllDocuments();
+            // Buscar documentos con body renderizable
+            allDocs.forEach(doc => {
+                if (!doc.body) return;
+                if (doc.getElementById('bve-sync-widget')) return;
 
-            const widget = topDoc.createElement('div');
-            widget.id = 'bve-sync-widget';
-            widget.innerHTML = `
-                <div style="
-                    position: fixed !important;
-                    bottom: 20px !important;
-                    right: 25px !important;
-                    background: #ffffff !important;
-                    color: #111827 !important;
-                    padding: 12px 16px !important;
-                    border-radius: 14px !important;
-                    box-shadow: 0 12px 30px rgba(0,0,0,0.3), 0 4px 8px rgba(159,18,57,0.15) !important;
-                    border: 2px solid #9f1239 !important;
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-                    font-size: 12px !important;
-                    z-index: 2147483647 !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: 10px !important;
-                    user-select: none !important;
-                    min-width: 230px !important;
-                ">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div id="bve-status-dot" style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);"></div>
-                            <div>
-                                <div style="font-weight: 700; color: #9f1239; font-size: 12px; line-height: 1.2;">BVE Medicina URP</div>
-                                <div id="bve-status-text" style="color: #6b7280; font-size: 10px;">Sincronizador Conectado</div>
+                // Solo inyectar en frames con tamaño visual o en el frame principal
+                const win = doc.defaultView;
+                if (win && win.innerHeight < 150) return;
+
+                const widget = doc.createElement('div');
+                widget.id = 'bve-sync-widget';
+                widget.innerHTML = `
+                    <div style="
+                        position: fixed !important;
+                        bottom: 15px !important;
+                        right: 20px !important;
+                        background: #ffffff !important;
+                        color: #111827 !important;
+                        padding: 10px 14px !important;
+                        border-radius: 12px !important;
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.3), 0 4px 8px rgba(159,18,57,0.15) !important;
+                        border: 2px solid #9f1239 !important;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                        font-size: 12px !important;
+                        z-index: 2147483647 !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        gap: 8px !important;
+                        user-select: none !important;
+                        min-width: 210px !important;
+                    ">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div class="bve-status-dot" style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);"></div>
+                                <div>
+                                    <div style="font-weight: 700; color: #9f1239; font-size: 11px; line-height: 1.2;">BVE Medicina URP</div>
+                                    <div class="bve-status-text" style="color: #6b7280; font-size: 10px;">Sincronizador Activo</div>
+                                </div>
                             </div>
+                            <button class="bve-cfg-btn" title="Configurar URL del Servidor" style="background: transparent; border: none; cursor: pointer; font-size: 13px; padding: 2px;">⚙️</button>
                         </div>
-                        <button id="bve-cfg-btn" title="Configurar URL del Servidor" style="background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 2px;">⚙️</button>
+
+                        <div style="display: flex; gap: 6px;">
+                            <button class="bve-capture-btn" style="
+                                flex: 1;
+                                background: #9f1239;
+                                color: #ffffff;
+                                border: none;
+                                border-radius: 6px;
+                                padding: 6px 10px;
+                                font-size: 11px;
+                                font-weight: 700;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 4px;
+                                box-shadow: 0 2px 4px rgba(159,18,57,0.3);
+                            ">📥 Sincronizar Ahora</button>
+
+                            <button class="bve-test-btn" style="
+                                background: #f3f4f6;
+                                color: #374151;
+                                border: 1px solid #d1d5db;
+                                border-radius: 6px;
+                                padding: 6px 8px;
+                                font-size: 10px;
+                                font-weight: 600;
+                                cursor: pointer;
+                            " title="Verificar conectividad con el servidor (sin registrar préstamos)">⚡ Probar</button>
+                        </div>
                     </div>
+                `;
 
-                    <div style="display: flex; gap: 8px;">
-                        <button id="bve-capture-btn" style="
-                            flex: 1;
-                            background: #9f1239;
-                            color: #ffffff;
-                            border: none;
-                            border-radius: 6px;
-                            padding: 6px 10px;
-                            font-size: 11px;
-                            font-weight: 700;
-                            cursor: pointer;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 4px;
-                            box-shadow: 0 2px 4px rgba(159,18,57,0.3);
-                        ">📥 Capturar Ahora</button>
+                doc.body.appendChild(widget);
 
-                        <button id="bve-test-btn" style="
-                            background: #f3f4f6;
-                            color: #374151;
-                            border: 1px solid #d1d5db;
-                            border-radius: 6px;
-                            padding: 6px 10px;
-                            font-size: 11px;
-                            font-weight: 600;
-                            cursor: pointer;
-                        " title="Probar conexión con el servidor">⚡ Probar</button>
-                    </div>
-                </div>
-            `;
+                // Listeners
+                const captureBtn = widget.querySelector('.bve-capture-btn');
+                if (captureBtn) {
+                    captureBtn.addEventListener('click', () => {
+                        showToast('Escaneando pantalla de AbsysNet...', 'info');
+                        const encontrado = inspeccionarPantalla(true);
+                        if (!encontrado) {
+                            showToast('No se encontró un libro o alumno en la pantalla actual.', 'error');
+                        }
+                    });
+                }
 
-            // En un frameset, document.body puede ser null, usamos documentElement
-            const container = topDoc.body || topDoc.documentElement;
-            if (container) {
-                container.appendChild(widget);
-                console.log('[BVE Sync] Widget insertado exitosamente en window.top');
-            }
+                const testBtn = widget.querySelector('.bve-test-btn');
+                if (testBtn) {
+                    testBtn.addEventListener('click', () => {
+                        probarConexionServidor();
+                    });
+                }
 
-            // Listeners de los botones
-            const captureBtn = topDoc.getElementById('bve-capture-btn');
-            if (captureBtn) {
-                captureBtn.addEventListener('click', () => {
-                    showToast('Escaneando pantalla de AbsysNet...', 'info');
-                    const encontrado = inspeccionarPantalla(true);
-                    if (!encontrado) {
-                        showToast('No se encontró un libro o alumno en la pantalla actual.', 'error');
-                    }
-                });
-            }
-
-            const testBtn = topDoc.getElementById('bve-test-btn');
-            if (testBtn) {
-                testBtn.addEventListener('click', () => {
-                    probarConexionServidor();
-                });
-            }
-
-            const cfgBtn = topDoc.getElementById('bve-cfg-btn');
-            if (cfgBtn) {
-                cfgBtn.addEventListener('click', () => {
-                    const nueva = prompt('URL de la API de Control-Laboratorio:', API_URL);
-                    if (nueva && nueva.trim()) {
-                        API_URL = nueva.trim();
-                        try {
-                            if (typeof GM_setValue !== 'undefined') GM_setValue('SYNC_API_URL', API_URL);
-                            else localStorage.setItem('SYNC_API_URL', API_URL);
-                        } catch(e){}
-                        showToast('URL actualizada: ' + API_URL, 'info');
-                    }
-                });
-            }
+                const cfgBtn = widget.querySelector('.bve-cfg-btn');
+                if (cfgBtn) {
+                    cfgBtn.addEventListener('click', () => {
+                        const nueva = prompt('URL de la API de Control-Laboratorio:', API_URL);
+                        if (nueva && nueva.trim()) {
+                            API_URL = nueva.trim();
+                            try {
+                                if (typeof GM_setValue !== 'undefined') GM_setValue('SYNC_API_URL', API_URL);
+                                else localStorage.setItem('SYNC_API_URL', API_URL);
+                            } catch(e){}
+                            showToast('URL actualizada: ' + API_URL, 'info');
+                        }
+                    });
+                }
+            });
         } catch (e) {
             console.error('[BVE Sync] Error al crear widget:', e);
         }
@@ -188,64 +187,83 @@
     // ========================================================
     function showToast(mensaje, tipo = 'success') {
         try {
-            const topDoc = (window.top && window.top.document) ? window.top.document : document;
-            const toast = topDoc.createElement('div');
-            const color = tipo === 'success' ? '#065f46' : (tipo === 'info' ? '#1e40af' : '#991b1b');
-            toast.style.cssText = `
-                position: fixed !important;
-                top: 25px !important;
-                right: 25px !important;
-                background: ${color} !important;
-                color: #ffffff !important;
-                padding: 14px 20px !important;
-                border-radius: 10px !important;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.35) !important;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-                font-size: 13px !important;
-                font-weight: 600 !important;
-                z-index: 2147483647 !important;
-                transition: all 0.3s ease !important;
-                max-width: 380px !important;
-            `;
-            toast.innerText = mensaje;
-            const container = topDoc.body || topDoc.documentElement;
-            if (container) container.appendChild(toast);
+            const allDocs = getAllDocuments();
+            allDocs.forEach(doc => {
+                if (!doc.body) return;
+                const toast = doc.createElement('div');
+                const color = tipo === 'success' ? '#065f46' : (tipo === 'info' ? '#1e40af' : '#991b1b');
+                toast.style.cssText = `
+                    position: fixed !important;
+                    top: 20px !important;
+                    right: 20px !important;
+                    background: ${color} !important;
+                    color: #ffffff !important;
+                    padding: 12px 18px !important;
+                    border-radius: 8px !important;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.35) !important;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                    z-index: 2147483647 !important;
+                    transition: all 0.3s ease !important;
+                    max-width: 360px !important;
+                `;
+                toast.innerText = mensaje;
+                doc.body.appendChild(toast);
 
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-10px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 4500);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-10px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            });
         } catch(e){}
     }
 
     // ========================================================
-    // PROBAR CONEXIÓN
+    // PROBAR CONEXIÓN (PING SEGURO SIN CREAR PRÉSTAMOS FALSOS)
     // ========================================================
     function probarConexionServidor() {
-        showToast('Enviando prueba a ' + API_URL, 'info');
-        const testPayload = {
-            tipoOperacion: 'PRESTAMO',
-            codigoAlumno: '202110452',
-            nombreAlumno: 'Verificacion Conectividad',
-            codigoBarrasLibro: '1106597',
-            tituloLibro: 'Histología Ross Atlas'
+        const pingUrl = API_URL.replace(/\/SincronizarAbsys\/?$/, '/Ping');
+        showToast('Comprobando conexión con servidor...', 'info');
+
+        const onPingSuccess = (status) => {
+            if (status >= 200 && status < 300) {
+                showToast('✅ Conexión con servidor exitosa (200 OK)', 'success');
+            } else {
+                showToast('⚠️ Respuesta del servidor: HTTP ' + status, 'error');
+            }
         };
 
-        enviarAlServidor(testPayload, true);
+        const onPingError = () => {
+            showToast('❌ Error al conectar con ' + pingUrl, 'error');
+        };
+
+        if (typeof GM_xmlhttpRequest !== 'undefined') {
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: pingUrl,
+                onload: (res) => onPingSuccess(res.status),
+                onerror: onPingError
+            });
+        } else {
+            fetch(pingUrl)
+                .then(r => onPingSuccess(r.status))
+                .catch(onPingError);
+        }
     }
 
     // ========================================================
-    // DETECCIÓN DE MODO
+    // DETECCIÓN DE MODO (PRESTAMO / DEVOLUCION)
     // ========================================================
     function detectarModo() {
         const allDocs = getAllDocuments();
         for (const doc of allDocs) {
-            const txt = (doc.body ? doc.body.innerText : '') || (doc.documentElement ? doc.documentElement.innerText : '');
-            if (txt.includes('PRÉSTAMOS') || txt.includes('Fecha de préstamo')) {
+            const txt = (doc.body ? doc.body.innerText : '') || '';
+            if (txt.includes('PRÉSTAMOS') || txt.includes('Fecha de préstamo') || txt.includes('Prestamos')) {
                 return 'PRESTAMO';
             }
-            if (txt.includes('DEVOLUCIONES') || txt.includes('Fecha de devolución')) {
+            if (txt.includes('DEVOLUCIONES') || txt.includes('Fecha de devolución') || txt.includes('Devoluciones')) {
                 return 'DEVOLUCION';
             }
         }
@@ -261,43 +279,49 @@
 
         const allDocs = getAllDocuments();
         for (const doc of allDocs) {
-            const inputs = Array.from(doc.querySelectorAll('input'));
+            const inputs = Array.from(doc.querySelectorAll('input, textarea'));
 
-            // 1. Por name o id
+            // 1. Por name, id o clase 'lector'
             for (const input of inputs) {
                 const name = (input.name || '').toLowerCase();
                 const id = (input.id || '').toLowerCase();
                 if (name.includes('lector') || id.includes('lector')) {
-                    if (input.value && input.value.trim()) {
-                        codigo = input.value.trim();
+                    const v = (input.value || '').trim();
+                    if (/^\d{8,10}$/.test(v)) {
+                        codigo = v;
                         break;
                     }
                 }
             }
 
-            // 2. Por etiqueta "Nº lector"
+            // 2. Por etiqueta visible "Nº lector" o "N° lector"
             if (!codigo) {
-                const tags = doc.querySelectorAll('td, span, div, label, b, th');
-                for (const tag of tags) {
-                    const t = tag.innerText || '';
-                    if (t.includes('Nº lector') || t.includes('N° lector') || t.includes('Lector:')) {
-                        const row = tag.closest('tr') || tag.parentElement;
-                        if (row) {
-                            const inp = row.querySelector('input');
-                            if (inp && inp.value && inp.value.trim()) {
-                                codigo = inp.value.trim();
-                                break;
+                const labels = doc.querySelectorAll('td, span, div, label, b, th');
+                for (const lbl of labels) {
+                    const t = (lbl.innerText || '').toLowerCase();
+                    if (t.includes('lector')) {
+                        const tr = lbl.closest('tr') || lbl.parentElement;
+                        if (tr) {
+                            const inps = tr.querySelectorAll('input');
+                            for (const inp of inps) {
+                                const v = (inp.value || '').trim();
+                                if (/^\d{8,10}$/.test(v)) {
+                                    codigo = v;
+                                    break;
+                                }
                             }
                         }
                     }
+                    if (codigo) break;
                 }
             }
 
             // 3. Nombre del alumno
             for (const input of inputs) {
-                if (input.disabled || input.readOnly) {
-                    const v = (input.value || '').trim();
-                    if (v.length > 5 && /[A-Za-z]/.test(v) && v.includes(' ') && !v.includes('URP')) {
+                const v = (input.value || '').trim();
+                if (v.length > 5 && /[A-Z]/.test(v) && (v.includes(',') || v.includes(' ')) && 
+                    !v.includes('URP') && !v.includes('MEDICINA') && !v.includes('BARATZ')) {
+                    if (input.readOnly || input.disabled || (input.name || '').toLowerCase().includes('lector')) {
                         nombre = v;
                         break;
                     }
@@ -317,7 +341,7 @@
         const modo = detectarModo();
         const { codigo: codAlumno, nombre: nomAlumno } = obtenerDatosAlumno();
 
-        console.log('[BVE Sync] Inspeccionando pantalla... Modo:', modo, 'Alumno:', codAlumno);
+        console.log('[BVE Sync] Inspeccionando pantalla... Modo:', modo, 'Alumno:', codAlumno, nomAlumno);
 
         let encontrado = false;
         const allDocs = getAllDocuments();
@@ -328,45 +352,55 @@
                 const rows = Array.from(tabla.rows || []);
                 if (rows.length < 2) return;
 
-                const encabezado = (rows[0].innerText || '').toLowerCase();
-                if (encabezado.includes('barras') || encabezado.includes('título') || encabezado.includes('ejemp') || encabezado.includes('fecha')) {
+                const headerTexts = Array.from(rows[0].cells).map(c => (c.innerText || '').toLowerCase().trim());
+                const colBarras = headerTexts.findIndex(h => h.includes('barras') || h.includes('c. barras'));
+                const colTitulo = headerTexts.findIndex(h => h.includes('título') || h.includes('titulo'));
+                const colFechaDev = headerTexts.findIndex(h => h.includes('fecha devol') || h.includes('devol'));
+
+                const esTablaValida = headerTexts.some(h => h.includes('barras') || h.includes('ejemp') || h.includes('título'));
+
+                if (esTablaValida) {
                     for (let i = 1; i < rows.length; i++) {
                         const cells = Array.from(rows[i].cells || []);
-                        if (cells.length < 4) continue;
+                        if (cells.length < 3) continue;
 
-                        let cBarras = '';
-                        let titulo = '';
-                        let fechaDevol = null;
+                        let cBarras = colBarras >= 0 && cells[colBarras] ? cells[colBarras].innerText.trim() : '';
+                        let titulo = colTitulo >= 0 && cells[colTitulo] ? cells[colTitulo].innerText.trim() : '';
+                        let fechaDevStr = colFechaDev >= 0 && cells[colFechaDev] ? cells[colFechaDev].innerText.trim() : '';
 
-                        for (const cell of cells) {
-                            const txt = (cell.innerText || '').trim();
-                            if (/^[A-Za-z0-9\-_]{4,20}$/.test(txt) && !cBarras && !txt.includes('/')) {
-                                cBarras = txt;
-                            } else if (txt.length > 5 && !titulo && !/\d{2}\/\d{2}\/\d{4}/.test(txt)) {
-                                titulo = txt;
-                            } else if (/\d{2}\/\d{2}\/\d{4}/.test(txt) && !fechaDevol) {
-                                fechaDevol = parseFecha(txt);
+                        // Fallback heurístico si no están alineadas las columnas
+                        if (!cBarras) {
+                            for (const cell of cells) {
+                                const txt = cell.innerText.trim();
+                                if (/^[0-9]{5,15}$/.test(txt) && !cBarras) {
+                                    cBarras = txt;
+                                } else if (txt.length > 6 && !titulo && !txt.includes('/')) {
+                                    titulo = txt;
+                                } else if (/\d{2}\/\d{2}\/\d{4}/.test(txt) && !fechaDevStr) {
+                                    fechaDevStr = txt;
+                                }
                             }
                         }
 
                         if (cBarras) {
                             encontrado = true;
-                            sincronizarLibro(modo, codAlumno, nomAlumno, cBarras, titulo, fechaDevol);
+                            const fechaDev = parseFecha(fechaDevStr);
+                            sincronizarLibro(modo, codAlumno, nomAlumno, cBarras, titulo, fechaDev);
                         }
                     }
                 }
             });
 
-            // Si no hay tabla con filas pero hay un código de barras en un input
+            // Fallback si no hay tabla pero hay código de barras en un input
             if (!encontrado) {
                 const inputs = Array.from(doc.querySelectorAll('input'));
                 for (const input of inputs) {
                     const name = (input.name || '').toLowerCase();
                     if (name.includes('barras') || name.includes('ejemplar')) {
                         const val = (input.value || '').trim();
-                        if (val.length >= 4) {
+                        if (/^[0-9]{5,15}$/.test(val)) {
                             encontrado = true;
-                            sincronizarLibro(modo, codAlumno, nomAlumno, val, 'Material Bibliográfico URP', null);
+                            sincronizarLibro(modo, codAlumno, nomAlumno, val, '', null);
                             break;
                         }
                     }
@@ -380,9 +414,12 @@
     }
 
     function parseFecha(str) {
-        const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (!str) return null;
+        const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
         if (m) {
-            return `${m[3]}-${m[2]}-${m[1]}T18:00:00`;
+            const hh = m[4] || '18';
+            const mm = m[5] || '00';
+            return `${m[3]}-${m[2]}-${m[1]}T${hh}:${mm}:00`;
         }
         return null;
     }
@@ -401,37 +438,42 @@
 
         const payload = {
             tipoOperacion: modo,
-            codigoAlumno: codAlumno || 'ALUMNO-URP',
-            nombreAlumno: nomAlumno || 'Estudiante Medicina',
+            codigoAlumno: codAlumno || '',
+            nombreAlumno: nomAlumno || '',
             codigoBarrasLibro: cBarras,
-            tituloLibro: titulo || 'Material Bibliográfico URP',
+            tituloLibro: titulo || '',
             fechaDevolucion: fechaDevol
         };
 
         enviarAlServidor(payload);
     }
 
-    function enviarAlServidor(payload, esPrueba = false) {
+    function enviarAlServidor(payload) {
         console.log('[BVE Sync] Enviando datos a API:', payload);
 
-        const topDoc = (window.top && window.top.document) ? window.top.document : document;
-        const dot = topDoc.getElementById('bve-status-dot');
-        const txt = topDoc.getElementById('bve-status-text');
-        if (dot) dot.style.background = '#f59e0b';
-        if (txt) txt.innerText = 'Enviando...';
+        const allDocs = getAllDocuments();
+        allDocs.forEach(doc => {
+            const dot = doc.querySelector('.bve-status-dot');
+            const txt = doc.querySelector('.bve-status-text');
+            if (dot) dot.style.background = '#f59e0b';
+            if (txt) txt.innerText = 'Enviando...';
+        });
 
         const jsonStr = JSON.stringify(payload);
 
         const onSuccess = (status, responseText) => {
             console.log('[BVE Sync] Respuesta servidor (' + status + '):', responseText);
-            if (dot) dot.style.background = '#10b981';
-            if (txt) txt.innerText = 'Sincronizado ✓';
+            allDocs.forEach(doc => {
+                const dot = doc.querySelector('.bve-status-dot');
+                const txt = doc.querySelector('.bve-status-text');
+                if (dot) dot.style.background = '#10b981';
+                if (txt) txt.innerText = 'Sincronizado ✓';
+            });
 
             try {
                 const res = JSON.parse(responseText);
                 if (status >= 200 && status < 300) {
-                    const msg = esPrueba ? '✅ Conexión con servidor exitosa (200 OK)' : `✅ ${res.mensaje || 'Préstamo guardado'}`;
-                    showToast(msg, 'success');
+                    showToast(`✅ ${res.mensaje || 'Préstamo guardado'} (${res.alumno || payload.codigoAlumno})`, 'success');
                 } else {
                     showToast(`⚠️ Servidor: ${res.mensaje || res.error || responseText}`, 'error');
                 }
@@ -442,8 +484,12 @@
 
         const onError = (err) => {
             console.error('[BVE Sync] Error al conectar:', err);
-            if (dot) dot.style.background = '#ef4444';
-            if (txt) txt.innerText = 'Error de conexión';
+            allDocs.forEach(doc => {
+                const dot = doc.querySelector('.bve-status-dot');
+                const txt = doc.querySelector('.bve-status-text');
+                if (dot) dot.style.background = '#ef4444';
+                if (txt) txt.innerText = 'Error conexión';
+            });
             showToast('Error conectando con ' + API_URL, 'error');
         };
 
@@ -484,8 +530,8 @@
                 inspeccionarPantalla();
             });
 
-            if (doc.body || doc.documentElement) {
-                observer.observe(doc.body || doc.documentElement, {
+            if (doc.body) {
+                observer.observe(doc.body, {
                     childList: true,
                     subtree: true
                 });
@@ -497,8 +543,7 @@
         createWidget();
         setupListeners();
         inspeccionarPantalla();
-        // Reintentar crear widget cada 2s en caso de que los frames carguen tarde
-        setInterval(createWidget, 2000);
+        setInterval(createWidget, 2500);
     }
 
     if (document.readyState === 'loading') {
