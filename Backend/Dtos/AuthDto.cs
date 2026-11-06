@@ -12,12 +12,6 @@ namespace ControlLaboratorio.API.Dtos
         public int SesionId { get; set; }
     }
 
-    public class AdminLoginRequest
-    {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-    }
-
     public class SetSessionLimitRequest
     {
         public int SesionId { get; set; }

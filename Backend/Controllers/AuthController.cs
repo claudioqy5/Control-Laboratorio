@@ -5,6 +5,11 @@ using ControlLaboratorio.API.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ControlLaboratorio.API.Controllers
 {
@@ -71,7 +76,6 @@ namespace ControlLaboratorio.API.Controllers
 
             if (equipo == null)
             {
-                // Si el equipo no existe, lo registramos (opcional, dependiendo de la política)
                 equipo = new Equipo { NombreRed = request.NombreRed, Ubicacion = "Laboratorio Central", Estado = true };
                 _context.Equipos.Add(equipo);
                 await _context.SaveChangesAsync();
@@ -82,15 +86,11 @@ namespace ControlLaboratorio.API.Controllers
                 return BadRequest(new { message = "Este equipo está fuera de servicio." });
             }
 
-            // Verificar si ya tiene una sesión activa en este equipo (para evitar duplicados)
             var sesionActiva = await _context.Sesiones
                 .FirstOrDefaultAsync(s => s.EquipoID == equipo.EquipoID && s.HoraFin == null);
 
             if (sesionActiva != null)
             {
-                // Si la sesión activa en este mismo equipo pertenece al MISMO alumno y se creó hace menos de 3 minutos,
-                // significa que la respuesta de su login previo se perdió por parpadeo de red y volvió a hacer clic en Ingresar.
-                // Reutilizamos la sesión en lugar de cerrarla como huérfana de 0 minutos.
                 if (sesionActiva.AlumnoID == alumno.AlumnoID && (TimeHelper.GetPeruTime() - sesionActiva.HoraInicio).TotalMinutes < 3)
                 {
                     ActiveSessionPings[sesionActiva.SesionID] = TimeHelper.GetPeruTime();
@@ -114,10 +114,8 @@ namespace ControlLaboratorio.API.Controllers
                     });
                 }
 
-                // Como el equipo está en la pantalla de Login y es otra sesión o más antigua, es huérfana. La cerramos.
                 sesionActiva.HoraFin = TimeHelper.GetPeruTime();
                 
-                // Asegurar que no exceda el límite del día si era de ayer
                 if (sesionActiva.Fecha.Date < TimeHelper.GetPeruTime().Date)
                 {
                     sesionActiva.HoraFin = sesionActiva.HoraLimite ?? sesionActiva.HoraInicio.AddHours(3);
@@ -126,10 +124,6 @@ namespace ControlLaboratorio.API.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // Verificar si EL ALUMNO ya tiene una sesión abierta en CUALQUIER otro equipo.
-            // En lugar de bloquear el ingreso, cerramos la sesión anterior automáticamente.
-            // El Agent del equipo anterior detectará el cierre en su próximo poll (cada 3s)
-            // y ejecutará ForceLogout(), mostrando la pantalla de bloqueo sin intervención manual.
             var sesionAlumnoActiva = await _context.Sesiones
                 .Include(s => s.Equipo)
                 .FirstOrDefaultAsync(s => s.AlumnoID == alumno.AlumnoID && s.HoraFin == null);
@@ -138,31 +132,24 @@ namespace ControlLaboratorio.API.Controllers
             {
                 var ahora = TimeHelper.GetPeruTime();
 
-                // Si la sesión es de un día anterior, es huérfana: cerrar con HoraLimite para no distorsionar estadísticas.
                 if (sesionAlumnoActiva.Fecha.Date < ahora.Date)
                 {
                     sesionAlumnoActiva.HoraFin = sesionAlumnoActiva.HoraLimite ?? sesionAlumnoActiva.HoraInicio.AddHours(3);
                 }
                 else
                 {
-                    // Sesión activa del mismo día en otro equipo: cerrarla ahora.
-                    // El Agent de ese equipo lo detectará en su próximo poll y bloqueará la pantalla.
                     sesionAlumnoActiva.HoraFin = ahora;
                 }
 
-                // Remover del diccionario de heartbeats para que el SessionMonitorService
-                // no interfiera con el proceso de cierre que ya estamos haciendo aquí.
                 ActiveSessionPings.TryRemove(sesionAlumnoActiva.SesionID, out _);
 
                 await _context.SaveChangesAsync();
             }
 
-            // --- LÓGICA DE BOLSA DE TIEMPO DIARIA ---
             var sesionesHoy = await _context.Sesiones
                 .Where(s => s.AlumnoID == alumno.AlumnoID && s.Fecha.Date == TimeHelper.GetPeruTime().Date && s.HoraFin != null)
                 .ToListAsync();
 
-            // Si es su primer inicio del día, restablecer el límite diario a 3 horas (10800 seg)
             if (sesionesHoy.Count == 0 && alumno.LimiteDiarioSegundos != 10800)
             {
                 alumno.LimiteDiarioSegundos = 10800;
@@ -175,7 +162,6 @@ namespace ControlLaboratorio.API.Controllers
 
             if (segundosConsumidosHoy >= segundosLimite)
             {
-                // Alumno consumió el límite. Si Estado=true, el admin lo reactivó.
                 if (alumno.Estado)
                 {
                     if (alumno.LimiteDiarioSegundos <= segundosConsumidosHoy)
@@ -185,7 +171,7 @@ namespace ControlLaboratorio.API.Controllers
                         segundosLimite = alumno.LimiteDiarioSegundos;
                     }
                     segundosRestantes = segundosLimite - segundosConsumidosHoy;
-                    if (segundosRestantes <= 0) segundosRestantes = 10800; // Por si acaso
+                    if (segundosRestantes <= 0) segundosRestantes = 10800;
                 }
                 else
                 {
@@ -198,13 +184,11 @@ namespace ControlLaboratorio.API.Controllers
             {
                 double tiempoRestante = segundosLimite - segundosConsumidosHoy;
 
-                // CORRECCIÓN DE RACE CONDITION:
                 bool tieneSessionesPreviasHoy = sesionesHoy.Count > 0;
-                bool tiempoRestanteAnomalo = tiempoRestante < (15 * 60); // menos de 15 minutos
+                bool tiempoRestanteAnomalo = tiempoRestante < (15 * 60);
 
                 if (tiempoRestanteAnomalo && tieneSessionesPreviasHoy && alumno.Estado)
                 {
-                    // Si se detecta un desfase (race condition), incrementamos el límite en 3 horas adicionales
                     alumno.LimiteDiarioSegundos = (alumno.LimiteDiarioSegundos < 10800 ? 10800 : alumno.LimiteDiarioSegundos) + 10800;
                     await _context.SaveChangesAsync();
                     segundosRestantes = alumno.LimiteDiarioSegundos - segundosConsumidosHoy;
@@ -259,7 +243,6 @@ namespace ControlLaboratorio.API.Controllers
             
             ActiveSessionPings.TryRemove(request.SesionId, out _);
 
-            // Calcular el total consumido hoy
             if (sesion.Alumno != null)
             {
                 var sesionesHoy = await _context.Sesiones
@@ -268,7 +251,6 @@ namespace ControlLaboratorio.API.Controllers
 
                 double segundosConsumidosHoy = sesionesHoy.Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
                 
-                // Si consumió su límite diario (con un pequeño margen de 1 minuto por retrasos de red)
                 if (segundosConsumidosHoy >= (sesion.Alumno.LimiteDiarioSegundos - 60))
                 {
                     sesion.Alumno.Estado = false;
@@ -284,20 +266,200 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpPost("admin-login")]
-        public IActionResult AdminLogin([FromBody] AdminLoginRequest request)
+        public async Task<IActionResult> AdminLogin([FromBody] AdminLoginRequest request)
         {
             var username = request.Username?.Trim() ?? string.Empty;
             var password = request.Password?.Trim() ?? string.Empty;
+
+            var user = await _context.UsuariosAdmin.FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower());
+            if (user != null)
+            {
+                if (!user.EstadoActivo)
+                {
+                    return Unauthorized(new { message = "Usuario inactivo o suspendido." });
+                }
+
+                bool validPassword = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+                if (!validPassword)
+                {
+                    return Unauthorized(new { message = "Credenciales incorrectas." });
+                }
+
+                user.UltimoAcceso = DateTime.UtcNow;
+
+                var token = GenerateJwtToken(user.IdUsuarioAdmin.ToString(), user.Username, user.Rol.ToString());
+                var refreshTokenString = GenerateRefreshTokenString();
+
+                var refreshTokenEntity = new RefreshToken
+                {
+                    IdUsuarioAdmin = user.IdUsuarioAdmin,
+                    Token = refreshTokenString,
+                    ExpiresAt = DateTime.UtcNow.AddDays(7),
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.RefreshTokens.Add(refreshTokenEntity);
+                await _context.SaveChangesAsync();
+
+                return Ok(new AdminLoginResponse
+                {
+                    Token = token,
+                    RefreshToken = refreshTokenString,
+                    EsLegacy = false,
+                    Usuario = new UsuarioAdminDto
+                    {
+                        IdUsuarioAdmin = user.IdUsuarioAdmin,
+                        Username = user.Username,
+                        Nombres = user.Nombres,
+                        Correo = user.Correo,
+                        Rol = user.Rol,
+                        RolNombre = user.Rol.ToString(),
+                        EstadoActivo = user.EstadoActivo,
+                        FechaCreacion = user.FechaCreacion,
+                        UltimoAcceso = user.UltimoAcceso
+                    }
+                });
+            }
+
+            bool allowLegacy = _configuration.GetValue<bool>("AdminSettings:AllowLegacyAdmin", true);
             var expectedUsername = _configuration["AdminSettings:Username"] ?? "admin";
             var expectedPassword = _configuration["AdminSettings:Password"] ?? "admin123";
 
-            if (username == expectedUsername && password == expectedPassword)
+            if (allowLegacy && username == expectedUsername && password == expectedPassword)
             {
-                return Ok(new { token = "fake-jwt-token-for-now", message = "Bienvenido Administrador" });
+                var token = GenerateJwtToken("0", expectedUsername, RolAdmin.SuperAdmin.ToString());
+                var refreshTokenString = GenerateRefreshTokenString();
+
+                return Ok(new AdminLoginResponse
+                {
+                    Token = token,
+                    RefreshToken = refreshTokenString,
+                    EsLegacy = true,
+                    Usuario = new UsuarioAdminDto
+                    {
+                        IdUsuarioAdmin = 0,
+                        Username = expectedUsername,
+                        Nombres = "Administrador Legacy",
+                        Correo = "admin@urp.edu.pe",
+                        Rol = RolAdmin.SuperAdmin,
+                        RolNombre = RolAdmin.SuperAdmin.ToString(),
+                        EstadoActivo = true,
+                        FechaCreacion = DateTime.UtcNow,
+                        UltimoAcceso = DateTime.UtcNow
+                    }
+                });
             }
 
             return Unauthorized(new { message = "Usuario o contraseña incorrectos." });
         }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return BadRequest(new { message = "Token de refresco requerido." });
+            }
+
+            var existingToken = await _context.RefreshTokens
+                .Include(t => t.UsuarioAdmin)
+                .FirstOrDefaultAsync(t => t.Token == request.RefreshToken);
+
+            if (existingToken == null || existingToken.RevokedAt != null || existingToken.ExpiresAt <= DateTime.UtcNow)
+            {
+                return Unauthorized(new { message = "Token de refresco inválido o expirado." });
+            }
+
+            if (existingToken.UsuarioAdmin == null || !existingToken.UsuarioAdmin.EstadoActivo)
+            {
+                return Unauthorized(new { message = "El usuario se encuentra inactivo." });
+            }
+
+            var newRefreshTokenString = GenerateRefreshTokenString();
+            existingToken.RevokedAt = DateTime.UtcNow;
+            existingToken.ReplacedByToken = newRefreshTokenString;
+
+            var newJwt = GenerateJwtToken(existingToken.UsuarioAdmin.IdUsuarioAdmin.ToString(), existingToken.UsuarioAdmin.Username, existingToken.UsuarioAdmin.Rol.ToString());
+
+            var newRefreshTokenEntity = new RefreshToken
+            {
+                IdUsuarioAdmin = existingToken.IdUsuarioAdmin,
+                Token = newRefreshTokenString,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.RefreshTokens.Add(newRefreshTokenEntity);
+            await _context.SaveChangesAsync();
+
+            return Ok(new AdminLoginResponse
+            {
+                Token = newJwt,
+                RefreshToken = newRefreshTokenString,
+                EsLegacy = false,
+                Usuario = new UsuarioAdminDto
+                {
+                    IdUsuarioAdmin = existingToken.UsuarioAdmin.IdUsuarioAdmin,
+                    Username = existingToken.UsuarioAdmin.Username,
+                    Nombres = existingToken.UsuarioAdmin.Nombres,
+                    Correo = existingToken.UsuarioAdmin.Correo,
+                    Rol = existingToken.UsuarioAdmin.Rol,
+                    RolNombre = existingToken.UsuarioAdmin.Rol.ToString(),
+                    EstadoActivo = existingToken.UsuarioAdmin.EstadoActivo,
+                    FechaCreacion = existingToken.UsuarioAdmin.FechaCreacion,
+                    UltimoAcceso = existingToken.UsuarioAdmin.UltimoAcceso
+                }
+            });
+        }
+
+        [HttpPost("admin-logout")]
+        public async Task<IActionResult> AdminLogout([FromBody] RefreshTokenRequest request)
+        {
+            if (!string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                var existingToken = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == request.RefreshToken);
+                if (existingToken != null && existingToken.RevokedAt == null)
+                {
+                    existingToken.RevokedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            return Ok(new { message = "Sesión administrativa cerrada." });
+        }
+
+        private string GenerateJwtToken(string sub, string name, string role)
+        {
+            var secretKey = _configuration["JwtSettings:SecretKey"] ?? "FamurpBve2026_ClaveSecretaSuperSeguraParaJwt_Produccion!";
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, sub),
+                new Claim("name", name),
+                new Claim("role", role),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+            };
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(15),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private static string GenerateRefreshTokenString()
+        {
+            var randomBytes = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
+            return Convert.ToBase64String(randomBytes);
+        }
+
 
         [HttpGet("session-status/{sesionId}")]
         public async Task<IActionResult> GetSessionStatus(int sesionId)
@@ -325,10 +487,8 @@ namespace ControlLaboratorio.API.Controllers
             if (sesion.HoraFin != null) return BadRequest(new { message = "La sesión ya ha finalizado." });
             if (sesion.Alumno == null) return BadRequest(new { message = "Alumno no encontrado." });
 
-            // Sumar 3 horas (10800 seg) al límite diario del alumno
             sesion.Alumno.LimiteDiarioSegundos += 10800;
 
-            // Extender la hora límite de la sesión actual en 3 horas
             sesion.HoraLimite = (sesion.HoraLimite ?? TimeHelper.GetPeruTime()).AddHours(3);
 
             await _context.SaveChangesAsync();
@@ -393,7 +553,6 @@ namespace ControlLaboratorio.API.Controllers
             var equipo = await _context.Equipos.FirstOrDefaultAsync(e => e.NombreRed == nombreRed);
             if (equipo == null) return NotFound(new { message = "Equipo no encontrado." });
 
-            // Buscar o crear el alumno Administrador para el registro
             var admin = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == "ADMIN");
             if (admin == null)
             {
@@ -411,14 +570,13 @@ namespace ControlLaboratorio.API.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // Crear una sesión virtual para el administrador
             var sesion = new Sesion
             {
                 AlumnoID = admin.AlumnoID,
                 EquipoID = equipo.EquipoID,
                 Fecha = TimeHelper.GetPeruTime().Date,
                 HoraInicio = TimeHelper.GetPeruTime(),
-                HoraLimite = TimeHelper.GetPeruTime().AddHours(5) // 5 horas por defecto para admin
+                HoraLimite = TimeHelper.GetPeruTime().AddHours(5)
             };
             _context.Sesiones.Add(sesion);
             await _context.SaveChangesAsync();
@@ -453,7 +611,6 @@ namespace ControlLaboratorio.API.Controllers
 
             foreach (var equipo in equipos)
             {
-                // Cerramos sesión activa si la hubiera
                 var sesionActiva = await _context.Sesiones
                     .Include(s => s.Alumno)
                     .FirstOrDefaultAsync(s => s.EquipoID == equipo.EquipoID && s.HoraFin == null);
@@ -462,12 +619,10 @@ namespace ControlLaboratorio.API.Controllers
                 {
                     if (onlyFree)
                     {
-                        // Si onlyFree es true y hay sesión activa, ignoramos este equipo
                         continue;
                     }
 
                     sesionActiva.HoraFin = now;
-                    // También actualizamos estado del alumno si corresponde (opcional, pero buena práctica)
                     if (sesionActiva.Alumno != null)
                     {
                         var sesionesHoy = await _context.Sesiones
@@ -478,7 +633,6 @@ namespace ControlLaboratorio.API.Controllers
                     }
                 }
 
-                // Crear sesión virtual para el administrador
                 var sesion = new Sesion
                 {
                     AlumnoID = admin.AlumnoID,
@@ -488,7 +642,7 @@ namespace ControlLaboratorio.API.Controllers
                     HoraLimite = now.AddHours(5)
                 };
                 _context.Sesiones.Add(sesion);
-                await _context.SaveChangesAsync(); // Se necesita guardar para generar SesionID
+                await _context.SaveChangesAsync();
 
                 PendingUnlocks[equipo.NombreRed] = sesion.SesionID;
             }
@@ -502,7 +656,6 @@ namespace ControlLaboratorio.API.Controllers
             var equipo = await _context.Equipos.FirstOrDefaultAsync(e => e.NombreRed == nombreRed);
             if (equipo == null) return NotFound(new { message = "Equipo no encontrado." });
 
-            // Si tiene una sesión activa, la cerramos automáticamente
             var sesionActiva = await _context.Sesiones
                 .Include(s => s.Alumno)
                 .FirstOrDefaultAsync(s => s.EquipoID == equipo.EquipoID && s.HoraFin == null);
@@ -544,10 +697,8 @@ namespace ControlLaboratorio.API.Controllers
 
             foreach (var e in equipos)
             {
-                // Registrar comando de apagado para TODOS los equipos (con o sin sesión activa)
                 PendingShutdowns[e.NombreRed] = now;
 
-                // Si tiene sesión activa, la cerramos
                 var sesionActiva = await _context.Sesiones
                     .Include(s => s.Alumno)
                     .FirstOrDefaultAsync(s => s.EquipoID == e.EquipoID && s.HoraFin == null);
@@ -569,7 +720,6 @@ namespace ControlLaboratorio.API.Controllers
                 }
             }
 
-            // Un único guardado al final para evitar conflictos de concurrencia
             await _context.SaveChangesAsync();
             return Ok(new { message = "Comando de apagado enviado a todos los equipos." });
         }
@@ -580,12 +730,11 @@ namespace ControlLaboratorio.API.Controllers
             bool shouldShutdown = false;
             if (PendingShutdowns.TryGetValue(nombreRed, out DateTime shutdownTime))
             {
-                // Solo apagar si el comando fue enviado hace menos de 10 minutos (evita apagados fantasmas en encendidos del día siguiente)
                 if ((TimeHelper.GetPeruTime() - shutdownTime).TotalMinutes <= 10)
                 {
                     shouldShutdown = true;
                 }
-                PendingShutdowns.TryRemove(nombreRed, out _); // Consumir comando
+                PendingShutdowns.TryRemove(nombreRed, out _);
             }
 
             if (PendingUnlocks.TryGetValue(nombreRed, out int sesionId))
@@ -606,7 +755,7 @@ namespace ControlLaboratorio.API.Controllers
                 {
                     shouldShutdown = true;
                 }
-                PendingShutdowns.TryRemove(nombreRed, out _); // Consumir comando
+                PendingShutdowns.TryRemove(nombreRed, out _);
             }
             return Ok(new { shutdown = shouldShutdown });
         }
