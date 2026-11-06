@@ -45,6 +45,32 @@ const devolverLibro = async (prestamoId) => {
   }
 }
 
+const eliminarPrestamo = async (prestamoId) => {
+  if (!confirm('¿Seguro que deseas eliminar este registro de préstamo?')) return
+
+  try {
+    const res = await axios.delete(`${API_BASE_URL}/api/Prestamos/${prestamoId}`)
+    showToast(res.data.mensaje || 'Préstamo eliminado', 'success')
+    await loadPrestamos()
+  } catch (err) {
+    console.error("Error al eliminar préstamo:", err)
+    showToast('Error al eliminar préstamo', 'error')
+  }
+}
+
+const limpiarPruebas = async () => {
+  if (!confirm('¿Deseas eliminar todos los registros que digan "Prueba" o "Test"?')) return
+
+  try {
+    const res = await axios.delete(`${API_BASE_URL}/api/Prestamos/LimpiarPruebas`)
+    showToast(res.data.mensaje || 'Pruebas eliminadas correctamente', 'success')
+    await loadPrestamos()
+  } catch (err) {
+    console.error("Error al limpiar pruebas:", err)
+    showToast('Error al limpiar registros de prueba', 'error')
+  }
+}
+
 // Métricas de resumen
 const totalPrestamos = computed(() => prestamos.value.length)
 const prestamosActivos = computed(() => prestamos.value.filter(p => p.estado === 'Activo' && !p.esVencido).length)
@@ -117,12 +143,18 @@ onMounted(() => {
         <p class="page-subtitle">Visualización y seguimiento de libros prestados a estudiantes de Medicina</p>
       </div>
 
-      <button class="btn-refresh" @click="loadPrestamos" :disabled="loading" title="Refrescar datos">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }">
-          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-        </svg>
-        <span>Actualizar</span>
-      </button>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button class="btn-clean" @click="limpiarPruebas" title="Eliminar registros de prueba">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span>Limpiar Pruebas</span>
+        </button>
+        <button class="btn-refresh" @click="loadPrestamos" :disabled="loading" title="Refrescar datos">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" :class="{ 'spin': loading }">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span>Actualizar</span>
+        </button>
+      </div>
     </div>
 
     <!-- TARJETAS DE MÉTRICAS -->
@@ -283,17 +315,27 @@ onMounted(() => {
 
             <!-- ACCIÓN -->
             <td style="text-align: right;">
-              <button 
-                v-if="p.estado === 'Activo'" 
-                class="btn-devolver"
-                @click="devolverLibro(p.prestamoID)"
-                title="Registrar devolución en sala"
-              >
-                Marcar Devuelto
-              </button>
-              <span v-else class="text-muted-ok">
-                ✓ Entregado
-              </span>
+              <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end;">
+                <button 
+                  v-if="p.estado === 'Activo'" 
+                  class="btn-devolver"
+                  @click="devolverLibro(p.prestamoID)"
+                  title="Registrar devolución en sala"
+                >
+                  Marcar Devuelto
+                </button>
+                <span v-else class="text-muted-ok">
+                  ✓ Entregado
+                </span>
+
+                <button 
+                  class="btn-delete"
+                  @click="eliminarPrestamo(p.prestamoID)"
+                  title="Eliminar este préstamo"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -361,6 +403,45 @@ onMounted(() => {
   background: #10b981;
   border-radius: 50%;
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.btn-clean {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #fecdd3;
+  color: #9f1239;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-clean:hover {
+  background: #fff1f2;
+  border-color: #f43f5e;
+}
+
+.btn-delete {
+  background: transparent;
+  border: 1px solid #fee2e2;
+  color: #ef4444;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-delete:hover {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .btn-refresh {

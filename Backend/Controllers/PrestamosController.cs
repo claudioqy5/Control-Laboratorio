@@ -207,6 +207,74 @@ namespace ControlLaboratorio.API.Controllers
             }
         }
 
+        // GET: api/Prestamos/Ping
+        [HttpGet("Ping")]
+        public IActionResult Ping()
+        {
+            return Ok(new { mensaje = "Conexión exitosa con el servidor de Control-Laboratorio", fecha = DateTime.Now });
+        }
+
+        // DELETE: api/Prestamos/LimpiarPruebas
+        [HttpDelete("LimpiarPruebas")]
+        public async Task<IActionResult> LimpiarPruebas()
+        {
+            var prestamosTest = await _context.Prestamos
+                .Include(p => p.Libro)
+                .Include(p => p.Alumno)
+                .Include(p => p.Multas)
+                .Where(p => 
+                    (p.Alumno != null && (p.Alumno.Nombres.Contains("Prueba") || p.Alumno.CodigoUniversitario == "202110452")) ||
+                    (p.Libro != null && (p.Libro.CodigoBarras == "TEST-001" || p.Libro.Titulo.Contains("Prueba"))))
+                .ToListAsync();
+
+            foreach (var p in prestamosTest)
+            {
+                if (p.Libro != null) p.Libro.Estado = "Disponible";
+                if (p.Multas.Any()) _context.Multas.RemoveRange(p.Multas);
+            }
+
+            _context.Prestamos.RemoveRange(prestamosTest);
+
+            var alumnoTest = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == "202110452");
+            if (alumnoTest != null) _context.Alumnos.Remove(alumnoTest);
+
+            var libroTest = await _context.Libros.FirstOrDefaultAsync(l => l.CodigoBarras == "TEST-001");
+            if (libroTest != null) _context.Libros.Remove(libroTest);
+
+            await _context.SaveChangesAsync();
+            return Ok(new { mensaje = "Datos de prueba eliminados correctamente" });
+        }
+
+        // DELETE: api/Prestamos/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarPrestamo(int id)
+        {
+            var prestamo = await _context.Prestamos
+                .Include(p => p.Libro)
+                .Include(p => p.Multas)
+                .FirstOrDefaultAsync(p => p.PrestamoID == id);
+
+            if (prestamo == null)
+            {
+                return NotFound(new { mensaje = "Préstamo no encontrado" });
+            }
+
+            if (prestamo.Libro != null && prestamo.Estado == "Activo")
+            {
+                prestamo.Libro.Estado = "Disponible";
+            }
+
+            if (prestamo.Multas.Any())
+            {
+                _context.Multas.RemoveRange(prestamo.Multas);
+            }
+
+            _context.Prestamos.Remove(prestamo);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Préstamo eliminado con éxito" });
+        }
+
         // GET: api/Prestamos/Alumno/5
         [HttpGet("Alumno/{alumnoId}")]
         public async Task<ActionResult<IEnumerable<object>>> GetPrestamosAlumno(int alumnoId)
