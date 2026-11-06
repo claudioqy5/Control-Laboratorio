@@ -193,10 +193,25 @@ namespace ControlLaboratorio.API.Controllers
                 if (alumno == null)
                 {
                     // Auto-crear alumno preliminar si aún no estaba en la base de datos de laboratorio
-                    var nombreParts = (dto.NombreAlumno ?? "Estudiante URP").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    var nombres = nombreParts.Length > 0 ? nombreParts[0] : "Estudiante";
-                    var apPaterno = nombreParts.Length > 1 ? nombreParts[1] : "URP";
-                    var apMaterno = nombreParts.Length > 2 ? nombreParts[2] : "";
+                    string nombres = "Estudiante";
+                    string apPaterno = "URP";
+                    string apMaterno = "";
+
+                    if (!string.IsNullOrWhiteSpace(dto.NombreAlumno) && dto.NombreAlumno.Contains(','))
+                    {
+                        var halves = dto.NombreAlumno.Split(',', 2);
+                        var apellidos = halves[0].Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        apPaterno = apellidos.Length > 0 ? apellidos[0] : "URP";
+                        apMaterno = apellidos.Length > 1 ? apellidos[1] : "";
+                        nombres = halves.Length > 1 ? halves[1].Trim() : "Estudiante";
+                    }
+                    else
+                    {
+                        var nombreParts = (dto.NombreAlumno ?? "Estudiante URP").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        nombres = nombreParts.Length > 0 ? nombreParts[0] : "Estudiante";
+                        apPaterno = nombreParts.Length > 1 ? nombreParts[1] : "URP";
+                        apMaterno = nombreParts.Length > 2 ? nombreParts[2] : "";
+                    }
 
                     alumno = new Alumno
                     {

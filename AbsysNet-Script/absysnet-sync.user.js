@@ -347,59 +347,49 @@
 
         if (!targetDoc) return { codigo, nombre };
 
-        const inputs = Array.from(targetDoc.querySelectorAll('input'));
+        // 1. Buscar en todos los inputs
+        const inputs = Array.from(targetDoc.querySelectorAll('input, textarea, select'));
 
-        // 1. Buscar código universitario de alumno:
-        // En la URP tiene entre 8 y 10 dígitos (ej. 201712043)
+        // A) Buscar inputs cuyo valor contenga un código de 8 a 10 dígitos (URP)
         for (const input of inputs) {
-            const v = (input.value || '').trim();
-            if (/^\d{8,10}$/.test(v)) {
-                codigo = v;
+            const rawVal = input.value || input.getAttribute('value') || '';
+            const digits = rawVal.replace(/\D/g, '');
+            if (digits.length >= 8 && digits.length <= 10) {
+                codigo = digits;
                 break;
             }
         }
 
-        // 2. Si no lo encontramos por valor directo, buscar inputs junto a la etiqueta "lector"
+        // B) Si no se encontró en inputs por valor, buscar en el texto de la pantalla (Detalles del Lector)
         if (!codigo) {
-            const elements = targetDoc.querySelectorAll('td, th, span, div, label, b');
-            for (const el of elements) {
-                const t = (el.innerText || '').toLowerCase();
-                if (t.includes('lector') && !t.includes('tipo')) {
-                    const tr = el.closest('tr') || el.parentElement;
-                    if (tr) {
-                        const inps = tr.querySelectorAll('input');
-                        for (const inp of inps) {
-                            const v = (inp.value || '').trim();
-                            if (/^\d{6,12}$/.test(v)) {
-                                codigo = v;
-                                break;
-                            }
-                        }
-                    }
+            const docText = (targetDoc.body ? targetDoc.body.innerText : '') || '';
+            const matchLector = docText.match(/N[º°\.]?\s*lector[:\s]*(\d{8,10})/i) || 
+                                docText.match(/Detalles del Lector[\s\S]{1,120}?(\d{8,10})/i);
+            if (matchLector) {
+                codigo = matchLector[1];
+            } else {
+                const matchGeneral = docText.match(/\b(20\d{6,8})\b/);
+                if (matchGeneral) {
+                    codigo = matchGeneral[1];
                 }
-                if (codigo) break;
             }
         }
 
-        // 3. Buscar nombre del alumno:
-        // En AbsysNet, al lado del código de lector hay una caja con el nombre en mayúsculas (ej. "QUELLO YAPU, CLAUDIO FERNANDO")
+        // 2. Buscar nombre del alumno (formato: "APELLIDOS, NOMBRES")
         for (const input of inputs) {
-            const v = (input.value || '').trim();
+            const v = (input.value || input.getAttribute('value') || '').trim();
             if (v.length > 5 && v.includes(',') && /[A-Z]/.test(v) && !v.includes('URP') && !v.includes('MEDICINA')) {
                 nombre = v;
                 break;
             }
         }
 
+        // Si el nombre no está en un input con coma, buscar en texto
         if (!nombre) {
-            for (const input of inputs) {
-                if (input.readOnly || input.disabled) {
-                    const v = (input.value || '').trim();
-                    if (v.length > 6 && v.includes(' ') && /[A-Z]/.test(v) && !v.includes('URP') && !v.includes('MEDICINA')) {
-                        nombre = v;
-                        break;
-                    }
-                }
+            const docText = (targetDoc.body ? targetDoc.body.innerText : '') || '';
+            const matchNom = docText.match(/([A-ZÁÉÍÓÚÑ\s]{3,30},\s*[A-ZÁÉÍÓÚÑ\s]{3,30})/);
+            if (matchNom && !matchNom[1].includes('URP') && !matchNom[1].includes('MEDICINA')) {
+                nombre = matchNom[1].trim();
             }
         }
 
