@@ -131,8 +131,53 @@ namespace ControlLaboratorio.API.Controllers
                     else
                     {
                         libro.Estado = "Disponible";
+
+                        // Si AbsysNet envió los datos del alumno que devolvió el libro, registramos el préstamo como Devuelto
+                        if (!string.IsNullOrWhiteSpace(dto.CodigoAlumno))
+                        {
+                            var codAlumno = dto.CodigoAlumno.Trim();
+                            var alumno = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == codAlumno || a.DNI == codAlumno);
+                            if (alumno == null)
+                            {
+                                var nombreParts = (dto.NombreAlumno ?? "Estudiante URP").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                alumno = new Alumno
+                                {
+                                    CodigoUniversitario = codAlumno,
+                                    DNI = codAlumno.Length == 8 ? codAlumno : "00000000",
+                                    Nombres = nombreParts.Length > 0 ? nombreParts[0] : "Estudiante",
+                                    ApellidoPaterno = nombreParts.Length > 1 ? nombreParts[1] : "URP",
+                                    ApellidoMaterno = nombreParts.Length > 2 ? nombreParts[2] : "",
+                                    Carrera = "Medicina Humana",
+                                    Estado = true
+                                };
+                                _context.Alumnos.Add(alumno);
+                                await _context.SaveChangesAsync();
+                            }
+
+                            var prestamoDevuelto = new Prestamo
+                            {
+                                AlumnoID = alumno.AlumnoID,
+                                LibroID = libro.LibroID,
+                                FechaPrestamo = DateTime.Now.AddDays(-3),
+                                FechaDevolucion = dto.FechaDevolucion ?? DateTime.Now,
+                                FechaEntregado = DateTime.Now,
+                                Estado = "Devuelto"
+                            };
+
+                            _context.Prestamos.Add(prestamoDevuelto);
+                            await _context.SaveChangesAsync();
+
+                            return Ok(new
+                            {
+                                mensaje = "Devolución registrada con éxito en Control-Laboratorio",
+                                prestamoId = prestamoDevuelto.PrestamoID,
+                                alumno = $"{alumno.CodigoUniversitario} - {alumno.Nombres} {alumno.ApellidoPaterno}",
+                                libro = libro.Titulo
+                            });
+                        }
+
                         await _context.SaveChangesAsync();
-                        return Ok(new { mensaje = "El libro no tenía un préstamo activo pendiente, su estado se actualizó a Disponible" });
+                        return Ok(new { mensaje = "El libro se actualizó a Disponible", libro = libro.Titulo });
                     }
                 }
 
