@@ -294,15 +294,24 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger(options =>
 {
-    options.RouteTemplate = "openapi/{documentName}.json";
+    options.RouteTemplate = "api/openapi/{documentName}.json";
 });
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/api/openapi/v1.json", "ControlLaboratorio API v1");
+        c.RoutePrefix = "api/swagger";
+    });
 }
 
-app.MapScalarApiReference();
+app.MapScalarApiReference(options =>
+{
+    options.WithTitle("BVE FAMURP - API Reference")
+           .WithEndpointPrefix("/api/scalar/{documentName}")
+           .WithOpenApiRoutePattern("/api/openapi/{documentName}.json");
+});
 
 app.UseStaticFiles();
 
