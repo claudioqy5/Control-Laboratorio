@@ -1,8 +1,19 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { API_BASE_URL } from '../config.js'
 
-const activeTab = ref('conexiones') // 'conexiones' o 'escaneos'
+const props = defineProps({
+  initialTab: {
+    type: String,
+    default: 'conexiones'
+  }
+})
+
+const activeTab = ref(props.initialTab || 'conexiones')
+
+watch(() => props.initialTab, (newVal) => {
+  if (newVal) activeTab.value = newVal
+})
 const alumnosGrouped = ref([])
 const totalConexiones = ref(0)
 const loading = ref(true)
