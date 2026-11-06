@@ -288,6 +288,69 @@ using (var scope = app.Services.CreateScope())
                 db.SaveChanges();
             }
         }
+
+        // Semilla de Administrador Inicial si la tabla está vacía
+        if (!db.UsuariosAdmin.Any())
+        {
+            db.UsuariosAdmin.Add(new UsuarioAdmin
+            {
+                Username = "admin",
+                PasswordHash = "$2a$11$jFkWk74Sn8veMy1Gsc85DOtk/d3tVRb86bLWL06/2kknBCiSOcF3O", // admin123
+                Nombres = "Administrador Principal",
+                Correo = "admin@urp.edu.pe",
+                Rol = RolAdmin.SuperAdmin,
+                EstadoActivo = true,
+                FechaCreacion = DateTime.UtcNow
+            });
+            db.SaveChanges();
+        }
+
+        // Migración automática de portadas Base64 a archivos estáticos para aligerar la base de datos
+        try
+        {
+            var portadasDir = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "portadas");
+            if (!Directory.Exists(portadasDir))
+            {
+                Directory.CreateDirectory(portadasDir);
+            }
+
+            var librosBase64 = db.Libros.Where(l => l.Portada != null && l.Portada.StartsWith("data:")).ToList();
+            if (librosBase64.Any())
+            {
+                foreach (var libro in librosBase64)
+                {
+                    try
+                    {
+                        var match = System.Text.RegularExpressions.Regex.Match(libro.Portada!, @"^data:(image\/[a-zA-Z0-9\+\-]+);base64,(.+)$");
+                        if (match.Success)
+                        {
+                            var mime = match.Groups[1].Value.ToLowerInvariant();
+                            var base64Data = match.Groups[2].Value;
+                            var ext = mime switch
+                            {
+                                "image/png" => ".png",
+                                "image/webp" => ".webp",
+                                _ => ".jpg"
+                            };
+
+                            var fileName = $"portada_{libro.LibroID}{ext}";
+                            var filePath = Path.Combine(portadasDir, fileName);
+                            var bytes = Convert.FromBase64String(base64Data);
+                            File.WriteAllBytes(filePath, bytes);
+
+                            libro.Portada = $"/api/static/portadas/{fileName}";
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+                db.SaveChanges();
+            }
+        }
+        catch
+        {
+        }
     }
     catch
     {
@@ -318,15 +381,21 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 
 var wwwrootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
-if (!Directory.Exists(wwwrootPath))
+var portadasStaticPath = Path.Combine(wwwrootPath, "portadas");
+if (!Directory.Exists(portadasStaticPath))
 {
-    Directory.CreateDirectory(wwwrootPath);
+    Directory.CreateDirectory(portadasStaticPath);
 }
 
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(wwwrootPath),
-    RequestPath = "/api/static"
+    RequestPath = "/api/static",
+    OnPrepareResponse = ctx =>
+    {
+        // Cache estático de 30 días para portadas y recursos de medios
+        ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=2592000");
+    }
 });
 
 app.UseHttpsRedirection();

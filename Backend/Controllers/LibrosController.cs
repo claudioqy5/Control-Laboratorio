@@ -158,28 +158,51 @@ namespace ControlLaboratorio.API.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new { mensaje = "No se proporcionó ningún archivo." });
 
-            if (file.Length > 1 * 1024 * 1024)
-                return BadRequest(new { mensaje = "El archivo supera el límite de 1MB." });
+            if (file.Length > 5 * 1024 * 1024)
+                return BadRequest(new { mensaje = "El archivo supera el límite de 5MB." });
 
             var libro = await _context.Libros.FindAsync(id);
             if (libro == null)
                 return NotFound(new { mensaje = "Libro no encontrado" });
 
-            // Convertir la imagen a Base64 para evitar pérdida de archivos en despliegues con sistema de archivos efímero (como Docker en PaaS)
-            using (var ms = new MemoryStream())
+            var portadasDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "portadas");
+            if (!Directory.Exists(portadasDir))
             {
-                await file.CopyToAsync(ms);
-                var fileBytes = ms.ToArray();
-                string base64String = Convert.ToBase64String(fileBytes);
-                string mimeType = file.ContentType;
-                
-                libro.Portada = $"data:{mimeType};base64,{base64String}";
+                Directory.CreateDirectory(portadasDir);
             }
 
+            var rawExt = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+            var ext = rawExt switch
+            {
+                ".png" => ".png",
+                ".jpg" or ".jpeg" => ".jpg",
+                _ => ".webp"
+            };
+
+            var fileName = $"portada_{id}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{ext}";
+            var filePath = Path.Combine(portadasDir, fileName);
+
+            // Eliminar archivo físico anterior si existía
+            if (!string.IsNullOrEmpty(libro.Portada) && libro.Portada.StartsWith("/api/static/portadas/"))
+            {
+                var oldFileName = Path.GetFileName(libro.Portada);
+                var oldFilePath = Path.Combine(portadasDir, oldFileName);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    try { System.IO.File.Delete(oldFilePath); } catch { }
+                }
+            }
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            libro.Portada = $"/api/static/portadas/{fileName}";
             await _context.SaveChangesAsync();
 
             return Ok(new { 
-                mensaje = "Portada guardada permanentemente en base de datos", 
+                mensaje = "Portada guardada permanentemente en almacenamiento estático", 
                 portadaUrl = libro.Portada 
             });
         }

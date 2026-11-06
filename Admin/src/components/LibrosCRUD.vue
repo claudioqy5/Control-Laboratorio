@@ -299,20 +299,61 @@ const deleteLibro = async (id) => {
 
 const portadaFile = ref(null)
 
-const handlePortadaChange = (e) => {
-  const file = e.target.files[0]
-  if (file) {
-    if (file.size > 1024 * 1024) {
-      showToast('La imagen supera el límite de 1MB.', 'error')
-      return
+const compressImageToWebP = (file, maxWidth = 800, quality = 0.82) => {
+  return new Promise((resolve) => {
+    if (file.type === 'image/webp' && file.size <= 300 * 1024) {
+      return resolve(file)
     }
-    portadaFile.value = file
     const reader = new FileReader()
     reader.onload = (event) => {
-      // Show preview only
-      currentLibro.value.portada = event.target.result
+      const img = new Image()
+      img.onload = () => {
+        let width = img.width
+        let height = img.height
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".webp"
+            resolve(new File([blob], cleanName, { type: 'image/webp' }))
+          } else {
+            resolve(file)
+          }
+        }, 'image/webp', quality)
+      }
+      img.onerror = () => resolve(file)
+      img.src = event.target.result
     }
+    reader.onerror = () => resolve(file)
     reader.readAsDataURL(file)
+  })
+}
+
+const handlePortadaChange = async (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('La imagen supera el límite de 5MB.', 'error')
+      return
+    }
+    try {
+      const optimizedFile = await compressImageToWebP(file)
+      portadaFile.value = optimizedFile
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        currentLibro.value.portada = event.target.result
+      }
+      reader.readAsDataURL(optimizedFile)
+    } catch {
+      portadaFile.value = file
+    }
   }
 }
 
@@ -321,11 +362,18 @@ const removePortada = () => {
   portadaFile.value = null
 }
 
+const formatImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/portadas')) return `${API_BASE_URL}/api/static${url}`
+  return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
 const showImageModal = ref(false)
 const selectedImage = ref('')
 
 const viewImage = (url) => {
-  selectedImage.value = url.startsWith('data:') ? url : (url.startsWith('/portadas') ? API_BASE_URL + '/api/static' + url : API_BASE_URL + url)
+  selectedImage.value = formatImageUrl(url)
   showImageModal.value = true
 }
 
@@ -553,7 +601,7 @@ onMounted(() => {
           <td>
             <div style="display: flex; gap: 1rem; align-items: center; text-align: left;">
               <div class="book-cover-thumbnail" style="flex-shrink: 0; width: 45px; height: 60px;">
-                <img v-if="l.portada" :src="l.portada.startsWith('data:') ? l.portada : (l.portada.startsWith('/portadas') ? API_BASE_URL + '/api/static' + l.portada : API_BASE_URL + l.portada)" alt="Portada" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; cursor: zoom-in; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" @click="viewImage(l.portada)" />
+                <img v-if="l.portada" :src="formatImageUrl(l.portada)" loading="lazy" alt="Portada" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; cursor: zoom-in; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" @click="viewImage(l.portada)" />
                 <div v-else class="book-cover-placeholder">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                 </div>
@@ -822,7 +870,7 @@ onMounted(() => {
               <label style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px; text-align: center;">Portada del Libro</label>
               <div class="cover-upload-container">
                 <div class="book-cover-preview-lg">
-                  <img v-if="currentLibro.portada" :src="currentLibro.portada.startsWith('data:') ? currentLibro.portada : API_BASE_URL + currentLibro.portada" alt="Vista previa de portada" />
+                  <img v-if="currentLibro.portada" :src="formatImageUrl(currentLibro.portada)" alt="Vista previa de portada" />
                   <div v-else class="book-cover-placeholder-xl">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     <span style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px; font-weight: 500;">Sin Portada</span>

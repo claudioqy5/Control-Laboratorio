@@ -3,6 +3,13 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '../config'
 
+const formatImageUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/portadas')) return `${API_BASE_URL}/api/static${url}`
+  return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
 const searchQuery = ref('')
 const selectedBook = ref(null)
 const libros = ref([])
@@ -229,7 +236,7 @@ const clearSelection = () => {
             </button>
             
             <div class="book-cover-medium">
-              <img v-if="selectedBook.portada" :src="selectedBook.portada.startsWith('data:') ? selectedBook.portada : API_BASE_URL + selectedBook.portada" alt="Portada" />
+              <img v-if="selectedBook.portada" :src="formatImageUrl(selectedBook.portada)" loading="lazy" alt="Portada" />
               <div v-else class="book-cover-placeholder-medium">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                 <span>Sin Portada</span>
