@@ -8,9 +8,11 @@ import LaboratoryMap from './components/LaboratoryMap.vue'
 import EquiposList from './components/EquiposList.vue'
 import ReportesConexiones from './components/ReportesConexiones.vue'
 import LibrosCRUD from './components/LibrosCRUD.vue'
+import PrestamosCRUD from './components/PrestamosCRUD.vue'
 import CategoriasCRUD from './components/CategoriasCRUD.vue'
 import MapaBiblioteca from './components/MapaBiblioteca.vue'
 import UsoEstadisticas from './components/UsoEstadisticas.vue'
+import ChatBot from './components/ChatBot.vue'
 
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
@@ -85,7 +87,7 @@ onMounted(checkAuth)
 
       <!-- Biblioteca Collapsible Section -->
       <div>
-        <a href="#" class="nav-item" :class="{ active: ['libros', 'categorias', 'mapa-biblio'].includes(currentView) }" @click="isBibliotecaOpen = !isBibliotecaOpen" :title="isSidebarCollapsed ? 'Biblioteca' : ''" style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
+        <a href="#" class="nav-item" :class="{ active: ['libros', 'prestamos', 'categorias', 'mapa-biblio'].includes(currentView) }" @click="isBibliotecaOpen = !isBibliotecaOpen" :title="isSidebarCollapsed ? 'Biblioteca' : ''" style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
           <div style="display: flex; align-items: center; gap: 10px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
             <span v-if="!isSidebarCollapsed">Biblioteca</span>
@@ -96,6 +98,10 @@ onMounted(checkAuth)
           <a href="#" class="sub-nav-item" :class="{ active: currentView === 'libros' }" @click="currentView = 'libros'">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
             Libros
+          </a>
+          <a href="#" class="sub-nav-item" :class="{ active: currentView === 'prestamos' }" @click="currentView = 'prestamos'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
+            Préstamos
           </a>
           <a href="#" class="sub-nav-item" :class="{ active: currentView === 'categorias' }" @click="currentView = 'categorias'">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 6V3M9 6V3M15 6V3"></path></svg>
@@ -126,11 +132,15 @@ onMounted(checkAuth)
       <EquiposList v-if="currentView === 'equipos'" />
       <AlumnosCRUD v-if="currentView === 'alumnos'" />
       <LibrosCRUD v-if="currentView === 'libros'" />
+      <PrestamosCRUD v-if="currentView === 'prestamos'" />
       <CategoriasCRUD v-if="currentView === 'categorias'" />
       <MapaBiblioteca v-if="currentView === 'mapa-biblio'" />
       <ActiveSessions v-if="currentView === 'active'" />
       <ReportesConexiones v-if="currentView === 'conexiones'" />
       <UsoEstadisticas v-if="currentView === 'estadisticas'" />
     </main>
+
+    <!-- Asistente Virtual BiblioBot Flotante -->
+    <ChatBot />
   </template>
 </template>
