@@ -18,10 +18,20 @@ namespace ControlLaboratorio.API.Data
         public DbSet<Multa> Multas { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<ScanLog> ScanLogs { get; set; }
+        public DbSet<UsuarioAdmin> UsuariosAdmin { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<UsuarioAdmin>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(r => r.Token)
+                .IsUnique();
 
             modelBuilder.Entity<Alumno>()
                 .HasIndex(a => a.CodigoUniversitario)
@@ -37,7 +47,6 @@ namespace ControlLaboratorio.API.Data
             modelBuilder.Entity<Sesion>()
                 .HasIndex(s => s.AlumnoID);
 
-            // Configuraciones de Biblioteca
             modelBuilder.Entity<Libro>()
                 .HasIndex(l => l.NroRegistro);
 
@@ -60,7 +69,6 @@ namespace ControlLaboratorio.API.Data
             modelBuilder.Entity<Multa>()
                 .HasIndex(m => m.AlumnoID);
 
-            // Prevenir ciclos de borrado en cascada (Cascade Delete Cycles)
             modelBuilder.Entity<Prestamo>()
                 .HasOne(p => p.Libro)
                 .WithMany()
