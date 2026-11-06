@@ -14,7 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-var secretKey = builder.Configuration["JwtSettings:SecretKey"] ?? "FamurpBve2026_ClaveSecretaSuperSeguraParaJwt_Produccion!";
+var secretKey = builder.Configuration["JwtSettings:SecretKey"];
+if (string.IsNullOrWhiteSpace(secretKey))
+{
+    throw new InvalidOperationException("La clave secreta JwtSettings:SecretKey no está configurada.");
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -290,26 +294,26 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseSwagger(options =>
-{
-    options.RouteTemplate = "api/openapi/{documentName}.json";
-});
-
 if (app.Environment.IsDevelopment())
 {
+    app.UseSwagger(options =>
+    {
+        options.RouteTemplate = "api/openapi/{documentName}.json";
+    });
+
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/api/openapi/v1.json", "ControlLaboratorio API v1");
         c.RoutePrefix = "api/swagger";
     });
-}
 
-app.MapScalarApiReference(options =>
-{
-    options.WithTitle("BVE FAMURP - API Reference")
-           .WithEndpointPrefix("/api/scalar/{documentName}")
-           .WithOpenApiRoutePattern("/api/openapi/{documentName}.json");
-});
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("BVE FAMURP - API Reference")
+               .WithEndpointPrefix("/api/scalar/{documentName}")
+               .WithOpenApiRoutePattern("/api/openapi/{documentName}.json");
+    });
+}
 
 app.UseStaticFiles();
 

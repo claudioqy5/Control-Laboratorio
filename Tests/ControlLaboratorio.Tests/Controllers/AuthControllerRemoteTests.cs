@@ -26,11 +26,7 @@ public class AuthControllerRemoteTests : IDisposable
         TestDbContextFactory.ResetActiveSessionPings();
         _context = TestDbContextFactory.CreateInMemoryDbContext();
         _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "AdminSettings:Username", "admin" },
-                { "AdminSettings:Password", "admin123" }
-            })
+            .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
         _controller = new AuthController(_context, _configuration);
     }

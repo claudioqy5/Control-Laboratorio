@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using ControlLaboratorio.API.Controllers;
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Dtos;
+using ControlLaboratorio.API.Models;
 using ControlLaboratorio.Tests.Fixtures;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -30,12 +31,12 @@ public class AuthControllerAdminLoginTests : IDisposable
         _context.Dispose();
     }
 
-    private static IConfiguration CreateConfig(string? username = "admin", string? password = "admin123")
+    private static IConfiguration CreateConfig()
     {
-        var dict = new Dictionary<string, string?>();
-        if (username != null) dict["AdminSettings:Username"] = username;
-        if (password != null) dict["AdminSettings:Password"] = password;
-        dict["AdminSettings:AllowLegacyAdmin"] = "true";
+        var dict = new Dictionary<string, string?>
+        {
+            ["JwtSettings:SecretKey"] = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64))
+        };
         return new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
     }
 
@@ -45,11 +46,26 @@ public class AuthControllerAdminLoginTests : IDisposable
         return JsonDocument.Parse(json).RootElement;
     }
 
+    private void SeedAdminUser(string username, string password, bool activo = true)
+    {
+        var user = new UsuarioAdmin
+        {
+            Username = username,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, 11),
+            Nombres = "Administrador Prueba",
+            Rol = RolAdmin.SuperAdmin,
+            EstadoActivo = activo,
+            FechaCreacion = DateTime.UtcNow
+        };
+        _context.UsuariosAdmin.Add(user);
+        _context.SaveChanges();
+    }
+
     [Fact]
     public async Task AdminLogin_WithValidCredentials_ReturnsOkWithToken()
     {
-        var config = CreateConfig("sysadmin", "secretPass99");
-        var controller = new AuthController(_context, config);
+        SeedAdminUser("sysadmin", "secretPass99");
+        var controller = new AuthController(_context, CreateConfig());
 
         var request = new AdminLoginRequest
         {
@@ -63,14 +79,15 @@ public class AuthControllerAdminLoginTests : IDisposable
         var response = okResult.Value.Should().BeOfType<AdminLoginResponse>().Subject;
         response.Token.Should().NotBeNullOrEmpty();
         response.RefreshToken.Should().NotBeNullOrEmpty();
-        response.EsLegacy.Should().BeTrue();
+        response.EsLegacy.Should().BeFalse();
+        response.Usuario.Username.Should().Be("sysadmin");
     }
 
     [Fact]
     public async Task AdminLogin_WithInvalidPassword_ReturnsUnauthorized()
     {
-        var config = CreateConfig("sysadmin", "secretPass99");
-        var controller = new AuthController(_context, config);
+        SeedAdminUser("sysadmin", "secretPass99");
+        var controller = new AuthController(_context, CreateConfig());
 
         var request = new AdminLoginRequest
         {
@@ -82,14 +99,14 @@ public class AuthControllerAdminLoginTests : IDisposable
 
         var unauthResult = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
         var data = ToJsonElement(unauthResult.Value);
-        data.GetProperty("message").GetString().Should().Be("Usuario o contraseña incorrectos.");
+        data.GetProperty("message").GetString().Should().Be("Credenciales incorrectas.");
     }
 
     [Fact]
     public async Task AdminLogin_WithInvalidUsername_ReturnsUnauthorized()
     {
-        var config = CreateConfig("sysadmin", "secretPass99");
-        var controller = new AuthController(_context, config);
+        SeedAdminUser("sysadmin", "secretPass99");
+        var controller = new AuthController(_context, CreateConfig());
 
         var request = new AdminLoginRequest
         {
@@ -101,38 +118,38 @@ public class AuthControllerAdminLoginTests : IDisposable
 
         var unauthResult = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
         var data = ToJsonElement(unauthResult.Value);
-        data.GetProperty("message").GetString().Should().Be("Usuario o contraseña incorrectos.");
+        data.GetProperty("message").GetString().Should().Be("Credenciales incorrectas.");
     }
 
     [Fact]
-    public async Task AdminLogin_WhenConfigMissing_FallsBackToDefaultCredentials()
+    public async Task AdminLogin_WhenUserInactive_ReturnsUnauthorized()
     {
-        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
-        var controller = new AuthController(_context, config);
+        SeedAdminUser("inactivo", "pass12345", activo: false);
+        var controller = new AuthController(_context, CreateConfig());
 
         var request = new AdminLoginRequest
         {
-            Username = "admin",
-            Password = "admin123"
+            Username = "inactivo",
+            Password = "pass12345"
         };
 
         var result = await controller.AdminLogin(request);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var response = okResult.Value.Should().BeOfType<AdminLoginResponse>().Subject;
-        response.Token.Should().NotBeNullOrEmpty();
+        var unauthResult = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
+        var data = ToJsonElement(unauthResult.Value);
+        data.GetProperty("message").GetString().Should().Be("Usuario inactivo o suspendido.");
     }
 
     [Fact]
     public async Task AdminLogin_WithTrimmedWhitespace_MatchesCredentials()
     {
-        var config = CreateConfig("admin", "admin123");
-        var controller = new AuthController(_context, config);
+        SeedAdminUser("admintest", "TestPassTrim99");
+        var controller = new AuthController(_context, CreateConfig());
 
         var request = new AdminLoginRequest
         {
-            Username = "  admin  ",
-            Password = "  admin123  "
+            Username = "  admintest  ",
+            Password = "  TestPassTrim99  "
         };
 
         var result = await controller.AdminLogin(request);

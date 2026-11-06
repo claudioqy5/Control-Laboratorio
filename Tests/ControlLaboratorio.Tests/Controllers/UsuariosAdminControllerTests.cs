@@ -36,8 +36,8 @@ public class UsuariosAdminControllerTests : IDisposable
     {
         var dict = new Dictionary<string, string?>
         {
-            ["JwtSettings:SecretKey"] = "ClaveSecretaSuperSeguraParaTestsUnitarios12345!",
-            ["AdminSettings:AllowLegacyAdmin"] = "true"
+            ["JwtSettings:SecretKey"] = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64))
+
         };
         return new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
     }
