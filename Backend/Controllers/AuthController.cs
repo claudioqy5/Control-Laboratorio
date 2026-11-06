@@ -436,8 +436,11 @@ namespace ControlLaboratorio.API.Controllers
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, sub),
+                new Claim(ClaimTypes.NameIdentifier, sub),
+                new Claim("sub", sub),
+                new Claim(ClaimTypes.Name, name),
                 new Claim("name", name),
+                new Claim(ClaimTypes.Role, role),
                 new Claim("role", role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
