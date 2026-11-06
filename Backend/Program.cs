@@ -1,27 +1,74 @@
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Models;
 using ControlLaboratorio.API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-// Agregar el BackgroundService para la reactivación automática y monitoreo de sesiones
+var secretKey = builder.Configuration["JwtSettings:SecretKey"] ?? "FamurpBve2026_ClaveSecretaSuperSeguraParaJwt_Produccion!";
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            NameClaimType = "name",
+            RoleClaimType = "role",
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingrese el token JWT en formato Bearer {token}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 builder.Services.AddHostedService<ReactivacionAlumnosService>();
 builder.Services.AddHostedService<SessionMonitorService>();
 
-// Registrar el servicio de Google Vision API
 builder.Services.AddScoped<GoogleVisionService>();
-// Database Configuration
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ControlLaboratorioConnection")));
 
-// CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -32,15 +79,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-add column if not exists
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     try
     {
-        // Crear base de datos y tablas si no existen
-        db.Database.EnsureCreated();
-
         db.Database.EnsureCreated();
 
         db.Database.ExecuteSqlRaw(@"
@@ -104,6 +147,35 @@ using (var scope = app.Services.CreateScope())
                 );
             END
 
+            IF OBJECT_ID('UsuariosAdmin', 'U') IS NULL
+            BEGIN
+                CREATE TABLE UsuariosAdmin (
+                    IdUsuarioAdmin INT IDENTITY(1,1) PRIMARY KEY,
+                    Username NVARCHAR(50) NOT NULL UNIQUE,
+                    PasswordHash NVARCHAR(100) NOT NULL,
+                    Nombres NVARCHAR(150) NOT NULL,
+                    Correo NVARCHAR(150) NULL,
+                    Rol TINYINT NOT NULL DEFAULT 1,
+                    EstadoActivo BIT NOT NULL DEFAULT 1,
+                    FechaCreacion DATETIME2 NOT NULL DEFAULT GETDATE(),
+                    UltimoAcceso DATETIME2 NULL
+                );
+            END
+
+            IF OBJECT_ID('RefreshTokens', 'U') IS NULL
+            BEGIN
+                CREATE TABLE RefreshTokens (
+                    Id INT IDENTITY(1,1) PRIMARY KEY,
+                    Token NVARCHAR(150) NOT NULL UNIQUE,
+                    IdUsuarioAdmin INT NOT NULL,
+                    ExpiresAt DATETIME2 NOT NULL,
+                    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+                    RevokedAt DATETIME2 NULL,
+                    ReplacedByToken NVARCHAR(150) NULL,
+                    CONSTRAINT FK_RefreshTokens_UsuariosAdmin FOREIGN KEY (IdUsuarioAdmin) REFERENCES UsuariosAdmin(IdUsuarioAdmin) ON DELETE CASCADE
+                );
+            END
+
             IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Libros_NroRegistro' AND object_id = OBJECT_ID('Libros'))
             BEGIN
                 IF INDEXPROPERTY(OBJECT_ID('Libros'), 'IX_Libros_NroRegistro', 'IsUnique') = 1
@@ -114,13 +186,11 @@ using (var scope = app.Services.CreateScope())
             END
         ");
 
-        // Force cleanup and re-seeding if we want to ensure fresh mock data with all new columns populated (only in development)
         if (app.Environment.IsDevelopment() && db.Sesiones.Count() < 15)
         {
             db.Database.ExecuteSqlRaw("DELETE FROM Sesiones; DELETE FROM Alumnos; DELETE FROM Equipos;");
         }
 
-        // Seeding mock data if empty (only in development)
         if (app.Environment.IsDevelopment())
         {
             if (!db.Categorias.Any())
@@ -138,7 +208,6 @@ using (var scope = app.Services.CreateScope())
                 db.Categorias.AddRange(mockCategorias);
                 db.SaveChanges();
             }
-
 
             if (!db.Alumnos.Any())
             {
@@ -179,19 +248,16 @@ using (var scope = app.Services.CreateScope())
                 var random = new Random();
                 var sesionesMock = new List<Sesion>();
                 
-                // Generar datos para los últimos 12 meses
                 for (int monthOffset = 0; monthOffset < 12; monthOffset++)
                 {
                     var baseDate = new DateTime(hoy.Year, hoy.Month, 1).AddMonths(-monthOffset);
                     int daysInMonth = DateTime.DaysInMonth(baseDate.Year, baseDate.Month);
                     
-                    // Generar al menos 30 sesiones por mes
                     for (int i = 0; i < 40; i++)
                     {
                         var diaAleatorio = random.Next(1, daysInMonth + 1);
                         var fechaDia = new DateTime(baseDate.Year, baseDate.Month, diaAleatorio);
 
-                        // Omitir fines de semana la mayoría de las veces
                         if (fechaDia.DayOfWeek == DayOfWeek.Saturday || fechaDia.DayOfWeek == DayOfWeek.Sunday)
                         {
                             if (random.Next(0, 3) > 0) continue;
@@ -203,7 +269,6 @@ using (var scope = app.Services.CreateScope())
                         var duracion = random.Next(30, 180);
                         var horaFin = horaInicio.AddMinutes(duracion);
                         
-                        // Si es el día de hoy, algunas pueden estar activas
                         bool esActiva = (fechaDia.Date == hoy.Date && i % 5 == 0);
                         
                         sesionesMock.Add(new Sesion
@@ -222,26 +287,31 @@ using (var scope = app.Services.CreateScope())
             }
         }
     }
-    catch { /* Ignore if it fails or already exists */ }
+    catch
+    {
+    }
 }
 
-// Configure the HTTP request pipeline.
+app.UseSwagger(options =>
+{
+    options.RouteTemplate = "openapi/{documentName}.json";
+});
+
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseStaticFiles(); // Mantener ruta por defecto
+app.MapScalarApiReference();
 
-// Asegurar que exista la carpeta wwwroot
+app.UseStaticFiles();
+
 var wwwrootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 if (!Directory.Exists(wwwrootPath))
 {
     Directory.CreateDirectory(wwwrootPath);
 }
 
-// Servir archivos estáticos bajo la ruta /api/static para que Nginx la enrute al backend
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(wwwrootPath),
@@ -252,10 +322,9 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-
 
 app.Run();

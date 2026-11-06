@@ -16,6 +16,11 @@ namespace ControlLaboratorio.API.Dtos
         public bool EsLegacy { get; set; }
     }
 
+    public class RefreshTokenRequest
+    {
+        public string RefreshToken { get; set; } = string.Empty;
+    }
+
     public class CreateUsuarioAdminRequest
     {
         public string Username { get; set; } = string.Empty;

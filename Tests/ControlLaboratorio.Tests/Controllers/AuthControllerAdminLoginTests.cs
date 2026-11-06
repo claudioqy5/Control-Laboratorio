@@ -35,6 +35,7 @@ public class AuthControllerAdminLoginTests : IDisposable
         var dict = new Dictionary<string, string?>();
         if (username != null) dict["AdminSettings:Username"] = username;
         if (password != null) dict["AdminSettings:Password"] = password;
+        dict["AdminSettings:AllowLegacyAdmin"] = "true";
         return new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
     }
 
@@ -45,7 +46,7 @@ public class AuthControllerAdminLoginTests : IDisposable
     }
 
     [Fact]
-    public void AdminLogin_WithValidCredentials_ReturnsOkWithToken()
+    public async Task AdminLogin_WithValidCredentials_ReturnsOkWithToken()
     {
         var config = CreateConfig("sysadmin", "secretPass99");
         var controller = new AuthController(_context, config);
@@ -56,16 +57,17 @@ public class AuthControllerAdminLoginTests : IDisposable
             Password = "secretPass99"
         };
 
-        var result = controller.AdminLogin(request);
+        var result = await controller.AdminLogin(request);
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var data = ToJsonElement(okResult.Value);
-        data.GetProperty("token").GetString().Should().Be("fake-jwt-token-for-now");
-        data.GetProperty("message").GetString().Should().Be("Bienvenido Administrador");
+        var response = okResult.Value.Should().BeOfType<AdminLoginResponse>().Subject;
+        response.Token.Should().NotBeNullOrEmpty();
+        response.RefreshToken.Should().NotBeNullOrEmpty();
+        response.EsLegacy.Should().BeTrue();
     }
 
     [Fact]
-    public void AdminLogin_WithInvalidPassword_ReturnsUnauthorized()
+    public async Task AdminLogin_WithInvalidPassword_ReturnsUnauthorized()
     {
         var config = CreateConfig("sysadmin", "secretPass99");
         var controller = new AuthController(_context, config);
@@ -76,7 +78,7 @@ public class AuthControllerAdminLoginTests : IDisposable
             Password = "wrongPassword"
         };
 
-        var result = controller.AdminLogin(request);
+        var result = await controller.AdminLogin(request);
 
         var unauthResult = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
         var data = ToJsonElement(unauthResult.Value);
@@ -84,7 +86,7 @@ public class AuthControllerAdminLoginTests : IDisposable
     }
 
     [Fact]
-    public void AdminLogin_WithInvalidUsername_ReturnsUnauthorized()
+    public async Task AdminLogin_WithInvalidUsername_ReturnsUnauthorized()
     {
         var config = CreateConfig("sysadmin", "secretPass99");
         var controller = new AuthController(_context, config);
@@ -95,7 +97,7 @@ public class AuthControllerAdminLoginTests : IDisposable
             Password = "secretPass99"
         };
 
-        var result = controller.AdminLogin(request);
+        var result = await controller.AdminLogin(request);
 
         var unauthResult = result.Should().BeOfType<UnauthorizedObjectResult>().Subject;
         var data = ToJsonElement(unauthResult.Value);
@@ -103,7 +105,7 @@ public class AuthControllerAdminLoginTests : IDisposable
     }
 
     [Fact]
-    public void AdminLogin_WhenConfigMissing_FallsBackToDefaultCredentials()
+    public async Task AdminLogin_WhenConfigMissing_FallsBackToDefaultCredentials()
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
         var controller = new AuthController(_context, config);
@@ -114,15 +116,15 @@ public class AuthControllerAdminLoginTests : IDisposable
             Password = "admin123"
         };
 
-        var result = controller.AdminLogin(request);
+        var result = await controller.AdminLogin(request);
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        var data = ToJsonElement(okResult.Value);
-        data.GetProperty("token").GetString().Should().Be("fake-jwt-token-for-now");
+        var response = okResult.Value.Should().BeOfType<AdminLoginResponse>().Subject;
+        response.Token.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
-    public void AdminLogin_WithTrimmedWhitespace_MatchesCredentials()
+    public async Task AdminLogin_WithTrimmedWhitespace_MatchesCredentials()
     {
         var config = CreateConfig("admin", "admin123");
         var controller = new AuthController(_context, config);
@@ -133,7 +135,7 @@ public class AuthControllerAdminLoginTests : IDisposable
             Password = "  admin123  "
         };
 
-        var result = controller.AdminLogin(request);
+        var result = await controller.AdminLogin(request);
 
         result.Should().BeOfType<OkObjectResult>();
     }

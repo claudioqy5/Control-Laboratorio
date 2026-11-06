@@ -9,11 +9,8 @@ namespace ControlLaboratorio.API.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<SessionMonitorService> _logger;
-
-        // Tolerancia de desconexión. El Agent hace polling cada 3 segundos,
-        // pero en redes de laboratorio con muchas PCs puede haber picos de latencia.
-        // 90 segundos da suficiente margen para tolerar micro-cortes y parpadeos de red sin cerrar la sesión en BD.
         private readonly TimeSpan _timeoutThreshold = TimeSpan.FromSeconds(90);
+        private DateTime _lastTokenCleanup = DateTime.MinValue;
 
         public SessionMonitorService(IServiceProvider serviceProvider, ILogger<SessionMonitorService> logger)
         {
@@ -30,13 +27,18 @@ namespace ControlLaboratorio.API.Services
                 try
                 {
                     await VerificarConexionesActivasAsync(stoppingToken);
+
+                    if ((DateTime.UtcNow - _lastTokenCleanup) > TimeSpan.FromHours(1))
+                    {
+                        _lastTokenCleanup = DateTime.UtcNow;
+                        await PurgarTokensExpiradosAsync(stoppingToken);
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error en el servicio de monitoreo de sesiones.");
                 }
 
-                // Ejecutar cada 5 segundos para detectar rápidamente caídas
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
         }
@@ -46,7 +48,6 @@ namespace ControlLaboratorio.API.Services
             var now = TimeHelper.GetPeruTime();
             var sesionesDesconectadas = new List<int>();
 
-            // Identificar sesiones que no han reportado heartbeat recientemente
             foreach (var kvp in AuthController.ActiveSessionPings)
             {
                 if ((now - kvp.Value) > _timeoutThreshold)
@@ -73,8 +74,6 @@ namespace ControlLaboratorio.API.Services
                     _logger.LogWarning("Equipo {Equipo} (Sesion {SesionId}) se desconectó inesperadamente. Cerrando sesión.", 
                         sesion.Equipo?.NombreRed ?? "Desconocido", sesionId);
 
-                    // La hora final será la última vez que tuvimos señales de vida (o ahora mismo)
-                    // Usaremos la última hora de ping si es posible, pero fallamos seguro a "now"
                     if (AuthController.ActiveSessionPings.TryGetValue(sesionId, out var lastPing))
                     {
                         sesion.HoraFin = lastPing;
@@ -84,15 +83,12 @@ namespace ControlLaboratorio.API.Services
                         sesion.HoraFin = now;
                     }
                     
-                    // Actualizar el total consumido por el alumno y bloquear si alcanzó su límite
                     if (sesion.Alumno != null)
                     {
-                        // Guardar los cambios de la sesión para que se incluya en la suma (al estar en la misma transacción EF trackea)
                         var sesionesHoy = await dbContext.Sesiones
                             .Where(s => s.AlumnoID == sesion.AlumnoID && s.Fecha.Date == now.Date && s.HoraFin != null)
                             .ToListAsync(stoppingToken);
 
-                        // Como EF trackea la entidad actual, agregamos la sesión actual a la suma si no viene de BD
                         double segundosConsumidosHoy = sesionesHoy.Where(s => s.SesionID != sesionId).Sum(s => (s.HoraFin!.Value - s.HoraInicio).TotalSeconds);
                         segundosConsumidosHoy += (sesion.HoraFin.Value - sesion.HoraInicio).TotalSeconds;
 
@@ -107,11 +103,35 @@ namespace ControlLaboratorio.API.Services
                     }
                 }
 
-                // Removemos del diccionario independientemente de si existía en BD o ya estaba cerrada
                 AuthController.ActiveSessionPings.TryRemove(sesionId, out _);
             }
 
             await dbContext.SaveChangesAsync(stoppingToken);
+        }
+
+        private async Task PurgarTokensExpiradosAsync(CancellationToken stoppingToken)
+        {
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var cutoff = DateTime.UtcNow.AddHours(-48);
+
+                var tokensToDelete = await dbContext.RefreshTokens
+                    .Where(t => (t.RevokedAt != null || t.ExpiresAt < DateTime.UtcNow) && t.ExpiresAt < cutoff)
+                    .ToListAsync(stoppingToken);
+
+                if (tokensToDelete.Any())
+                {
+                    dbContext.RefreshTokens.RemoveRange(tokensToDelete);
+                    await dbContext.SaveChangesAsync(stoppingToken);
+                    _logger.LogInformation("Se purgaron {Count} refresh tokens expirados o revocados.", tokensToDelete.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al purgar refresh tokens antiguos.");
+            }
         }
     }
 }
