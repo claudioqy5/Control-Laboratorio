@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AbsysNet -> Control Laboratorio & Biblioteca URP Sync
 // @namespace    https://medicina.urp.edu.pe/bve
-// @version      1.4.0
+// @version      1.5.0
 // @description  Captura automática de préstamos y devoluciones en AbsysNet y sincronización en tiempo real con Control-Laboratorio.
 // @author       Facultad de Medicina Humana - URP
 // @match        https://biblioteca.urp.edu.pe/abnet/*
@@ -62,161 +62,219 @@
     }
 
     // ========================================================
-    // WIDGET FLOTANTE VISIBLE SOBRE LOS MARCOS DE ABSYSNET
+    // BUSCAR EL DOCUMENTO DESTINO ADECUADO (SOLO EN PRÉSTAMOS / DEVOLUCIONES)
+    // ========================================================
+    function findTargetDocument() {
+        const allDocs = getAllDocuments();
+
+        // Solo inyectar en el frame que contenga el formulario de Préstamos o Devoluciones
+        for (const doc of allDocs) {
+            if (!doc.body) continue;
+
+            const txt = (doc.body.innerText || '').toLowerCase();
+            const hasCirculationTerms = txt.includes('detalles del lector') || 
+                                        txt.includes('detalles del ejemplar') || 
+                                        txt.includes('fecha de préstamo') || 
+                                        txt.includes('fecha de devolución') || 
+                                        txt.includes('nº lector') || 
+                                        txt.includes('n° lector');
+
+            const hasInputs = Array.from(doc.querySelectorAll('input')).some(i => {
+                const n = (i.name || '').toLowerCase();
+                const id = (i.id || '').toLowerCase();
+                return n.includes('lector') || n.includes('barras') || id.includes('lector') || id.includes('barras');
+            });
+
+            if (hasCirculationTerms || hasInputs) {
+                return doc;
+            }
+        }
+
+        // Si estamos en el "Escritorio", "Notas", "Enlaces", etc., no mostramos el widget para no saturar la pantalla
+        return null;
+    }
+
+    // ========================================================
+    // WIDGET FLOTANTE VISIBLE SOBRE LOS MARCOS DE ABSYSNET (SINGLETON)
     // ========================================================
     function createWidget() {
         try {
             const allDocs = getAllDocuments();
-            // Buscar documentos con body renderizable
-            allDocs.forEach(doc => {
-                if (!doc.body) return;
-                if (doc.getElementById('bve-sync-widget')) return;
+            const targetDoc = findTargetDocument();
 
-                // Solo inyectar en frames con tamaño visual o en el frame principal
-                const win = doc.defaultView;
-                if (win && win.innerHeight < 150) return;
+            // Si no estamos en la pestaña de préstamos o devoluciones, retirar cualquier widget existente
+            if (!targetDoc) {
+                allDocs.forEach(d => {
+                    const existing = d.getElementById('bve-sync-widget');
+                    if (existing) existing.remove();
+                });
+                return;
+            }
 
-                const widget = doc.createElement('div');
-                widget.id = 'bve-sync-widget';
-                widget.innerHTML = `
-                    <div style="
-                        position: fixed !important;
-                        bottom: 15px !important;
-                        right: 20px !important;
-                        background: #ffffff !important;
-                        color: #111827 !important;
-                        padding: 10px 14px !important;
-                        border-radius: 12px !important;
-                        box-shadow: 0 10px 25px rgba(0,0,0,0.3), 0 4px 8px rgba(159,18,57,0.15) !important;
-                        border: 2px solid #9f1239 !important;
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-                        font-size: 12px !important;
-                        z-index: 2147483647 !important;
-                        display: flex !important;
-                        flex-direction: column !important;
-                        gap: 8px !important;
-                        user-select: none !important;
-                        min-width: 210px !important;
-                    ">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <div class="bve-status-dot" style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);"></div>
-                                <div>
-                                    <div style="font-weight: 700; color: #9f1239; font-size: 11px; line-height: 1.2;">BVE Medicina URP</div>
-                                    <div class="bve-status-text" style="color: #6b7280; font-size: 10px;">Sincronizador Activo</div>
-                                </div>
-                            </div>
-                            <button class="bve-cfg-btn" title="Configurar URL del Servidor" style="background: transparent; border: none; cursor: pointer; font-size: 13px; padding: 2px;">⚙️</button>
-                        </div>
-
-                        <div style="display: flex; gap: 6px;">
-                            <button class="bve-capture-btn" style="
-                                flex: 1;
-                                background: #9f1239;
-                                color: #ffffff;
-                                border: none;
-                                border-radius: 6px;
-                                padding: 6px 10px;
-                                font-size: 11px;
-                                font-weight: 700;
-                                cursor: pointer;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                gap: 4px;
-                                box-shadow: 0 2px 4px rgba(159,18,57,0.3);
-                            ">📥 Sincronizar Ahora</button>
-
-                            <button class="bve-test-btn" style="
-                                background: #f3f4f6;
-                                color: #374151;
-                                border: 1px solid #d1d5db;
-                                border-radius: 6px;
-                                padding: 6px 8px;
-                                font-size: 10px;
-                                font-weight: 600;
-                                cursor: pointer;
-                            " title="Verificar conectividad con el servidor (sin registrar préstamos)">⚡ Probar</button>
-                        </div>
-                    </div>
-                `;
-
-                doc.body.appendChild(widget);
-
-                // Listeners
-                const captureBtn = widget.querySelector('.bve-capture-btn');
-                if (captureBtn) {
-                    captureBtn.addEventListener('click', () => {
-                        showToast('Escaneando pantalla de AbsysNet...', 'info');
-                        const encontrado = inspeccionarPantalla(true);
-                        if (!encontrado) {
-                            showToast('No se encontró un libro o alumno en la pantalla actual.', 'error');
-                        }
-                    });
-                }
-
-                const testBtn = widget.querySelector('.bve-test-btn');
-                if (testBtn) {
-                    testBtn.addEventListener('click', () => {
-                        probarConexionServidor();
-                    });
-                }
-
-                const cfgBtn = widget.querySelector('.bve-cfg-btn');
-                if (cfgBtn) {
-                    cfgBtn.addEventListener('click', () => {
-                        const nueva = prompt('URL de la API de Control-Laboratorio:', API_URL);
-                        if (nueva && nueva.trim()) {
-                            API_URL = nueva.trim();
-                            try {
-                                if (typeof GM_setValue !== 'undefined') GM_setValue('SYNC_API_URL', API_URL);
-                                else localStorage.setItem('SYNC_API_URL', API_URL);
-                            } catch(e){}
-                            showToast('URL actualizada: ' + API_URL, 'info');
-                        }
-                    });
+            // Limpiar widgets huérfanos en otros frames para que solo haya exactamente UNO
+            allDocs.forEach(d => {
+                if (d !== targetDoc) {
+                    const existing = d.getElementById('bve-sync-widget');
+                    if (existing) existing.remove();
                 }
             });
+
+            // Si ya existe en el targetDoc, no recrearlo
+            if (targetDoc.getElementById('bve-sync-widget')) return;
+
+            const widget = targetDoc.createElement('div');
+            widget.id = 'bve-sync-widget';
+            widget.innerHTML = `
+                <div style="
+                    position: fixed !important;
+                    bottom: 18px !important;
+                    right: 25px !important;
+                    background: #ffffff !important;
+                    color: #111827 !important;
+                    padding: 10px 14px !important;
+                    border-radius: 12px !important;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.25), 0 4px 8px rgba(159,18,57,0.15) !important;
+                    border: 2px solid #9f1239 !important;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                    font-size: 12px !important;
+                    z-index: 2147483647 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    gap: 8px !important;
+                    user-select: none !important;
+                    min-width: 220px !important;
+                ">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div class="bve-status-dot" style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);"></div>
+                            <div>
+                                <div style="font-weight: 700; color: #9f1239; font-size: 11px; line-height: 1.2;">BVE Medicina URP</div>
+                                <div class="bve-status-text" style="color: #6b7280; font-size: 10px;">Sincronizador Activo</div>
+                            </div>
+                        </div>
+                        <button class="bve-cfg-btn" title="Configurar URL del Servidor" style="background: transparent; border: none; cursor: pointer; font-size: 13px; padding: 2px;">⚙️</button>
+                    </div>
+
+                    <div style="display: flex; gap: 6px;">
+                        <button class="bve-capture-btn" style="
+                            flex: 1;
+                            background: #9f1239;
+                            color: #ffffff;
+                            border: none;
+                            border-radius: 6px;
+                            padding: 6px 10px;
+                            font-size: 11px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 4px;
+                            box-shadow: 0 2px 4px rgba(159,18,57,0.3);
+                        ">📥 Sincronizar Ahora</button>
+
+                        <button class="bve-test-btn" style="
+                            background: #f3f4f6;
+                            color: #374151;
+                            border: 1px solid #d1d5db;
+                            border-radius: 6px;
+                            padding: 6px 8px;
+                            font-size: 10px;
+                            font-weight: 600;
+                            cursor: pointer;
+                        " title="Verificar conectividad con el servidor (sin registrar préstamos)">⚡ Probar</button>
+                    </div>
+                </div>
+            `;
+
+            targetDoc.body.appendChild(widget);
+
+            // Listeners
+            const captureBtn = widget.querySelector('.bve-capture-btn');
+            if (captureBtn) {
+                captureBtn.addEventListener('click', () => {
+                    showToast('Escaneando pantalla de AbsysNet...', 'info');
+                    const encontrado = inspeccionarPantalla(true);
+                    if (!encontrado) {
+                        showToast('No se encontró un libro o alumno en la pantalla actual.', 'error');
+                    }
+                });
+            }
+
+            const testBtn = widget.querySelector('.bve-test-btn');
+            if (testBtn) {
+                testBtn.addEventListener('click', () => {
+                    probarConexionServidor();
+                });
+            }
+
+            const cfgBtn = widget.querySelector('.bve-cfg-btn');
+            if (cfgBtn) {
+                cfgBtn.addEventListener('click', () => {
+                    const nueva = prompt('URL de la API de Control-Laboratorio:', API_URL);
+                    if (nueva && nueva.trim()) {
+                        API_URL = nueva.trim();
+                        try {
+                            if (typeof GM_setValue !== 'undefined') GM_setValue('SYNC_API_URL', API_URL);
+                            else localStorage.setItem('SYNC_API_URL', API_URL);
+                        } catch(e){}
+                        showToast('URL actualizada: ' + API_URL, 'info');
+                    }
+                });
+            }
         } catch (e) {
             console.error('[BVE Sync] Error al crear widget:', e);
         }
     }
 
     // ========================================================
-    // TOAST NOTIFICACIÓN EN LA PANTALLA
+    // TOAST NOTIFICACIÓN EN LA PANTALLA (SINGLETON)
     // ========================================================
     function showToast(mensaje, tipo = 'success') {
         try {
             const allDocs = getAllDocuments();
-            allDocs.forEach(doc => {
-                if (!doc.body) return;
-                const toast = doc.createElement('div');
-                const color = tipo === 'success' ? '#065f46' : (tipo === 'info' ? '#1e40af' : '#991b1b');
-                toast.style.cssText = `
-                    position: fixed !important;
-                    top: 20px !important;
-                    right: 20px !important;
-                    background: ${color} !important;
-                    color: #ffffff !important;
-                    padding: 12px 18px !important;
-                    border-radius: 8px !important;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.35) !important;
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-                    font-size: 13px !important;
-                    font-weight: 600 !important;
-                    z-index: 2147483647 !important;
-                    transition: all 0.3s ease !important;
-                    max-width: 360px !important;
-                `;
-                toast.innerText = mensaje;
-                doc.body.appendChild(toast);
+            let targetDoc = null;
+            for (const doc of allDocs) {
+                if (doc.getElementById('bve-sync-widget')) {
+                    targetDoc = doc;
+                    break;
+                }
+            }
+            if (!targetDoc) {
+                targetDoc = allDocs.find(d => d.body && (d.defaultView?.innerHeight || 0) > 300) || allDocs.find(d => d.body);
+            }
+            if (!targetDoc || !targetDoc.body) return;
 
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateY(-10px)';
-                    setTimeout(() => toast.remove(), 300);
-                }, 4000);
-            });
+            const oldToast = targetDoc.getElementById('bve-sync-toast');
+            if (oldToast) oldToast.remove();
+
+            const toast = targetDoc.createElement('div');
+            toast.id = 'bve-sync-toast';
+            const color = tipo === 'success' ? '#065f46' : (tipo === 'info' ? '#1e40af' : '#991b1b');
+            toast.style.cssText = `
+                position: fixed !important;
+                top: 20px !important;
+                right: 20px !important;
+                background: ${color} !important;
+                color: #ffffff !important;
+                padding: 12px 18px !important;
+                border-radius: 8px !important;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.35) !important;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                z-index: 2147483647 !important;
+                transition: all 0.3s ease !important;
+                max-width: 360px !important;
+            `;
+            toast.innerText = mensaje;
+            targetDoc.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         } catch(e){}
     }
 
