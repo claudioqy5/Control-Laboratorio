@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AbsysNet -> Control Laboratorio & Biblioteca URP Sync
 // @namespace    https://medicina.urp.edu.pe/bve
-// @version      1.5.0
+// @version      1.6.0
 // @description  Captura automática de préstamos y devoluciones en AbsysNet y sincronización en tiempo real con Control-Laboratorio.
 // @author       Facultad de Medicina Humana - URP
 // @match        https://biblioteca.urp.edu.pe/abnet/*
@@ -314,79 +314,93 @@
     // ========================================================
     // DETECCIÓN DE MODO (PRESTAMO / DEVOLUCION)
     // ========================================================
-    function detectarModo() {
-        const allDocs = getAllDocuments();
-        for (const doc of allDocs) {
-            const txt = (doc.body ? doc.body.innerText : '') || '';
-            if (txt.includes('PRÉSTAMOS') || txt.includes('Fecha de préstamo') || txt.includes('Prestamos')) {
-                return 'PRESTAMO';
-            }
-            if (txt.includes('DEVOLUCIONES') || txt.includes('Fecha de devolución') || txt.includes('Devoluciones')) {
-                return 'DEVOLUCION';
-            }
+    function detectarModo(targetDoc) {
+        if (!targetDoc || !targetDoc.body) return 'PRESTAMO';
+        const txt = targetDoc.body.innerText || '';
+
+        // 1. Verificación precisa en la cabecera de la ventana activa
+        if (txt.includes('Fecha de préstamo') || txt.includes('PRÉSTAMOS |') || txt.includes('PRÉSTAMO')) {
+            return 'PRESTAMO';
         }
+        if (txt.includes('Fecha de devolución') || txt.includes('DEVOLUCIONES |') || txt.includes('DEVOLUCIÓN')) {
+            return 'DEVOLUCION';
+        }
+
+        // 2. Por minúsculas
+        const lower = txt.toLowerCase();
+        if (lower.includes('fecha de préstamo') || lower.includes('préstamo')) {
+            return 'PRESTAMO';
+        }
+        if (lower.includes('fecha de devolución') || lower.includes('devolución')) {
+            return 'DEVOLUCION';
+        }
+
         return 'PRESTAMO';
     }
 
     // ========================================================
-    // BUSCAR ALUMNO EN TODOS LOS FRAMES
+    // BUSCAR ALUMNO EN EL FRAME ACTIVO
     // ========================================================
-    function obtenerDatosAlumno() {
+    function obtenerDatosAlumno(targetDoc) {
         let codigo = '';
         let nombre = '';
 
-        const allDocs = getAllDocuments();
-        for (const doc of allDocs) {
-            const inputs = Array.from(doc.querySelectorAll('input, textarea'));
+        if (!targetDoc) return { codigo, nombre };
 
-            // 1. Por name, id o clase 'lector'
-            for (const input of inputs) {
-                const name = (input.name || '').toLowerCase();
-                const id = (input.id || '').toLowerCase();
-                if (name.includes('lector') || id.includes('lector')) {
-                    const v = (input.value || '').trim();
-                    if (/^\d{8,10}$/.test(v)) {
-                        codigo = v;
-                        break;
-                    }
-                }
+        const inputs = Array.from(targetDoc.querySelectorAll('input'));
+
+        // 1. Buscar código universitario de alumno:
+        // En la URP tiene entre 8 y 10 dígitos (ej. 201712043)
+        for (const input of inputs) {
+            const v = (input.value || '').trim();
+            if (/^\d{8,10}$/.test(v)) {
+                codigo = v;
+                break;
             }
+        }
 
-            // 2. Por etiqueta visible "Nº lector" o "N° lector"
-            if (!codigo) {
-                const labels = doc.querySelectorAll('td, span, div, label, b, th');
-                for (const lbl of labels) {
-                    const t = (lbl.innerText || '').toLowerCase();
-                    if (t.includes('lector')) {
-                        const tr = lbl.closest('tr') || lbl.parentElement;
-                        if (tr) {
-                            const inps = tr.querySelectorAll('input');
-                            for (const inp of inps) {
-                                const v = (inp.value || '').trim();
-                                if (/^\d{8,10}$/.test(v)) {
-                                    codigo = v;
-                                    break;
-                                }
+        // 2. Si no lo encontramos por valor directo, buscar inputs junto a la etiqueta "lector"
+        if (!codigo) {
+            const elements = targetDoc.querySelectorAll('td, th, span, div, label, b');
+            for (const el of elements) {
+                const t = (el.innerText || '').toLowerCase();
+                if (t.includes('lector') && !t.includes('tipo')) {
+                    const tr = el.closest('tr') || el.parentElement;
+                    if (tr) {
+                        const inps = tr.querySelectorAll('input');
+                        for (const inp of inps) {
+                            const v = (inp.value || '').trim();
+                            if (/^\d{6,12}$/.test(v)) {
+                                codigo = v;
+                                break;
                             }
                         }
                     }
-                    if (codigo) break;
                 }
+                if (codigo) break;
             }
+        }
 
-            // 3. Nombre del alumno
+        // 3. Buscar nombre del alumno:
+        // En AbsysNet, al lado del código de lector hay una caja con el nombre en mayúsculas (ej. "QUELLO YAPU, CLAUDIO FERNANDO")
+        for (const input of inputs) {
+            const v = (input.value || '').trim();
+            if (v.length > 5 && v.includes(',') && /[A-Z]/.test(v) && !v.includes('URP') && !v.includes('MEDICINA')) {
+                nombre = v;
+                break;
+            }
+        }
+
+        if (!nombre) {
             for (const input of inputs) {
-                const v = (input.value || '').trim();
-                if (v.length > 5 && /[A-Z]/.test(v) && (v.includes(',') || v.includes(' ')) && 
-                    !v.includes('URP') && !v.includes('MEDICINA') && !v.includes('BARATZ')) {
-                    if (input.readOnly || input.disabled || (input.name || '').toLowerCase().includes('lector')) {
+                if (input.readOnly || input.disabled) {
+                    const v = (input.value || '').trim();
+                    if (v.length > 6 && v.includes(' ') && /[A-Z]/.test(v) && !v.includes('URP') && !v.includes('MEDICINA')) {
                         nombre = v;
                         break;
                     }
                 }
             }
-
-            if (codigo) break;
         }
 
         return { codigo, nombre };
@@ -396,76 +410,77 @@
     // INSPECCIÓN DE PANTALLA Y TABLAS DE LIBROS
     // ========================================================
     function inspeccionarPantalla(esManual = false) {
-        const modo = detectarModo();
-        const { codigo: codAlumno, nombre: nomAlumno } = obtenerDatosAlumno();
+        const targetDoc = findTargetDocument();
+        if (!targetDoc) {
+            console.log('[BVE Sync] No se encontró marco de circulación activo.');
+            return false;
+        }
+
+        const modo = detectarModo(targetDoc);
+        const { codigo: codAlumno, nombre: nomAlumno } = obtenerDatosAlumno(targetDoc);
 
         console.log('[BVE Sync] Inspeccionando pantalla... Modo:', modo, 'Alumno:', codAlumno, nomAlumno);
 
         let encontrado = false;
-        const allDocs = getAllDocuments();
 
-        for (const doc of allDocs) {
-            const tablas = doc.querySelectorAll('table');
-            tablas.forEach(tabla => {
-                const rows = Array.from(tabla.rows || []);
-                if (rows.length < 2) return;
+        const tablas = targetDoc.querySelectorAll('table');
+        tablas.forEach(tabla => {
+            const rows = Array.from(tabla.rows || []);
+            if (rows.length < 2) return;
 
-                const headerTexts = Array.from(rows[0].cells).map(c => (c.innerText || '').toLowerCase().trim());
-                const colBarras = headerTexts.findIndex(h => h.includes('barras') || h.includes('c. barras'));
-                const colTitulo = headerTexts.findIndex(h => h.includes('título') || h.includes('titulo'));
-                const colFechaDev = headerTexts.findIndex(h => h.includes('fecha devol') || h.includes('devol'));
+            const headerTexts = Array.from(rows[0].cells).map(c => (c.innerText || '').toLowerCase().trim());
+            const colBarras = headerTexts.findIndex(h => h.includes('barras') || h.includes('c. barras'));
+            const colTitulo = headerTexts.findIndex(h => h.includes('título') || h.includes('titulo'));
+            const colFechaDev = headerTexts.findIndex(h => h.includes('fecha devol') || h.includes('devol'));
 
-                const esTablaValida = headerTexts.some(h => h.includes('barras') || h.includes('ejemp') || h.includes('título'));
+            const esTablaValida = headerTexts.some(h => h.includes('barras') || h.includes('ejemp') || h.includes('título'));
 
-                if (esTablaValida) {
-                    for (let i = 1; i < rows.length; i++) {
-                        const cells = Array.from(rows[i].cells || []);
-                        if (cells.length < 3) continue;
+            if (esTablaValida) {
+                for (let i = 1; i < rows.length; i++) {
+                    const cells = Array.from(rows[i].cells || []);
+                    if (cells.length < 3) continue;
 
-                        let cBarras = colBarras >= 0 && cells[colBarras] ? cells[colBarras].innerText.trim() : '';
-                        let titulo = colTitulo >= 0 && cells[colTitulo] ? cells[colTitulo].innerText.trim() : '';
-                        let fechaDevStr = colFechaDev >= 0 && cells[colFechaDev] ? cells[colFechaDev].innerText.trim() : '';
+                    let cBarras = colBarras >= 0 && cells[colBarras] ? cells[colBarras].innerText.trim() : '';
+                    let titulo = colTitulo >= 0 && cells[colTitulo] ? cells[colTitulo].innerText.trim() : '';
+                    let fechaDevStr = colFechaDev >= 0 && cells[colFechaDev] ? cells[colFechaDev].innerText.trim() : '';
 
-                        // Fallback heurístico si no están alineadas las columnas
-                        if (!cBarras) {
-                            for (const cell of cells) {
-                                const txt = cell.innerText.trim();
-                                if (/^[0-9]{5,15}$/.test(txt) && !cBarras) {
-                                    cBarras = txt;
-                                } else if (txt.length > 6 && !titulo && !txt.includes('/')) {
-                                    titulo = txt;
-                                } else if (/\d{2}\/\d{2}\/\d{4}/.test(txt) && !fechaDevStr) {
-                                    fechaDevStr = txt;
-                                }
+                    // Heurística de respaldo si las columnas no están bien alineadas
+                    if (!cBarras) {
+                        for (const cell of cells) {
+                            const txt = cell.innerText.trim();
+                            if (/^[0-9]{5,15}$/.test(txt) && !cBarras) {
+                                cBarras = txt;
+                            } else if (txt.length > 6 && !titulo && !txt.includes('/')) {
+                                titulo = txt;
+                            } else if (/\d{2}\/\d{2}\/\d{4}/.test(txt) && !fechaDevStr) {
+                                fechaDevStr = txt;
                             }
                         }
-
-                        if (cBarras) {
-                            encontrado = true;
-                            const fechaDev = parseFecha(fechaDevStr);
-                            sincronizarLibro(modo, codAlumno, nomAlumno, cBarras, titulo, fechaDev);
-                        }
                     }
-                }
-            });
 
-            // Fallback si no hay tabla pero hay código de barras en un input
-            if (!encontrado) {
-                const inputs = Array.from(doc.querySelectorAll('input'));
-                for (const input of inputs) {
-                    const name = (input.name || '').toLowerCase();
-                    if (name.includes('barras') || name.includes('ejemplar')) {
-                        const val = (input.value || '').trim();
-                        if (/^[0-9]{5,15}$/.test(val)) {
-                            encontrado = true;
-                            sincronizarLibro(modo, codAlumno, nomAlumno, val, '', null);
-                            break;
-                        }
+                    if (cBarras) {
+                        encontrado = true;
+                        const fechaDev = parseFecha(fechaDevStr);
+                        sincronizarLibro(modo, codAlumno, nomAlumno, cBarras, titulo, fechaDev, esManual);
                     }
                 }
             }
+        });
 
-            if (encontrado) break;
+        // Fallback si no hay tabla pero hay código de barras en un input
+        if (!encontrado) {
+            const inputs = Array.from(targetDoc.querySelectorAll('input'));
+            for (const input of inputs) {
+                const name = (input.name || '').toLowerCase();
+                if (name.includes('barras') || name.includes('ejemplar')) {
+                    const val = (input.value || '').trim();
+                    if (/^[0-9]{5,15}$/.test(val)) {
+                        encontrado = true;
+                        sincronizarLibro(modo, codAlumno, nomAlumno, val, '', null, esManual);
+                        break;
+                    }
+                }
+            }
         }
 
         return encontrado;
@@ -485,14 +500,15 @@
     // ========================================================
     // ENVIAR AL SERVIDOR
     // ========================================================
-    function sincronizarLibro(modo, codAlumno, nomAlumno, cBarras, titulo, fechaDevol) {
+    function sincronizarLibro(modo, codAlumno, nomAlumno, cBarras, titulo, fechaDevol, forzar = false) {
         const cacheKey = `${modo}_${codAlumno}_${cBarras}`;
-        if (syncCache.has(cacheKey)) {
+        if (!forzar && syncCache.has(cacheKey)) {
             console.log('[BVE Sync] Ya sincronizado recientemente:', cacheKey);
             return;
         }
 
         syncCache.add(cacheKey);
+        setTimeout(() => syncCache.delete(cacheKey), 25000);
 
         const payload = {
             tipoOperacion: modo,
