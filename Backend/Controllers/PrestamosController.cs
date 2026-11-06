@@ -136,11 +136,11 @@ namespace ControlLaboratorio.API.Controllers
                         if (!string.IsNullOrWhiteSpace(dto.CodigoAlumno))
                         {
                             var codAlumno = dto.CodigoAlumno.Trim();
-                            var alumno = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == codAlumno || a.DNI == codAlumno);
-                            if (alumno == null)
+                            var alumnoDev = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == codAlumno || a.DNI == codAlumno);
+                            if (alumnoDev == null)
                             {
                                 var nombreParts = (dto.NombreAlumno ?? "Estudiante URP").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                                alumno = new Alumno
+                                alumnoDev = new Alumno
                                 {
                                     CodigoUniversitario = codAlumno,
                                     DNI = codAlumno.Length == 8 ? codAlumno : "00000000",
@@ -150,13 +150,13 @@ namespace ControlLaboratorio.API.Controllers
                                     Carrera = "Medicina Humana",
                                     Estado = true
                                 };
-                                _context.Alumnos.Add(alumno);
+                                _context.Alumnos.Add(alumnoDev);
                                 await _context.SaveChangesAsync();
                             }
 
                             var prestamoDevuelto = new Prestamo
                             {
-                                AlumnoID = alumno.AlumnoID,
+                                AlumnoID = alumnoDev.AlumnoID,
                                 LibroID = libro.LibroID,
                                 FechaPrestamo = DateTime.Now.AddDays(-3),
                                 FechaDevolucion = dto.FechaDevolucion ?? DateTime.Now,
@@ -171,7 +171,7 @@ namespace ControlLaboratorio.API.Controllers
                             {
                                 mensaje = "Devolución registrada con éxito en Control-Laboratorio",
                                 prestamoId = prestamoDevuelto.PrestamoID,
-                                alumno = $"{alumno.CodigoUniversitario} - {alumno.Nombres} {alumno.ApellidoPaterno}",
+                                alumno = $"{alumnoDev.CodigoUniversitario} - {alumnoDev.Nombres} {alumnoDev.ApellidoPaterno}",
                                 libro = libro.Titulo
                             });
                         }
