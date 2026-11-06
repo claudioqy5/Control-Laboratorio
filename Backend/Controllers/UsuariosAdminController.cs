@@ -66,15 +66,8 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
         public async Task<ActionResult<UsuarioAdminDto>> CreateUsuario([FromBody] CreateUsuarioAdminRequest request)
         {
-            bool hasUsers = await _context.UsuariosAdmin.AnyAsync();
-            bool isSuperAdmin = User != null && (User.IsInRole("SuperAdmin") || User.HasClaim(c => (c.Type == ClaimTypes.Role || c.Type == "role" || c.Type.EndsWith("/role")) && c.Value == "SuperAdmin"));
-            if (hasUsers && !isSuperAdmin)
-            {
-                return Unauthorized(new { message = "Se requiere rol SuperAdmin para registrar administradores." });
-            }
 
             var username = request.Username?.Trim() ?? string.Empty;
             var password = request.Password?.Trim() ?? string.Empty;
@@ -109,7 +102,7 @@ namespace ControlLaboratorio.API.Controllers
                 PasswordHash = passwordHash,
                 Nombres = nombres,
                 Correo = request.Correo?.Trim(),
-                Rol = !hasUsers ? RolAdmin.SuperAdmin : request.Rol,
+                Rol = request.Rol,
                 EstadoActivo = true,
                 FechaCreacion = DateTime.UtcNow
             };

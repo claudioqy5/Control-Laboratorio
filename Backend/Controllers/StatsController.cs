@@ -22,14 +22,17 @@ namespace ControlLaboratorio.API.Controllers
 
         private bool IsAuthorizedAction(string password)
         {
-            var expected = _configuration["AdminSettings:ActionPassword"] ?? "admin12345";
+            var expected = _configuration["AdminSettings:ActionPassword"];
+            if (string.IsNullOrWhiteSpace(expected) || string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
             return password == expected;
         }
 
         [HttpGet("usage")]
         public async Task<IActionResult> GetUsageStats()
         {
-            // Agrupar por hora del día para ver afluencia
             var stats = await _context.Sesiones
                 .GroupBy(s => s.HoraInicio.Hour)
                 .Select(g => new
@@ -103,14 +106,12 @@ namespace ControlLaboratorio.API.Controllers
             }
             var targetDayEnd = targetDate.AddDays(1);
 
-            // Sesiones activas (Solo tiene sentido para hoy)
             var sesionesActivas = (targetDate == TimeHelper.GetPeruTime().Date) 
                 ? await _context.Sesiones.CountAsync(s => s.HoraFin == null)
                 : 0;
 
             var totalEstaciones = await _context.Equipos.CountAsync();
             
-            // Sesiones en el día seleccionado
             var sesionesHoy = await _context.Sesiones.CountAsync(s => s.HoraInicio >= targetDate && s.HoraInicio < targetDayEnd);
 
             var closedSessions = await _context.Sesiones
@@ -121,7 +122,6 @@ namespace ControlLaboratorio.API.Controllers
                 ? closedSessions.Average(s => (s.HoraFin!.Value - s.HoraInicio).TotalMinutes)
                 : 0;
 
-            // Obtener todas las sesiones del día seleccionado con sus relaciones
             var sesionesDelDia = await _context.Sesiones
                 .Include(s => s.Alumno)
                 .Include(s => s.Equipo)
@@ -129,7 +129,6 @@ namespace ControlLaboratorio.API.Controllers
                 .OrderBy(s => s.HoraInicio)
                 .ToListAsync();
 
-            // Afluencia detallada por hora del día seleccionado
             var afluenciaPorHora = Enumerable.Range(7, 15).Select(h => {
                 var sesionesDeLaHora = sesionesDelDia.Where(s => s.HoraInicio.Hour == h).ToList();
                 return new {
@@ -156,7 +155,6 @@ namespace ControlLaboratorio.API.Controllers
                 };
             }).ToList();
 
-            // Asistencia semanal relativa al día seleccionado (los 7 días anteriores)
             var weekStart = targetDate.AddDays(-6);
             var sesionesDeLaSemana = await _context.Sesiones
                 .Include(s => s.Alumno)
@@ -202,32 +200,27 @@ namespace ControlLaboratorio.API.Controllers
                 .Select(g => new { Carrera = g.Key, Cantidad = g.Count() })
                 .ToListAsync();
 
-            // Determinar rango de fechas para las estadísticas principales (sesionesTops)
             DateTime baseTopDate;
             DateTime endTopDate;
 
             if (mode == "date" || (date.HasValue && !month.HasValue && !year.HasValue))
             {
-                // Modo Día Exacto: se analizan únicamente las sesiones de ese día exacto
                 baseTopDate = targetDate;
                 endTopDate = targetDayEnd;
             }
             else if (mode == "year" || (year.HasValue && !month.HasValue))
             {
-                // Modo Año Completo: todo el año seleccionado
                 var targetYear = year ?? targetDate.Year;
                 baseTopDate = new DateTime(targetYear, 1, 1);
                 endTopDate = new DateTime(targetYear + 1, 1, 1);
             }
             else if (month.HasValue && year.HasValue)
             {
-                // Modo Mes: mes y año específicos
                 baseTopDate = new DateTime(year.Value, month.Value, 1);
                 endTopDate = baseTopDate.AddMonths(1);
             }
             else
             {
-                // Fallback: últimos 30 días
                 baseTopDate = targetDate.AddDays(-30);
                 endTopDate = targetDayEnd;
             }
@@ -275,7 +268,6 @@ namespace ControlLaboratorio.API.Controllers
                 .Take(5)
                 .ToList();
 
-            // Rendimiento total de todas las computadoras para el mapa
             var todosLosEquipos = await _context.Equipos.ToListAsync();
             var usoPorEquipo = sesionesTops
                 .GroupBy(s => s.EquipoID)
@@ -303,7 +295,6 @@ namespace ControlLaboratorio.API.Controllers
                 };
             }).ToList();
 
-            // Reporte completo de alumnos para descargar Excel
             var reporteAlumnos = sesionesTops
                 .Where(s => s.Alumno != null)
                 .GroupBy(s => s.AlumnoID)
@@ -357,7 +348,6 @@ namespace ControlLaboratorio.API.Controllers
             var equipo = await _context.Equipos.FindAsync(request.EquipoID);
             if (equipo == null) return NotFound(new { message = "Equipo no encontrado" });
 
-            // Remove this slot from any other PC to prevent duplicates
             if (request.PosicionMapa != null)
             {
                 var existing = await _context.Equipos.FirstOrDefaultAsync(e => e.PosicionMapa == request.PosicionMapa);
@@ -410,7 +400,6 @@ namespace ControlLaboratorio.API.Controllers
                 return Unauthorized(new { message = "Contraseña de administrador incorrecta." });
             }
 
-            // Crear alumnos de prueba si no hay
             if (!await _context.Alumnos.AnyAsync())
             {
                 var alumnos = new List<Alumno>
@@ -425,7 +414,6 @@ namespace ControlLaboratorio.API.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // Crear equipos si no hay
             if (!await _context.Equipos.AnyAsync())
             {
                 var equipos = new List<Equipo>
@@ -446,21 +434,19 @@ namespace ControlLaboratorio.API.Controllers
 
             var sesiones = new List<Sesion>();
             
-            // Generar datos para los ultimos 6 meses
             for (int monthOffset = 0; monthOffset < 6; monthOffset++)
             {
                 var targetMonth = DateTime.Now.AddMonths(-monthOffset);
                 int daysInMonth = DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month);
                 
-                // 35 sesiones por mes
                 for (int i = 0; i < 35; i++)
                 {
                     var day = random.Next(1, daysInMonth + 1);
-                    var hour = random.Next(8, 20); // 8 AM to 8 PM
+                    var hour = random.Next(8, 20);
                     var minute = random.Next(0, 60);
                     
                     var startTime = new DateTime(targetMonth.Year, targetMonth.Month, day, hour, minute, 0);
-                    var durationMinutes = random.Next(15, 180); // 15 mins to 3 hours
+                    var durationMinutes = random.Next(15, 180);
                     var endTime = startTime.AddMinutes(durationMinutes);
 
                     var alumno = alumnosList[random.Next(alumnosList.Count)];

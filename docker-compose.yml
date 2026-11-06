@@ -23,6 +23,7 @@ services:
       - "5001:80"
     environment:
       - ConnectionStrings__ControlLaboratorioConnection=${ConnectionStrings__ControlLaboratorioConnection}
+      - JwtSettings__SecretKey=${JwtSettings__SecretKey}
       - SmtpSettings__Server=${SmtpSettings__Server:-smtp.office365.com}
       - SmtpSettings__Port=${SmtpSettings__Port:-587}
       - SmtpSettings__SenderEmail=${SmtpSettings__SenderEmail:-biblioteca.famurp@urp.edu.pe}
@@ -30,9 +31,6 @@ services:
       - SmtpSettings__Username=${SmtpSettings__Username}
       - SmtpSettings__Password=${SmtpSettings__Password}
       - SmtpSettings__EnableSsl=${SmtpSettings__EnableSsl:-true}
-      - AdminSettings__Username=${AdminSettings__Username:-admin}
-      - AdminSettings__Password=${AdminSettings__Password:-admin123}
-      - AdminSettings__ActionPassword=${AdminSettings__ActionPassword:-admin12345}
       - ASPNETCORE_ENVIRONMENT=Production
       - TZ=America/Lima
     depends_on:

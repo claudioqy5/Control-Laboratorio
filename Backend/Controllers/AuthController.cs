@@ -321,36 +321,7 @@ namespace ControlLaboratorio.API.Controllers
                 });
             }
 
-            bool allowLegacy = _configuration.GetValue<bool>("AdminSettings:AllowLegacyAdmin", true);
-            var expectedUsername = _configuration["AdminSettings:Username"] ?? "admin";
-            var expectedPassword = _configuration["AdminSettings:Password"] ?? "admin123";
-
-            if (allowLegacy && username == expectedUsername && password == expectedPassword)
-            {
-                var token = GenerateJwtToken("0", expectedUsername, RolAdmin.SuperAdmin.ToString());
-                var refreshTokenString = GenerateRefreshTokenString();
-
-                return Ok(new AdminLoginResponse
-                {
-                    Token = token,
-                    RefreshToken = refreshTokenString,
-                    EsLegacy = true,
-                    Usuario = new UsuarioAdminDto
-                    {
-                        IdUsuarioAdmin = 0,
-                        Username = expectedUsername,
-                        Nombres = "Administrador Legacy",
-                        Correo = "admin@urp.edu.pe",
-                        Rol = RolAdmin.SuperAdmin,
-                        RolNombre = RolAdmin.SuperAdmin.ToString(),
-                        EstadoActivo = true,
-                        FechaCreacion = DateTime.UtcNow,
-                        UltimoAcceso = DateTime.UtcNow
-                    }
-                });
-            }
-
-            return Unauthorized(new { message = "Usuario o contraseña incorrectos." });
+            return Unauthorized(new { message = "Credenciales incorrectas." });
         }
 
         [HttpPost("refresh-token")]
@@ -430,7 +401,11 @@ namespace ControlLaboratorio.API.Controllers
 
         private string GenerateJwtToken(string sub, string name, string role)
         {
-            var secretKey = _configuration["JwtSettings:SecretKey"] ?? "FamurpBve2026_ClaveSecretaSuperSeguraParaJwt_Produccion!";
+            var secretKey = _configuration["JwtSettings:SecretKey"];
+            if (string.IsNullOrWhiteSpace(secretKey))
+            {
+                throw new InvalidOperationException("La clave secreta JwtSettings:SecretKey no está configurada.");
+            }
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
