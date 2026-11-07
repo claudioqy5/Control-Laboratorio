@@ -18,7 +18,13 @@ const login = async () => {
       password: password.value
     })
     localStorage.setItem('adminToken', res.data.token)
-    emit('login-success')
+    if (res.data.refreshToken) {
+      localStorage.setItem('adminRefreshToken', res.data.refreshToken)
+    }
+    if (res.data.usuario) {
+      localStorage.setItem('adminUser', JSON.stringify(res.data.usuario))
+    }
+    emit('login-success', res.data.usuario)
   } catch (err) {
     error.value = 'Credenciales inválidas.'
   } finally {
@@ -29,9 +35,7 @@ const login = async () => {
 
 <template>
   <div class="login-container">
-    <!-- Animated Background -->
     <div class="animated-bg"></div>
-    <!-- Overlay Gradient -->
     <div class="bg-overlay"></div>
 
     <div class="login-box">

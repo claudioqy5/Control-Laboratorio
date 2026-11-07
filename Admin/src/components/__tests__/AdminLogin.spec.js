@@ -52,6 +52,34 @@ describe('AdminLogin', () => {
     expect(wrapper.emitted('login-success')).toBeTruthy()
   })
 
+  it('saves token, refreshToken and usuario in localStorage and emits user on successful authentication', async () => {
+    const mockUser = { id: 1, username: 'admin', rol: 'Administrador' }
+    axios.post.mockResolvedValueOnce({
+      data: {
+        token: 'mock-jwt-admin-token',
+        refreshToken: 'mock-jwt-refresh-token',
+        usuario: mockUser
+      }
+    })
+
+    const wrapper = mount(AdminLogin)
+
+    await wrapper.find('input[type="text"]').setValue('admin')
+    await wrapper.find('input[type="password"]').setValue('admin123')
+    await wrapper.find('button.btn-login').trigger('click')
+
+    expect(axios.post).toHaveBeenCalledWith(
+      expect.stringContaining('/api/auth/admin-login'),
+      { username: 'admin', password: 'admin123' }
+    )
+
+    expect(localStorage.getItem('adminToken')).toBe('mock-jwt-admin-token')
+    expect(localStorage.getItem('adminRefreshToken')).toBe('mock-jwt-refresh-token')
+    expect(localStorage.getItem('adminUser')).toBe(JSON.stringify(mockUser))
+    expect(wrapper.emitted('login-success')).toBeTruthy()
+    expect(wrapper.emitted('login-success')[0]).toEqual([mockUser])
+  })
+
   it('triggers login on enter key in password input', async () => {
     axios.post.mockResolvedValueOnce({
       data: { token: 'token-from-enter' }
