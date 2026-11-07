@@ -15,6 +15,7 @@ const props = defineProps({
 const emit = defineEmits(['change-view', 'logout'])
 
 const isCollapsed = ref(true)
+const isPinned = ref(false)
 
 const openSubmenus = reactive({
   infraestructura: true,
@@ -29,7 +30,31 @@ const toastMessage = ref('')
 let toastTimer = null
 
 const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value
+  if (isPinned.value) {
+    isPinned.value = false
+    isCollapsed.value = true
+  } else {
+    isCollapsed.value = !isCollapsed.value
+  }
+}
+
+const togglePin = () => {
+  isPinned.value = !isPinned.value
+  if (isPinned.value) {
+    isCollapsed.value = false
+  }
+}
+
+const handleMouseEnter = () => {
+  if (!isPinned.value) {
+    isCollapsed.value = false
+  }
+}
+
+const handleMouseLeave = () => {
+  if (!isPinned.value) {
+    isCollapsed.value = true
+  }
 }
 
 const toggleSubmenu = (key) => {
@@ -105,9 +130,9 @@ onBeforeUnmount(() => {
 <template>
   <aside
     class="sidebar"
-    :class="{ collapsed: isCollapsed }"
-    @mouseenter="isCollapsed = false"
-    @mouseleave="isCollapsed = true"
+    :class="{ collapsed: isCollapsed, pinned: isPinned }"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
   >
     <div class="brand-header">
       <button type="button" class="brand-icon" @click="toggleCollapse" title="Alternar menú">
@@ -120,6 +145,24 @@ onBeforeUnmount(() => {
         <h1 class="brand-title">BVE Medicina</h1>
         <span class="brand-subtitle">URP - Lab. de Cómputo</span>
       </div>
+      <button
+        v-if="!isCollapsed"
+        type="button"
+        class="pin-button"
+        :class="{ active: isPinned }"
+        @click="togglePin"
+        :title="isPinned ? 'Desfijar menú lateral' : 'Fijar menú lateral'"
+      >
+        <svg v-if="!isPinned" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="17" x2="12" y2="22" />
+          <path d="M5 17h14v-2l-2-2V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8l-2 2v2z" />
+        </svg>
+        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="17" x2="12" y2="22" />
+          <path d="M5 17h14v-2l-2-2V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8l-2 2v2z" />
+          <line x1="3" y1="3" x2="21" y2="21" stroke="#dc2626" stroke-width="2.5" />
+        </svg>
+      </button>
     </div>
 
     <div class="nav-scroll">
@@ -739,6 +782,34 @@ onBeforeUnmount(() => {
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.pin-button {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.pin-button:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.pin-button.active {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
 }
 
 .nav-scroll {

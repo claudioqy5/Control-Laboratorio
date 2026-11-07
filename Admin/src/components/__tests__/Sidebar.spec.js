@@ -164,4 +164,30 @@ describe('Sidebar', () => {
     await wrapper.trigger('mouseleave')
     expect(wrapper.classes()).toContain('collapsed')
   })
+
+  it('keeps sidebar expanded when pinned and unpins properly', async () => {
+    const wrapper = mount(Sidebar)
+
+    const brandBtn = wrapper.find('.brand-icon')
+    await brandBtn.trigger('click')
+    expect(wrapper.classes()).not.toContain('collapsed')
+
+    const pinBtn = wrapper.find('.pin-button')
+    expect(pinBtn.exists()).toBe(true)
+    expect(pinBtn.classes()).not.toContain('active')
+
+    await pinBtn.trigger('click')
+    expect(pinBtn.classes()).toContain('active')
+    expect(wrapper.classes()).toContain('pinned')
+
+    await wrapper.trigger('mouseleave')
+    expect(wrapper.classes()).not.toContain('collapsed')
+
+    await pinBtn.trigger('click')
+    expect(pinBtn.classes()).not.toContain('active')
+    expect(wrapper.classes()).not.toContain('pinned')
+
+    await wrapper.trigger('mouseleave')
+    expect(wrapper.classes()).toContain('collapsed')
+  })
 })
