@@ -164,4 +164,44 @@ describe('Sidebar', () => {
     await wrapper.trigger('mouseleave')
     expect(wrapper.classes()).toContain('collapsed')
   })
+
+  it('keeps sidebar expanded when pinned and unpins properly', async () => {
+    const wrapper = mount(Sidebar)
+
+    const brandBtn = wrapper.find('.brand-icon')
+    await brandBtn.trigger('click')
+    expect(wrapper.classes()).not.toContain('collapsed')
+
+    const pinBtn = wrapper.find('.pin-button')
+    expect(pinBtn.exists()).toBe(true)
+    expect(pinBtn.classes()).not.toContain('active')
+
+    await pinBtn.trigger('click')
+    expect(pinBtn.classes()).toContain('active')
+    expect(wrapper.classes()).toContain('pinned')
+
+    await wrapper.trigger('mouseleave')
+    expect(wrapper.classes()).not.toContain('collapsed')
+
+    await pinBtn.trigger('click')
+    expect(pinBtn.classes()).not.toContain('active')
+    expect(wrapper.classes()).not.toContain('pinned')
+
+    await wrapper.trigger('mouseleave')
+    expect(wrapper.classes()).toContain('collapsed')
+  })
+
+  it('hides nested sub-nav-group items when collapsed and shows them when expanded', async () => {
+    const wrapper = mount(Sidebar)
+
+    expect(wrapper.classes()).toContain('collapsed')
+    expect(wrapper.find('.sub-nav-group').attributes('style')).toContain('display: none')
+
+    const brandBtn = wrapper.find('.brand-icon')
+    await brandBtn.trigger('click')
+    expect(wrapper.classes()).not.toContain('collapsed')
+
+    const style = wrapper.find('.sub-nav-group').attributes('style')
+    expect(!style || !style.includes('display: none')).toBe(true)
+  })
 })
