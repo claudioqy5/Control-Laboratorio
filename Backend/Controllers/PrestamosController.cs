@@ -139,14 +139,33 @@ namespace ControlLaboratorio.API.Controllers
                             var alumnoDev = await _context.Alumnos.FirstOrDefaultAsync(a => a.CodigoUniversitario == codAlumno || a.DNI == codAlumno);
                             if (alumnoDev == null)
                             {
-                                var nombreParts = (dto.NombreAlumno ?? "Estudiante URP").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                string devNombres = "Estudiante";
+                                string devApPaterno = "URP";
+                                string devApMaterno = "";
+
+                                if (!string.IsNullOrWhiteSpace(dto.NombreAlumno) && dto.NombreAlumno.Contains(','))
+                                {
+                                    var halves = dto.NombreAlumno.Split(',', 2);
+                                    var apellidos = halves[0].Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                    devApPaterno = apellidos.Length > 0 ? apellidos[0] : "URP";
+                                    devApMaterno = apellidos.Length > 1 ? apellidos[1] : "";
+                                    devNombres = halves.Length > 1 ? halves[1].Trim() : "Estudiante";
+                                }
+                                else
+                                {
+                                    var nombreParts = (dto.NombreAlumno ?? "Estudiante URP").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                    devNombres = nombreParts.Length > 0 ? nombreParts[0] : "Estudiante";
+                                    devApPaterno = nombreParts.Length > 1 ? nombreParts[1] : "URP";
+                                    devApMaterno = nombreParts.Length > 2 ? nombreParts[2] : "";
+                                }
+
                                 alumnoDev = new Alumno
                                 {
                                     CodigoUniversitario = codAlumno,
                                     DNI = codAlumno.Length == 8 ? codAlumno : "00000000",
-                                    Nombres = nombreParts.Length > 0 ? nombreParts[0] : "Estudiante",
-                                    ApellidoPaterno = nombreParts.Length > 1 ? nombreParts[1] : "URP",
-                                    ApellidoMaterno = nombreParts.Length > 2 ? nombreParts[2] : "",
+                                    Nombres = devNombres,
+                                    ApellidoPaterno = devApPaterno,
+                                    ApellidoMaterno = devApMaterno,
                                     Carrera = "Medicina Humana",
                                     Estado = true
                                 };
