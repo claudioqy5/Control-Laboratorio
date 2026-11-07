@@ -230,7 +230,7 @@ onBeforeUnmount(() => {
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          <div v-show="openSubmenus.infraestructura" class="sub-nav-group">
+          <div v-show="!isCollapsed && openSubmenus.infraestructura" class="sub-nav-group">
             <a
               href="#"
               class="sub-nav-item"
@@ -318,7 +318,7 @@ onBeforeUnmount(() => {
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          <div v-show="openSubmenus.estadisticasLab" class="sub-nav-group">
+          <div v-show="!isCollapsed && openSubmenus.estadisticasLab" class="sub-nav-group">
             <a
               href="#"
               class="sub-nav-item"
@@ -394,7 +394,7 @@ onBeforeUnmount(() => {
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          <div v-show="openSubmenus.basesDatos" class="sub-nav-group">
+          <div v-show="!isCollapsed && openSubmenus.basesDatos" class="sub-nav-group">
             <a
               href="#"
               class="sub-nav-item disabled"
@@ -450,7 +450,7 @@ onBeforeUnmount(() => {
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          <div v-show="openSubmenus.catalogoFisico" class="sub-nav-group">
+          <div v-show="!isCollapsed && openSubmenus.catalogoFisico" class="sub-nav-group">
             <a
               href="#"
               class="sub-nav-item"
@@ -539,7 +539,7 @@ onBeforeUnmount(() => {
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          <div v-show="openSubmenus.conferencias" class="sub-nav-group">
+          <div v-show="!isCollapsed && openSubmenus.conferencias" class="sub-nav-group">
             <a
               href="#"
               class="sub-nav-item disabled"
@@ -627,7 +627,7 @@ onBeforeUnmount(() => {
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          <div v-show="openSubmenus.infoUsuario" class="sub-nav-group">
+          <div v-show="!isCollapsed && openSubmenus.infoUsuario" class="sub-nav-group">
             <a
               href="#"
               class="sub-nav-item disabled"
@@ -996,18 +996,12 @@ onBeforeUnmount(() => {
 .sidebar.collapsed .item-text,
 .sidebar.collapsed .submenu-chevron,
 .sidebar.collapsed .user-info,
-.sidebar.collapsed .logout-button span {
+.sidebar.collapsed .logout-button span,
+.sidebar.collapsed .sub-nav-group {
   display: none;
 }
 
-.sidebar.collapsed .sub-nav-group {
-  margin-left: 0;
-  padding-left: 0;
-  border-left: none;
-}
-
 .sidebar.collapsed .nav-item,
-.sidebar.collapsed .sub-nav-item,
 .sidebar.collapsed .submenu-header {
   justify-content: center;
   padding: 0.75rem 0;
