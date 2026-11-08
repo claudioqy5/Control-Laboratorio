@@ -167,10 +167,19 @@ namespace ControlLaboratorio.API.Controllers
                                     ApellidoPaterno = devApPaterno,
                                     ApellidoMaterno = devApMaterno,
                                     Carrera = "Medicina Humana",
+                                    CorreoInstitucional = $"{codAlumno}@urp.edu.pe",
                                     Estado = true
                                 };
                                 _context.Alumnos.Add(alumnoDev);
                                 await _context.SaveChangesAsync();
+                            }
+                            else
+                            {
+                                if (string.IsNullOrWhiteSpace(alumnoDev.CorreoInstitucional) && !string.IsNullOrWhiteSpace(alumnoDev.CodigoUniversitario))
+                                {
+                                    alumnoDev.CorreoInstitucional = $"{alumnoDev.CodigoUniversitario.Trim()}@urp.edu.pe";
+                                    await _context.SaveChangesAsync();
+                                }
                             }
 
                             var prestamoDevuelto = new Prestamo
@@ -240,10 +249,19 @@ namespace ControlLaboratorio.API.Controllers
                         ApellidoPaterno = apPaterno,
                         ApellidoMaterno = apMaterno,
                         Carrera = "Medicina Humana",
+                        CorreoInstitucional = $"{codLimpio}@urp.edu.pe",
                         Estado = true
                     };
                     _context.Alumnos.Add(alumno);
                     await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(alumno.CorreoInstitucional) && !string.IsNullOrWhiteSpace(alumno.CodigoUniversitario))
+                    {
+                        alumno.CorreoInstitucional = $"{alumno.CodigoUniversitario.Trim()}@urp.edu.pe";
+                        await _context.SaveChangesAsync();
+                    }
                 }
 
                 // Evitar préstamos duplicados si el script envía la misma lectura en los últimos 2 minutos

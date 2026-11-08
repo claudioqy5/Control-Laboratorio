@@ -42,6 +42,10 @@ namespace ControlLaboratorio.API.Controllers
             alumno.ApellidoPaterno = alumno.ApellidoPaterno?.Trim() ?? string.Empty;
             alumno.ApellidoMaterno = alumno.ApellidoMaterno?.Trim() ?? string.Empty;
             alumno.CorreoInstitucional = alumno.CorreoInstitucional?.Trim();
+            if (string.IsNullOrWhiteSpace(alumno.CorreoInstitucional) && !string.IsNullOrWhiteSpace(alumno.CodigoUniversitario))
+            {
+                alumno.CorreoInstitucional = $"{alumno.CodigoUniversitario.Trim()}@urp.edu.pe";
+            }
             alumno.CorreoPersonal = alumno.CorreoPersonal?.Trim();
             alumno.Carrera = alumno.Carrera?.Trim() ?? string.Empty;
             alumno.Telefono = alumno.Telefono?.Trim();
@@ -68,6 +72,10 @@ namespace ControlLaboratorio.API.Controllers
             alumno.ApellidoPaterno = alumno.ApellidoPaterno?.Trim() ?? string.Empty;
             alumno.ApellidoMaterno = alumno.ApellidoMaterno?.Trim() ?? string.Empty;
             alumno.CorreoInstitucional = alumno.CorreoInstitucional?.Trim();
+            if (string.IsNullOrWhiteSpace(alumno.CorreoInstitucional) && !string.IsNullOrWhiteSpace(alumno.CodigoUniversitario))
+            {
+                alumno.CorreoInstitucional = $"{alumno.CodigoUniversitario.Trim()}@urp.edu.pe";
+            }
             alumno.CorreoPersonal = alumno.CorreoPersonal?.Trim();
             alumno.Carrera = alumno.Carrera?.Trim() ?? string.Empty;
             alumno.Telefono = alumno.Telefono?.Trim();
@@ -115,6 +123,10 @@ namespace ControlLaboratorio.API.Controllers
                 a.ApellidoPaterno = a.ApellidoPaterno?.Trim() ?? string.Empty;
                 a.ApellidoMaterno = a.ApellidoMaterno?.Trim() ?? string.Empty;
                 a.CorreoInstitucional = a.CorreoInstitucional?.Trim();
+                if (string.IsNullOrWhiteSpace(a.CorreoInstitucional) && !string.IsNullOrWhiteSpace(a.CodigoUniversitario))
+                {
+                    a.CorreoInstitucional = $"{a.CodigoUniversitario.Trim()}@urp.edu.pe";
+                }
                 a.CorreoPersonal = a.CorreoPersonal?.Trim();
                 a.Carrera = a.Carrera?.Trim() ?? string.Empty;
                 a.Telefono = a.Telefono?.Trim();

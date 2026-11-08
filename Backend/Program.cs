@@ -108,6 +108,13 @@ using (var scope = app.Services.CreateScope())
             BEGIN
                 ALTER TABLE Alumnos ADD CorreoPersonal NVARCHAR(100) NULL
             END
+
+            -- Auto-completar correos institucionales vacíos o no asignados a partir del código universitario
+            UPDATE Alumnos 
+            SET CorreoInstitucional = CONCAT(RTRIM(LTRIM(CodigoUniversitario)), '@urp.edu.pe')
+            WHERE (CorreoInstitucional IS NULL OR LTRIM(RTRIM(CorreoInstitucional)) = '' OR CorreoInstitucional = '-')
+              AND CodigoUniversitario IS NOT NULL 
+              AND LTRIM(RTRIM(CodigoUniversitario)) <> '';
             
             IF COL_LENGTH('Equipos', 'PosicionMapa') IS NULL
             BEGIN

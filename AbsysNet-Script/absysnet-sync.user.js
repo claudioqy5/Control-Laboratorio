@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AbsysNet -> Control Laboratorio & Biblioteca URP Sync
 // @namespace    https://medicina.urp.edu.pe/bve
-// @version      1.6.0
+// @version      1.7.0
 // @description  Captura automática de préstamos y devoluciones en AbsysNet y sincronización en tiempo real con Control-Laboratorio.
 // @author       Facultad de Medicina Humana - URP
 // @match        https://biblioteca.urp.edu.pe/abnet/*
@@ -35,6 +35,22 @@
     console.log('[BVE Sync] Iniciando sincronizador BVE Medicina URP ->', API_URL);
 
     const syncCache = new Set();
+    let isWidgetCollapsed = false;
+
+    // ========================================================
+    // ICONOS SVG (ESTRICTAMENTE SIN EMOJIS)
+    // ========================================================
+    const ICONS = {
+        book: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>`,
+        sync: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>`,
+        test: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+        gear: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+        chevron: `<svg class="bve-chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s ease;"><path d="m6 9 6 6 6-6"/></svg>`,
+        success: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+        warning: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        error: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+        info: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+    };
 
     // ========================================================
     // OBTENER TODOS LOS DOCUMENTOS (FRAMES / FRAMESETS)
@@ -125,73 +141,136 @@
             const widget = targetDoc.createElement('div');
             widget.id = 'bve-sync-widget';
             widget.innerHTML = `
-                <div style="
+                <div class="bve-container" style="
                     position: fixed !important;
-                    bottom: 18px !important;
-                    right: 25px !important;
+                    bottom: 16px !important;
+                    right: 20px !important;
                     background: #ffffff !important;
-                    color: #111827 !important;
-                    padding: 10px 14px !important;
-                    border-radius: 12px !important;
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.25), 0 4px 8px rgba(159,18,57,0.15) !important;
-                    border: 2px solid #9f1239 !important;
+                    color: #0f172a !important;
+                    border-radius: 10px !important;
+                    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.85) !important;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
                     font-size: 12px !important;
                     z-index: 2147483647 !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: 8px !important;
                     user-select: none !important;
-                    min-width: 220px !important;
+                    min-width: 250px !important;
+                    overflow: hidden !important;
+                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
                 ">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <div class="bve-status-dot" style="width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);"></div>
-                            <div>
-                                <div style="font-weight: 700; color: #9f1239; font-size: 11px; line-height: 1.2;">BVE Medicina URP</div>
-                                <div class="bve-status-text" style="color: #6b7280; font-size: 10px;">Sincronizador Activo</div>
+                    <!-- Barra de acento institucional -->
+                    <div style="height: 3px; background: linear-gradient(90deg, #9f1239 0%, #be123c 60%, #e11d48 100%); width: 100%;"></div>
+
+                    <div style="padding: 10px 14px 12px 14px; display: flex; flex-direction: column; gap: 9px;">
+                        <!-- Cabecera -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="
+                                    width: 26px;
+                                    height: 26px;
+                                    border-radius: 6px;
+                                    background: #fff1f2;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    color: #9f1239;
+                                    flex-shrink: 0;
+                                ">${ICONS.book}</div>
+                                <div>
+                                    <div style="font-weight: 700; color: #0f172a; font-size: 11.5px; line-height: 1.2; letter-spacing: -0.01em;">BVE Medicina URP</div>
+                                    <div style="display: flex; align-items: center; gap: 5px; margin-top: 2px;">
+                                        <div class="bve-status-dot" style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);"></div>
+                                        <span class="bve-status-text" style="color: #64748b; font-size: 10.5px; font-weight: 500;">Sincronizador Activo</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botones superiores -->
+                            <div style="display: flex; align-items: center; gap: 2px;">
+                                <button class="bve-cfg-btn" title="Configurar URL del Servidor" style="
+                                    background: transparent;
+                                    border: 1px solid transparent;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    color: #64748b;
+                                    width: 24px;
+                                    height: 24px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    padding: 0;
+                                    transition: all 0.15s ease;
+                                ">${ICONS.gear}</button>
+
+                                <button class="bve-collapse-btn" title="Minimizar / Expandir" style="
+                                    background: transparent;
+                                    border: 1px solid transparent;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    color: #64748b;
+                                    width: 24px;
+                                    height: 24px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    padding: 0;
+                                    transition: all 0.15s ease;
+                                ">${ICONS.chevron}</button>
                             </div>
                         </div>
-                        <button class="bve-cfg-btn" title="Configurar URL del Servidor" style="background: transparent; border: none; cursor: pointer; font-size: 13px; padding: 2px;">⚙️</button>
-                    </div>
 
-                    <div style="display: flex; gap: 6px;">
-                        <button class="bve-capture-btn" style="
-                            flex: 1;
-                            background: #9f1239;
-                            color: #ffffff;
-                            border: none;
-                            border-radius: 6px;
-                            padding: 6px 10px;
-                            font-size: 11px;
-                            font-weight: 700;
-                            cursor: pointer;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 4px;
-                            box-shadow: 0 2px 4px rgba(159,18,57,0.3);
-                        ">📥 Sincronizar Ahora</button>
+                        <!-- Acciones principales -->
+                        <div class="bve-actions-wrapper" style="display: flex; gap: 7px; align-items: center; ${isWidgetCollapsed ? 'display: none !important;' : ''}">
+                            <button class="bve-capture-btn" style="
+                                flex: 1;
+                                background: #9f1239;
+                                color: #ffffff;
+                                border: none;
+                                border-radius: 6px;
+                                padding: 6px 10px;
+                                font-size: 11px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                                box-shadow: 0 1px 3px rgba(159, 18, 57, 0.25);
+                                transition: background 0.15s ease, box-shadow 0.15s ease;
+                            ">
+                                ${ICONS.sync}
+                                <span>Sincronizar</span>
+                            </button>
 
-                        <button class="bve-test-btn" style="
-                            background: #f3f4f6;
-                            color: #374151;
-                            border: 1px solid #d1d5db;
-                            border-radius: 6px;
-                            padding: 6px 8px;
-                            font-size: 10px;
-                            font-weight: 600;
-                            cursor: pointer;
-                        " title="Verificar conectividad con el servidor (sin registrar préstamos)">⚡ Probar</button>
+                            <button class="bve-test-btn" title="Verificar conectividad con el servidor (Ping)" style="
+                                background: #f8fafc;
+                                color: #475569;
+                                border: 1px solid #e2e8f0;
+                                border-radius: 6px;
+                                padding: 6px 10px;
+                                font-size: 11px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 5px;
+                                transition: all 0.15s ease;
+                            ">
+                                ${ICONS.test}
+                                <span>Probar</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
 
             targetDoc.body.appendChild(widget);
 
-            // Listeners
+            // Listeners y Efectos Hover
             const captureBtn = widget.querySelector('.bve-capture-btn');
             if (captureBtn) {
+                captureBtn.addEventListener('mouseenter', () => { captureBtn.style.background = '#881337'; });
+                captureBtn.addEventListener('mouseleave', () => { captureBtn.style.background = '#9f1239'; });
                 captureBtn.addEventListener('click', () => {
                     showToast('Escaneando pantalla de AbsysNet...', 'info');
                     const encontrado = inspeccionarPantalla(true);
@@ -203,6 +282,16 @@
 
             const testBtn = widget.querySelector('.bve-test-btn');
             if (testBtn) {
+                testBtn.addEventListener('mouseenter', () => {
+                    testBtn.style.background = '#f1f5f9';
+                    testBtn.style.borderColor = '#cbd5e1';
+                    testBtn.style.color = '#0f172a';
+                });
+                testBtn.addEventListener('mouseleave', () => {
+                    testBtn.style.background = '#f8fafc';
+                    testBtn.style.borderColor = '#e2e8f0';
+                    testBtn.style.color = '#475569';
+                });
                 testBtn.addEventListener('click', () => {
                     probarConexionServidor();
                 });
@@ -210,6 +299,14 @@
 
             const cfgBtn = widget.querySelector('.bve-cfg-btn');
             if (cfgBtn) {
+                cfgBtn.addEventListener('mouseenter', () => {
+                    cfgBtn.style.background = '#f1f5f9';
+                    cfgBtn.style.color = '#0f172a';
+                });
+                cfgBtn.addEventListener('mouseleave', () => {
+                    cfgBtn.style.background = 'transparent';
+                    cfgBtn.style.color = '#64748b';
+                });
                 cfgBtn.addEventListener('click', () => {
                     const nueva = prompt('URL de la API de Control-Laboratorio:', API_URL);
                     if (nueva && nueva.trim()) {
@@ -222,13 +319,35 @@
                     }
                 });
             }
+
+            const collapseBtn = widget.querySelector('.bve-collapse-btn');
+            const actionsWrapper = widget.querySelector('.bve-actions-wrapper');
+            const chevronIcon = widget.querySelector('.bve-chevron-icon');
+
+            if (collapseBtn && actionsWrapper) {
+                collapseBtn.addEventListener('mouseenter', () => {
+                    collapseBtn.style.background = '#f1f5f9';
+                    collapseBtn.style.color = '#0f172a';
+                });
+                collapseBtn.addEventListener('mouseleave', () => {
+                    collapseBtn.style.background = 'transparent';
+                    collapseBtn.style.color = '#64748b';
+                });
+                collapseBtn.addEventListener('click', () => {
+                    isWidgetCollapsed = !isWidgetCollapsed;
+                    actionsWrapper.style.setProperty('display', isWidgetCollapsed ? 'none' : 'flex', 'important');
+                    if (chevronIcon) {
+                        chevronIcon.style.transform = isWidgetCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+                    }
+                });
+            }
         } catch (e) {
             console.error('[BVE Sync] Error al crear widget:', e);
         }
     }
 
     // ========================================================
-    // TOAST NOTIFICACIÓN EN LA PANTALLA (SINGLETON)
+    // TOAST NOTIFICACIÓN MODERNA (ESTRICTAMENTE CON ICONOS SVG)
     // ========================================================
     function showToast(mensaje, tipo = 'success') {
         try {
@@ -250,31 +369,62 @@
 
             const toast = targetDoc.createElement('div');
             toast.id = 'bve-sync-toast';
-            const color = tipo === 'success' ? '#065f46' : (tipo === 'info' ? '#1e40af' : '#991b1b');
+
+            let iconSvg = ICONS.success;
+            let accentColor = '#059669';
+            if (tipo === 'info') {
+                iconSvg = ICONS.info;
+                accentColor = '#2563eb';
+            } else if (tipo === 'warning') {
+                iconSvg = ICONS.warning;
+                accentColor = '#d97706';
+            } else if (tipo === 'error') {
+                iconSvg = ICONS.error;
+                accentColor = '#dc2626';
+            }
+
             toast.style.cssText = `
                 position: fixed !important;
                 top: 20px !important;
                 right: 20px !important;
-                background: ${color} !important;
-                color: #ffffff !important;
-                padding: 12px 18px !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                padding: 10px 14px !important;
                 border-radius: 8px !important;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.35) !important;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 10px -3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.85) !important;
+                border-left: 4px solid ${accentColor} !important;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-                font-size: 13px !important;
-                font-weight: 600 !important;
+                font-size: 12px !important;
+                font-weight: 500 !important;
                 z-index: 2147483647 !important;
-                transition: all 0.3s ease !important;
-                max-width: 360px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 9px !important;
+                max-width: 380px !important;
+                line-height: 1.4 !important;
+                opacity: 0 !important;
+                transform: translateY(-8px) !important;
+                transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
             `;
-            toast.innerText = mensaje;
+
+            toast.innerHTML = `
+                <div style="flex-shrink: 0; display: flex; align-items: center;">${iconSvg}</div>
+                <div style="flex: 1;">${mensaje}</div>
+            `;
+
             targetDoc.body.appendChild(toast);
+
+            // Transición suave de entrada
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            });
 
             setTimeout(() => {
                 toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-10px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
+                toast.style.transform = 'translateY(-8px)';
+                setTimeout(() => toast.remove(), 250);
+            }, 3800);
         } catch(e){}
     }
 
@@ -287,14 +437,14 @@
 
         const onPingSuccess = (status) => {
             if (status >= 200 && status < 300) {
-                showToast('✅ Conexión con servidor exitosa (200 OK)', 'success');
+                showToast('Conexión con servidor exitosa (200 OK)', 'success');
             } else {
-                showToast('⚠️ Respuesta del servidor: HTTP ' + status, 'error');
+                showToast('Respuesta del servidor: HTTP ' + status, 'warning');
             }
         };
 
         const onPingError = () => {
-            showToast('❌ Error al conectar con ' + pingUrl, 'error');
+            showToast('Error al conectar con ' + pingUrl, 'error');
         };
 
         if (typeof GM_xmlhttpRequest !== 'undefined') {
@@ -531,18 +681,20 @@
                 const dot = doc.querySelector('.bve-status-dot');
                 const txt = doc.querySelector('.bve-status-text');
                 if (dot) dot.style.background = '#10b981';
-                if (txt) txt.innerText = 'Sincronizado ✓';
+                if (txt) txt.innerText = 'Sincronizado';
             });
 
             try {
                 const res = JSON.parse(responseText);
                 if (status >= 200 && status < 300) {
-                    showToast(`✅ ${res.mensaje || 'Préstamo guardado'} (${res.alumno || payload.codigoAlumno})`, 'success');
+                    const extra = res.alumno || payload.codigoAlumno;
+                    const msg = res.mensaje || 'Préstamo guardado con éxito';
+                    showToast(`${msg}${extra ? ' (' + extra + ')' : ''}`, 'success');
                 } else {
-                    showToast(`⚠️ Servidor: ${res.mensaje || res.error || responseText}`, 'error');
+                    showToast(res.mensaje || res.error || responseText, 'error');
                 }
             } catch(e) {
-                showToast(`✅ Sincronizado correctamente`, 'success');
+                showToast('Sincronizado correctamente', 'success');
             }
         };
 
@@ -582,16 +734,21 @@
     // ========================================================
     function setupListeners() {
         const allDocs = getAllDocuments();
+        let mutationTimeout = null;
+
         for (const doc of allDocs) {
             doc.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
-                    setTimeout(() => inspeccionarPantalla(), 500);
-                    setTimeout(() => inspeccionarPantalla(), 1500);
+                    setTimeout(() => inspeccionarPantalla(), 400);
+                    setTimeout(() => inspeccionarPantalla(), 1200);
                 }
             });
 
             const observer = new MutationObserver(() => {
-                inspeccionarPantalla();
+                clearTimeout(mutationTimeout);
+                mutationTimeout = setTimeout(() => {
+                    inspeccionarPantalla();
+                }, 300);
             });
 
             if (doc.body) {
