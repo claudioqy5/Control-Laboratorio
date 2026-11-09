@@ -20,6 +20,8 @@ namespace ControlLaboratorio.API.Data
         public DbSet<ScanLog> ScanLogs { get; set; }
         public DbSet<UsuarioAdmin> UsuariosAdmin { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<ConferenciaMedica> ConferenciasMedicas { get; set; }
+        public DbSet<ParticipacionConferencia> ParticipacionesConferencia { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,6 +82,25 @@ namespace ControlLaboratorio.API.Data
                 .WithMany(p => p.Multas)
                 .HasForeignKey(m => m.PrestamoID)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ParticipacionConferencia>()
+                .HasIndex(p => new { p.IdConferencia, p.NumeroDocumento })
+                .IsUnique();
+
+            modelBuilder.Entity<ParticipacionConferencia>()
+                .HasIndex(p => new { p.IdConferencia, p.NumeroDocumento, p.CodigoURP });
+
+            modelBuilder.Entity<ParticipacionConferencia>()
+                .HasOne(p => p.Conferencia)
+                .WithMany(c => c.Participaciones)
+                .HasForeignKey(p => p.IdConferencia)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ParticipacionConferencia>()
+                .HasOne(p => p.Alumno)
+                .WithMany()
+                .HasForeignKey(p => p.AlumnoID)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }
