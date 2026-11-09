@@ -77,7 +77,7 @@ const handleLogout = () => {
       <MapaBiblioteca v-if="currentView === 'mapa-biblio'" />
       <ActiveSessions v-if="currentView === 'active'" />
       <ReportesConexiones
-        v-if="currentView === 'conexiones' || currentView === 'escaneos'"
+        v-if="currentView === 'conexiones' || currentView === 'escaneos' || currentView === 'reportes'"
         :initial-tab="currentView === 'escaneos' ? 'escaneos' : 'conexiones'"
       />
       <UsoEstadisticas v-if="currentView === 'estadisticas'" />
