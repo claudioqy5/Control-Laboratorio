@@ -219,12 +219,17 @@ onBeforeUnmount(() => {
 
     <div class="nav-scroll">
       <template v-if="activeTab === 'biblioteca'">
+        <!-- SECCIÓN: LABORATORIO DE CÓMPUTO -->
+        <div class="sidebar-section-header">
+          <span>Laboratorio de Cómputo</span>
+        </div>
+
         <a
           href="#"
           class="nav-item"
           :class="{ active: currentView === 'dashboard' }"
           @click.prevent="navigate('dashboard')"
-          :title="isCollapsed ? 'Resumen' : ''"
+          :title="isCollapsed ? 'Resumen Diario' : ''"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="7" height="7" />
@@ -232,7 +237,7 @@ onBeforeUnmount(() => {
             <rect x="14" y="14" width="7" height="7" />
             <rect x="3" y="14" width="7" height="7" />
           </svg>
-          <span class="item-text">Resumen</span>
+          <span class="item-text">Resumen Diario</span>
         </a>
 
         <a
@@ -240,14 +245,27 @@ onBeforeUnmount(() => {
           class="nav-item"
           :class="{ active: currentView === 'estadisticas' }"
           @click.prevent="navigate('estadisticas')"
-          :title="isCollapsed ? 'Estadísticas' : ''"
+          :title="isCollapsed ? 'Estadísticas Equipos' : ''"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="20" x2="18" y2="10" />
             <line x1="12" y1="20" x2="12" y2="4" />
             <line x1="6" y1="20" x2="6" y2="14" />
           </svg>
-          <span class="item-text">Estadísticas</span>
+          <span class="item-text">Estadísticas Equipos</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'active' }"
+          @click.prevent="navigate('active')"
+          :title="isCollapsed ? 'En Línea' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          <span class="item-text">En Línea</span>
         </a>
 
         <a
@@ -273,8 +291,9 @@ onBeforeUnmount(() => {
           :title="isCollapsed ? 'Computadoras' : ''"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-            <polyline points="22,6 12,13 2,6" />
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
           </svg>
           <span class="item-text">Computadoras</span>
         </a>
@@ -298,19 +317,6 @@ onBeforeUnmount(() => {
         <a
           href="#"
           class="nav-item"
-          :class="{ active: currentView === 'active' }"
-          @click.prevent="navigate('active')"
-          :title="isCollapsed ? 'En Línea' : ''"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-          </svg>
-          <span class="item-text">En Línea</span>
-        </a>
-
-        <a
-          href="#"
-          class="nav-item"
           :class="{ active: currentView === 'conexiones' || currentView === 'escaneos' || currentView === 'reportes' }"
           @click.prevent="navigate('conexiones')"
           :title="isCollapsed ? 'Reportes' : ''"
@@ -325,104 +331,100 @@ onBeforeUnmount(() => {
           <span class="item-text">Reportes</span>
         </a>
 
-        <div class="submenu-container">
-          <button
-            type="button"
-            class="submenu-header"
-            @click="toggleSubmenu('catalogoFisico')"
-            :title="isCollapsed ? 'Catálogo Físico' : ''"
-          >
-            <div class="submenu-header-left">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
-              <span class="item-text">Catálogo Físico</span>
-            </div>
-            <svg
-              class="submenu-chevron"
-              :class="{ open: openSubmenus.catalogoFisico }"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <div v-show="!isCollapsed && openSubmenus.catalogoFisico" class="sub-nav-group">
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'libros' }"
-              @click.prevent="navigate('libros')"
-              :title="isCollapsed ? 'Libros' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
-              <span class="item-text">Libros</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'prestamos' }"
-              @click.prevent="navigate('prestamos')"
-              :title="isCollapsed ? 'Préstamos' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                <path d="M9 14l2 2 4-4" />
-              </svg>
-              <span class="item-text">Préstamos</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'estadisticas-prestamos' }"
-              @click.prevent="navigate('estadisticas-prestamos')"
-              :title="isCollapsed ? 'Estadísticas Préstamos' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 3v18h18" />
-                <path d="m19 9-5 5-4-4-3 3" />
-              </svg>
-              <span class="item-text">Estadísticas Préstamos</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'categorias' }"
-              @click.prevent="navigate('categorias')"
-              :title="isCollapsed ? 'Categorías' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                <path d="M12 6V3M9 6V3M15 6V3" />
-              </svg>
-              <span class="item-text">Categorías</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'mapa-biblio' }"
-              @click.prevent="navigate('mapa-biblio')"
-              :title="isCollapsed ? 'Mapa Biblioteca' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-                <line x1="9" y1="3" x2="9" y2="18" />
-                <line x1="15" y1="6" x2="15" y2="21" />
-              </svg>
-              <span class="item-text">Mapa Biblioteca</span>
-            </a>
-          </div>
+        <!-- SECCIÓN: BIBLIOTECA Y PRÉSTAMOS -->
+        <div class="sidebar-section-header">
+          <span>Biblioteca y Préstamos</span>
         </div>
+
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'resumen-prestamos' }"
+          @click.prevent="navigate('resumen-prestamos')"
+          :title="isCollapsed ? 'Resumen Préstamos' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          <span class="item-text">Resumen Préstamos</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'estadisticas-prestamos' }"
+          @click.prevent="navigate('estadisticas-prestamos')"
+          :title="isCollapsed ? 'Estadísticas Préstamos' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+          </svg>
+          <span class="item-text">Estadísticas Préstamos</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'prestamos' }"
+          @click.prevent="navigate('prestamos')"
+          :title="isCollapsed ? 'Préstamos' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+            <path d="M9 14l2 2 4-4" />
+          </svg>
+          <span class="item-text">Préstamos</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'libros' }"
+          @click.prevent="navigate('libros')"
+          :title="isCollapsed ? 'Libros' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          </svg>
+          <span class="item-text">Libros</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'categorias' }"
+          @click.prevent="navigate('categorias')"
+          :title="isCollapsed ? 'Categorías' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            <path d="M12 6V3M9 6V3M15 6V3" />
+          </svg>
+          <span class="item-text">Categorías</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'mapa-biblio' }"
+          @click.prevent="navigate('mapa-biblio')"
+          :title="isCollapsed ? 'Mapa Biblioteca' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+            <line x1="9" y1="3" x2="9" y2="18" />
+            <line x1="15" y1="6" x2="15" y2="21" />
+          </svg>
+          <span class="item-text">Mapa Biblioteca</span>
+        </a>
       </template>
 
       <template v-else-if="activeTab === 'web'">
@@ -906,6 +908,33 @@ onBeforeUnmount(() => {
 
 .toast-close:hover {
   background-color: #fee2e2;
+}
+
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  padding: 0.75rem 0.5rem 0.35rem;
+  margin-top: 0.5rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sidebar-section-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #f1f5f9;
+  margin-left: 8px;
+}
+
+.sidebar-section-header:first-of-type {
+  margin-top: 0;
+  padding-top: 0.15rem;
 }
 
 .sidebar.collapsed .brand-text,

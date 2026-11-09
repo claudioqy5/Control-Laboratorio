@@ -5,18 +5,8 @@ import * as XLSX from 'xlsx'
 import { API_BASE_URL } from '../config'
 import { Line, Doughnut, Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Filler } from 'chart.js'
-import EstadisticasPrestamos from './EstadisticasPrestamos.vue'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Filler)
-
-const props = defineProps({
-  initialTab: {
-    type: String,
-    default: 'prestamos'
-  }
-})
-
-const activeTab = ref(props.initialTab || 'prestamos')
 
 const dashboardData = ref(null)
 const loaded = ref(false)
@@ -379,81 +369,24 @@ const donutOptions = {
 </script>
 
 <template>
-  <div class="resumen-container">
-    <!-- Header con selector tipo pestañas/botones -->
-    <div class="resumen-top-header">
-      <div class="resumen-title-area">
-        <h2 class="resumen-main-title">Resumen</h2>
-        <p class="resumen-sub-title">
-          {{ activeTab === 'prestamos'
-              ? 'Métricas y analítica en tiempo real de préstamos y circulación de libros'
-              : 'Métricas y afluencia en tiempo real de estaciones de cómputo' }}
-        </p>
+  <div v-if="loaded" class="dashboard-wrapper">
+    <!-- Header Minimal -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div>
+        <h2 style="color: #111827; font-size: 1.5rem; font-weight: 800; margin: 0;">Resumen Diario</h2>
+        <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Control en tiempo real · {{ selectedDate }}</p>
       </div>
-
-      <!-- BOTONES SELECTORES: PRÉSTAMOS (POR DEFECTO) Y COMPUTADORAS -->
-      <div class="resumen-toggle-group" role="tablist" aria-label="Selector de estadísticas">
-        <button
-          type="button"
-          role="tab"
-          data-test="tab-prestamos"
-          :aria-selected="activeTab === 'prestamos'"
-          class="resumen-toggle-btn"
-          :class="{ active: activeTab === 'prestamos' }"
-          @click="activeTab = 'prestamos'"
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-            <path d="M6 6h10"/>
-            <path d="M6 10h10"/>
-          </svg>
-          <span>Estadísticas de Préstamos</span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          data-test="tab-computadoras"
-          :aria-selected="activeTab === 'computadoras'"
-          class="resumen-toggle-btn"
-          :class="{ active: activeTab === 'computadoras' }"
-          @click="activeTab = 'computadoras'"
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-            <line x1="8" y1="21" x2="16" y2="21" />
-            <line x1="12" y1="17" x2="12" y2="21" />
-          </svg>
-          <span>Estadísticas de Computadoras</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- SECCIÓN PRÉSTAMOS (Por defecto) -->
-    <div v-show="activeTab === 'prestamos'" class="resumen-subview" data-test="view-prestamos">
-      <EstadisticasPrestamos :hide-main-header="true" />
-    </div>
-
-    <!-- SECCIÓN COMPUTADORAS -->
-    <div v-show="activeTab === 'computadoras'" class="resumen-subview" data-test="view-computadoras">
-      <div v-if="loaded" class="dashboard-wrapper">
-        <!-- Header Minimal Computadoras -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-          <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
-            <div>
-              <h3 style="color: #111827; font-size: 1.35rem; font-weight: 800; margin: 0;">Laboratorio de Cómputo</h3>
-              <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Control en tiempo real · {{ selectedDate }}</p>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <input type="date" v-model="selectedDate" @change="getDashboardStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
-            </div>
-          </div>
-          <div class="status-pill">
-            <span class="pulse-dot"></span>
-            {{ selectedDate === new Date().toISOString().split('T')[0] ? 'Sistema en línea' : 'Datos Históricos' }}
-          </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <input type="date" v-model="selectedDate" @change="getDashboardStats" style="border: none; outline: none; color: #374151; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
         </div>
+        <div class="status-pill">
+          <span class="pulse-dot"></span>
+          {{ selectedDate === new Date().toISOString().split('T')[0] ? 'Sistema en línea' : 'Datos Históricos' }}
+        </div>
+      </div>
+    </div>
 
     <!-- Mini Cards Row -->
     <div class="stats-grid">
@@ -565,94 +498,11 @@ const donutOptions = {
 
   <div v-else class="loading-overlay">
     <div class="spinner"></div>
-    <p>Cargando panel de computadoras...</p>
+    <p>Cargando panel de control...</p>
   </div>
-</div>
-</div>
 </template>
 
 <style scoped>
-.resumen-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-}
-
-.resumen-top-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.resumen-main-title {
-  color: #0f172a;
-  font-size: 1.75rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.resumen-sub-title {
-  color: #64748b;
-  font-size: 0.85rem;
-  margin: 4px 0 0 0;
-}
-
-.resumen-toggle-group {
-  display: inline-flex;
-  background: #f1f5f9;
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  gap: 4px;
-}
-
-.resumen-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 9px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.resumen-toggle-btn:hover:not(.active) {
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.6);
-}
-
-.resumen-toggle-btn.active {
-  background: #ffffff;
-  color: #9f1239;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  font-weight: 700;
-}
-
-.resumen-toggle-btn svg {
-  transition: transform 0.2s ease;
-}
-
-.resumen-toggle-btn.active svg {
-  stroke: #9f1239;
-}
-
-.resumen-subview {
-  width: 100%;
-}
-
 .dashboard-wrapper {
   max-width: 100%;
   overflow: hidden;

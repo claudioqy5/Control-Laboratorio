@@ -288,7 +288,7 @@ const downloadEquiposExcel = () => {
     <!-- Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
       <div>
-        <h2 style="color: #111827; font-size: 1.5rem; font-weight: 800; margin: 0;">Estadísticas de Uso</h2>
+        <h2 style="color: #111827; font-size: 1.5rem; font-weight: 800; margin: 0;">Estadísticas de Equipos</h2>
         <p style="color: #6b7280; font-size: 0.8rem; margin: 0;">Análisis del rendimiento e historial acumulado ({{ customPeriodLabel || currentPeriodLabel }})</p>
       </div>
       <div>

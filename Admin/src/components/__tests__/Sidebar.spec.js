@@ -212,17 +212,17 @@ describe('Sidebar', () => {
     expect(wrapper.classes()).toContain('collapsed')
   })
 
-  it('hides nested sub-nav-group items when collapsed and shows them when expanded', async () => {
+  it('hides workspace tabs and labels when collapsed and shows them when expanded', async () => {
     const wrapper = mount(Sidebar)
 
     expect(wrapper.classes()).toContain('collapsed')
-    expect(wrapper.find('.sub-nav-group').attributes('style')).toContain('display: none')
+    expect(wrapper.find('.workspace-tabs').attributes('style')).toContain('display: none')
 
     const brandBtn = wrapper.find('.brand-icon')
     await brandBtn.trigger('click')
     expect(wrapper.classes()).not.toContain('collapsed')
 
-    const style = wrapper.find('.sub-nav-group').attributes('style')
+    const style = wrapper.find('.workspace-tabs').attributes('style')
     expect(!style || !style.includes('display: none')).toBe(true)
   })
 })

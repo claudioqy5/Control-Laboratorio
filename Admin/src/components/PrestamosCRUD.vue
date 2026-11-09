@@ -250,9 +250,9 @@ onMounted(() => {
           <tr>
             <th>Estudiante</th>
             <th>Libro Prestado</th>
-            <th>Ubicación</th>
             <th>Fecha Préstamo</th>
             <th>Fecha Límite</th>
+            <th>Fecha de Devolución</th>
             <th>Estado</th>
             <th style="text-align: right;">Acción</th>
           </tr>
@@ -286,17 +286,12 @@ onMounted(() => {
               </div>
             </td>
 
-            <!-- UBICACIÓN -->
-            <td>
-              <span class="location-badge">{{ p.libroUbicacion }}</span>
-            </td>
-
             <!-- FECHA PRÉSTAMO -->
             <td class="date-cell">
               {{ formatDate(p.fechaPrestamo) }}
             </td>
 
-            <!-- FECHA DEVOLUCIÓN -->
+            <!-- FECHA LÍMITE -->
             <td class="date-cell">
               <div>{{ formatDate(p.fechaDevolucion) }}</div>
               <div v-if="p.estado === 'Activo'">
@@ -307,6 +302,16 @@ onMounted(() => {
                   ⏳ Quedan {{ p.diasRestantes }} día(s)
                 </span>
               </div>
+            </td>
+
+            <!-- FECHA DE DEVOLUCIÓN -->
+            <td class="date-cell">
+              <span v-if="p.estado === 'Devuelto' || p.fechaEntregado" class="returned-date">
+                {{ formatDate(p.fechaEntregado || p.fechaDevolucion) }}
+              </span>
+              <span v-else class="badge-pending">
+                Pendiente
+              </span>
             </td>
 
             <!-- ESTADO -->
@@ -737,6 +742,22 @@ onMounted(() => {
   font-weight: 500;
   padding: 3px 8px;
   border-radius: 6px;
+}
+
+.badge-pending {
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.returned-date {
+  color: #111827;
+  font-size: 0.82rem;
+  font-weight: 500;
 }
 
 .date-cell {

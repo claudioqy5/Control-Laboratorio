@@ -4,6 +4,11 @@ import axios from 'axios'
 import Dashboard from '../Dashboard.vue'
 
 vi.mock('axios')
+vi.mock('vue-chartjs', () => ({
+  Line: { name: 'Line', template: '<div data-test="line-chart">Line</div>' },
+  Bar: { name: 'Bar', template: '<div data-test="bar-chart">Bar</div>' },
+  Doughnut: { name: 'Doughnut', template: '<div data-test="doughnut-chart">Doughnut</div>' }
+}))
 
 const mockDashboardData = {
   sesionesActivas: 5,
@@ -20,7 +25,7 @@ const mockDashboardData = {
   topEquipos: [{ alias: 'PC-01', nombreRed: 'PC01', totalMinutos: 300 }]
 }
 
-describe('Dashboard (Resumen Unificado)', () => {
+describe('Dashboard (Resumen Diario del Laboratorio)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     axios.get.mockImplementation((url) => {
@@ -36,96 +41,65 @@ describe('Dashboard (Resumen Unificado)', () => {
     })
   })
 
-  const mountDashboard = (props = {}) => {
-    return mount(Dashboard, {
-      props,
-      global: {
-        stubs: {
-          EstadisticasPrestamos: {
-            name: 'EstadisticasPrestamos',
-            props: ['hideMainHeader'],
-            template: '<div data-test="stub-estadisticas-prestamos">Componente Estadisticas Prestamos</div>'
-          },
-          Line: true,
-          Bar: true,
-          Doughnut: true
-        }
-      }
-    })
+  const mountDashboard = () => {
+    return mount(Dashboard)
   }
 
-  it('renderiza la cabecera de Resumen con los botones de Estadísticas de Préstamos y Computadoras', async () => {
+  it('renderiza la cabecera del Resumen Diario con la fecha y estado del sistema', async () => {
     const wrapper = mountDashboard()
     await flushPromises()
 
-    expect(wrapper.find('.resumen-main-title').text()).toBe('Resumen')
-    const tabPrestamos = wrapper.find('[data-test="tab-prestamos"]')
-    const tabComputadoras = wrapper.find('[data-test="tab-computadoras"]')
-
-    expect(tabPrestamos.exists()).toBe(true)
-    expect(tabComputadoras.exists()).toBe(true)
-    expect(tabPrestamos.text()).toContain('Estadísticas de Préstamos')
-    expect(tabComputadoras.text()).toContain('Estadísticas de Computadoras')
+    expect(wrapper.text()).toContain('Resumen Diario')
+    expect(wrapper.text()).toContain('Control en tiempo real')
+    expect(wrapper.find('input[type="date"]').exists()).toBe(true)
+    expect(wrapper.find('.status-pill').exists()).toBe(true)
   })
 
-  it('muestra por defecto las Estadísticas de Préstamos', async () => {
+  it('muestra las métricas clave de sesiones activas, ingresos de hoy y tiempo promedio', async () => {
     const wrapper = mountDashboard()
     await flushPromises()
 
-    const tabPrestamos = wrapper.find('[data-test="tab-prestamos"]')
-    const tabComputadoras = wrapper.find('[data-test="tab-computadoras"]')
-
-    expect(tabPrestamos.classes()).toContain('active')
-    expect(tabComputadoras.classes()).not.toContain('active')
-
-    const viewPrestamos = wrapper.find('[data-test="view-prestamos"]')
-    const viewComputadoras = wrapper.find('[data-test="view-computadoras"]')
-
-    expect(viewPrestamos.isVisible()).toBe(true)
-    expect(viewComputadoras.isVisible()).toBe(false)
-    expect(wrapper.find('[data-test="stub-estadisticas-prestamos"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Sesiones Activas')
+    expect(wrapper.text()).toContain('5')
+    expect(wrapper.text()).toContain('/ 20')
+    expect(wrapper.text()).toContain('Ingresos Hoy')
+    expect(wrapper.text()).toContain('18')
+    expect(wrapper.text()).toContain('Tiempo Promedio')
+    expect(wrapper.text()).toContain('45')
   })
 
-  it('cambia a Estadísticas de Computadoras al hacer clic en el botón de computadoras', async () => {
+  it('calcula y muestra correctamente el porcentaje de ocupación', async () => {
     const wrapper = mountDashboard()
     await flushPromises()
 
-    const tabComputadoras = wrapper.find('[data-test="tab-computadoras"]')
-    await tabComputadoras.trigger('click')
-
-    const tabPrestamos = wrapper.find('[data-test="tab-prestamos"]')
-    expect(tabComputadoras.classes()).toContain('active')
-    expect(tabPrestamos.classes()).not.toContain('active')
-
-    const viewPrestamos = wrapper.find('[data-test="view-prestamos"]')
-    const viewComputadoras = wrapper.find('[data-test="view-computadoras"]')
-
-    expect(viewPrestamos.isVisible()).toBe(false)
-    expect(viewComputadoras.isVisible()).toBe(true)
-    expect(wrapper.text()).toContain('Laboratorio de Cómputo')
+    // 5 sesiones activas de 20 estaciones = 25%
+    expect(wrapper.text()).toContain('Ocupación')
+    expect(wrapper.text()).toContain('25%')
   })
 
-  it('permite alternar de regreso a Estadísticas de Préstamos con un clic', async () => {
+  it('muestra las estadísticas mensuales de escaneos de carnets', async () => {
     const wrapper = mountDashboard()
     await flushPromises()
 
-    // Cambiar a computadoras
-    await wrapper.find('[data-test="tab-computadoras"]').trigger('click')
-    expect(wrapper.find('[data-test="tab-computadoras"]').classes()).toContain('active')
-
-    // Volver a préstamos
-    await wrapper.find('[data-test="tab-prestamos"]').trigger('click')
-    expect(wrapper.find('[data-test="tab-prestamos"]').classes()).toContain('active')
-    expect(wrapper.find('[data-test="view-prestamos"]').isVisible()).toBe(true)
-    expect(wrapper.find('[data-test="view-computadoras"]').isVisible()).toBe(false)
+    expect(wrapper.text()).toContain('Escaneos del Mes')
+    expect(wrapper.text()).toContain('150')
+    expect(wrapper.text()).toContain('/ 1000')
+    expect(wrapper.text()).toContain('Faltan 20 días')
   })
 
-  it('respeta la prop initialTab cuando se especifica computadoras', async () => {
-    const wrapper = mountDashboard({ initialTab: 'computadoras' })
+  it('permite cambiar la fecha seleccionada y recarga las estadísticas', async () => {
+    const wrapper = mountDashboard()
     await flushPromises()
 
-    expect(wrapper.find('[data-test="tab-computadoras"]').classes()).toContain('active')
-    expect(wrapper.find('[data-test="view-computadoras"]').isVisible()).toBe(true)
-    expect(wrapper.find('[data-test="view-prestamos"]').isVisible()).toBe(false)
+    const initialCallCount = axios.get.mock.calls.length
+
+    const dateInput = wrapper.find('input[type="date"]')
+    await dateInput.setValue('2026-11-01')
+    await dateInput.trigger('change')
+    await flushPromises()
+
+    expect(axios.get.mock.calls.length).toBeGreaterThan(initialCallCount)
+    const dashboardCall = axios.get.mock.calls.find(call => call[0].includes('date=2026-11-01'))
+    expect(dashboardCall).toBeTruthy()
   })
 })

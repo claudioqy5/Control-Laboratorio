@@ -64,8 +64,8 @@ const login = async () => {
       <p v-if="error" style="color: #e11d48; margin-top: 1.25rem; text-align: center; font-size: 0.875rem; font-weight: 600;">{{ error }}</p>
       
       <div style="margin-top: 2.5rem; text-align: center; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 1.5rem;">
-        <p style="color: #64748b; font-size: 0.75rem; font-weight: 600;">© 2024 Facultad de Medicina Humana - URP</p>
-        <p style="color: #cbd5e1; font-size: 0.6rem; margin-top: 6px; letter-spacing: 0.05em; text-transform: uppercase;">Designed & Developed by Claudio Quello</p>
+        <p style="color: #64748b; font-size: 0.75rem; font-weight: 600;">© 2026 Facultad de Medicina Humana - URP</p>
+        <p style="color: #fafafaff; font-size: 0.6rem; margin-top: 6px; letter-spacing: 0.05em;">Designed & Developed by CLAUDIO QUELLO - JOSHUE CORREA</p>
       </div>
     </div>
   </div>

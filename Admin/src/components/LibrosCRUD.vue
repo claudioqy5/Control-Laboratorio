@@ -63,7 +63,9 @@ const validationError = ref('')
 const loadLibros = async () => {
   try {
     const res = await axios.get(`${API_BASE_URL}/api/Libros`)
-    libros.value = res.data
+    const data = res.data || []
+    // Ordenar por defecto: primero los agregados más recientemente (mayor libroID primero)
+    libros.value = [...data].sort((a, b) => (b.libroID || b.LibroID || 0) - (a.libroID || a.LibroID || 0))
   } catch (err) {
     console.error("Error al cargar libros:", err)
     showToast('Error al conectar con el servidor', 'error')
@@ -84,7 +86,7 @@ const loadCategorias = async () => {
 }
 
 const filteredLibros = computed(() => {
-  let result = libros.value
+  let result = [...libros.value]
 
   if (searchQuery.value) {
     const queryWords = searchQuery.value.toLowerCase().split(/\s+/).filter(Boolean)
@@ -93,7 +95,13 @@ const filteredLibros = computed(() => {
       return queryWords.every(word => bookString.includes(word))
     })
   }
-  return result
+
+  // Ordenar por defecto: primero los agregados más recientemente (mayor libroID primero)
+  return result.sort((a, b) => (b.libroID || b.LibroID || 0) - (a.libroID || a.LibroID || 0))
+})
+
+watch(searchQuery, () => {
+  currentPage.value = 1
 })
 
 const totalPages = computed(() => {
@@ -250,6 +258,7 @@ const saveLibro = async () => {
 
     // Recargar datos desde el backend
     await loadLibros()
+    currentPage.value = 1
     showModal.value = false
     portadaFile.value = null
 
@@ -516,6 +525,7 @@ const confirmImport = async () => {
     const res = await axios.post(`${API_BASE_URL}/api/Libros/bulk`, importPreviewData.value)
     alert(`Importación completada:\n- Procesados: ${res.data.procesados}\n- Insertados: ${res.data.insertados}\n- Omitidos (duplicados): ${res.data.omitidos}`)
     showImportModal.value = false
+    currentPage.value = 1
     await loadLibros()
   } catch (error) {
     console.error("Error en importación de libros", error)
@@ -546,7 +556,7 @@ onMounted(() => {
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
       <div>        
         <h2 style="color: #111827; font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem;">Registro de Libros</h2>
-        <div style="color: #6b7280; font-size: 0.875rem;">{{ libros.length }} Catálogos Registrados (Simulación Frontend)</div>
+        <div style="color: #6b7280; font-size: 0.875rem;">{{ libros.length }} Catálogos Registrados</div>
       </div>
       <div style="display: flex; gap: 1rem; align-items: center;">
         <!-- Buscador -->

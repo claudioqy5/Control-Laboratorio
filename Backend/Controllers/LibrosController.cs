@@ -27,7 +27,9 @@ namespace ControlLaboratorio.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Libro>>> GetLibros()
         {
-            return await _context.Libros.ToListAsync();
+            return await _context.Libros
+                .OrderByDescending(l => l.LibroID)
+                .ToListAsync();
         }
 
         // GET: api/Libros/5

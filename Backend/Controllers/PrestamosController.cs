@@ -549,6 +549,12 @@ namespace ControlLaboratorio.API.Controllers
                 rangeStart = date.Value.Date;
                 rangeEnd = rangeStart.AddDays(1);
             }
+            else if (mode == "week")
+            {
+                int diff = (7 + (targetDate.DayOfWeek - DayOfWeek.Monday)) % 7;
+                rangeStart = targetDate.AddDays(-1 * diff).Date;
+                rangeEnd = rangeStart.AddDays(7);
+            }
             else if (mode == "year" && year.HasValue)
             {
                 rangeStart = new DateTime(year.Value, 1, 1);
@@ -606,6 +612,21 @@ namespace ControlLaboratorio.API.Controllers
                     Etiqueta = $"{h:00}:00",
                     Prestamos = prestamosEnPeriodo.Count(p => p.FechaPrestamo.Hour == h),
                     Devoluciones = devolucionesEnPeriodo.Count(p => p.FechaEntregado!.Value.Hour == h)
+                }).ToList();
+            }
+            else if (mode == "week")
+            {
+                // Agrupado por los 7 días de la semana (Lunes a Domingo)
+                var diasSemanaNombres = new[] { "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom" };
+                tendenciaFlujo = Enumerable.Range(0, 7).Select(i =>
+                {
+                    var diaFecha = rangeStart.AddDays(i);
+                    return new
+                    {
+                        Etiqueta = $"{diasSemanaNombres[i]} {diaFecha:dd/MM}",
+                        Prestamos = prestamosEnPeriodo.Count(p => p.FechaPrestamo.Date == diaFecha.Date),
+                        Devoluciones = devolucionesEnPeriodo.Count(p => p.FechaEntregado.HasValue && p.FechaEntregado.Value.Date == diaFecha.Date)
+                    };
                 }).ToList();
             }
             else if (mode == "year")
@@ -695,6 +716,53 @@ namespace ControlLaboratorio.API.Controllers
                 .Take(5)
                 .ToList();
 
+            // 8. Lista de movimientos detallados
+            var movimientos = new List<object>();
+
+            foreach (var p in prestamosEnPeriodo)
+            {
+                movimientos.Add(new
+                {
+                    Tipo = "Préstamo",
+                    Fecha = p.FechaPrestamo,
+                    Hora = p.FechaPrestamo.ToString("HH:mm"),
+                    PrestamoID = p.PrestamoID,
+                    LibroID = p.LibroID,
+                    LibroTitulo = p.Libro?.Titulo ?? "Sin título",
+                    LibroCodigo = p.Libro?.CodigoBarras ?? "",
+                    AlumnoID = p.AlumnoID,
+                    AlumnoNombre = p.Alumno != null ? $"{p.Alumno.Nombres} {p.Alumno.ApellidoPaterno}".Trim() : "Desconocido",
+                    AlumnoCodigo = p.Alumno?.CodigoUniversitario ?? "",
+                    AlumnoCarrera = p.Alumno?.Carrera ?? "",
+                    FechaDevolucion = p.FechaDevolucion,
+                    Estado = p.Estado
+                });
+            }
+
+            foreach (var p in devolucionesEnPeriodo)
+            {
+                movimientos.Add(new
+                {
+                    Tipo = "Devolución",
+                    Fecha = p.FechaEntregado!.Value,
+                    Hora = p.FechaEntregado!.Value.ToString("HH:mm"),
+                    PrestamoID = p.PrestamoID,
+                    LibroID = p.LibroID,
+                    LibroTitulo = p.Libro?.Titulo ?? "Sin título",
+                    LibroCodigo = p.Libro?.CodigoBarras ?? "",
+                    AlumnoID = p.AlumnoID,
+                    AlumnoNombre = p.Alumno != null ? $"{p.Alumno.Nombres} {p.Alumno.ApellidoPaterno}".Trim() : "Desconocido",
+                    AlumnoCodigo = p.Alumno?.CodigoUniversitario ?? "",
+                    AlumnoCarrera = p.Alumno?.Carrera ?? "",
+                    FechaDevolucion = p.FechaDevolucion,
+                    Estado = "Devuelto"
+                });
+            }
+
+            var movimientosOrdenados = movimientos
+                .OrderByDescending(m => ((dynamic)m).Fecha)
+                .ToList();
+
             return Ok(new
             {
                 Kpis = new
@@ -719,7 +787,8 @@ namespace ControlLaboratorio.API.Controllers
                     ActivosEnPlazo = aunActivosRegular,
                     ActivosVencidos = aunActivosVencidos
                 },
-                TopAlumnos = topAlumnos
+                TopAlumnos = topAlumnos,
+                Movimientos = movimientosOrdenados
             });
         }
     }
