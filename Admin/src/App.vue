@@ -15,6 +15,7 @@ import UsoEstadisticas from './components/UsoEstadisticas.vue'
 import ChatBot from './components/ChatBot.vue'
 import Sidebar from './components/Sidebar.vue'
 import ConfiguracionAccesos from './components/ConfiguracionAccesos.vue'
+import EstadisticasPrestamos from './components/EstadisticasPrestamos.vue'
 
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
@@ -72,7 +73,8 @@ const handleLogout = () => {
       <EquiposList v-if="currentView === 'equipos'" />
       <AlumnosCRUD v-if="currentView === 'alumnos'" />
       <LibrosCRUD v-if="currentView === 'libros'" />
-      <PrestamosCRUD v-if="currentView === 'prestamos'" />
+      <PrestamosCRUD v-if="currentView === 'prestamos'" @ver-estadisticas="currentView = 'estadisticas-prestamos'" />
+      <EstadisticasPrestamos v-if="currentView === 'estadisticas-prestamos'" />
       <CategoriasCRUD v-if="currentView === 'categorias'" />
       <MapaBiblioteca v-if="currentView === 'mapa-biblio'" />
       <ActiveSessions v-if="currentView === 'active'" />

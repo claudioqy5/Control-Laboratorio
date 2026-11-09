@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '../config'
 
+const emit = defineEmits(['ver-estadisticas'])
+
 const prestamos = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
@@ -144,6 +146,13 @@ onMounted(() => {
       </div>
 
       <div style="display: flex; gap: 8px; align-items: center;">
+        <button class="btn-stats" @click="emit('ver-estadisticas')" title="Ver Gráficos y Estadísticas de Préstamos">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3v18h18" />
+            <path d="m19 9-5 5-4-4-3 3" />
+          </svg>
+          <span>Estadísticas</span>
+        </button>
         <button class="btn-clean" @click="limpiarPruebas" title="Eliminar registros de prueba">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           <span>Limpiar Pruebas</span>
@@ -403,6 +412,28 @@ onMounted(() => {
   background: #10b981;
   border-radius: 50%;
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.btn-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #9f1239;
+  border: 1px solid #9f1239;
+  color: #ffffff;
+  padding: 0.6rem 0.95rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(159, 18, 57, 0.2);
+}
+
+.btn-stats:hover {
+  background: #881337;
+  border-color: #881337;
+  transform: translateY(-1px);
 }
 
 .btn-clean {

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AbsysNet -> Control Laboratorio & Biblioteca URP Sync
 // @namespace    https://medicina.urp.edu.pe/bve
-// @version      1.7.0
+// @version      1.8.0
 // @description  Captura automática de préstamos y devoluciones en AbsysNet y sincronización en tiempo real con Control-Laboratorio.
 // @author       Facultad de Medicina Humana - URP
 // @match        https://biblioteca.urp.edu.pe/abnet/*
@@ -78,35 +78,65 @@
     }
 
     // ========================================================
-    // BUSCAR EL DOCUMENTO DESTINO ADECUADO (SOLO EN PRÉSTAMOS / DEVOLUCIONES)
+    // LISTA BLANCA ESTRICTA: ÚNICAS 4 PANTALLAS DONDE DEBE OPERAR EL SCRIPT
+    // Préstamos | Devoluciones | Préstamos en sala | Devoluciones en sala
     // ========================================================
+
+    /**
+     * Clasifica el documento según cuál de las 4 pantallas autorizadas es.
+     * Retorna 'PRESTAMO', 'DEVOLUCION' o null si no es ninguna de las 4.
+     */
+    function clasificarPantalla(doc) {
+        if (!doc || !doc.body) return null;
+
+        // Buscar el título prominente en la cabecera del frame o en el texto
+        // AbsysNet muestra el título en la barra superior (ej: "PRÉSTAMOS | PRÉSTAMOS")
+        // y también puede estar en el <title> del documento o en un encabezado visible.
+        const title = (doc.title || '').toUpperCase().trim();
+        const header = (() => {
+            // Intentar leer la cabecera de la barra superior de AbsysNet
+            const h = doc.querySelector('td.cabecera, div.titulo, h1, h2, .header-title, [class*="titulo"], [class*="cabecera"]');
+            return h ? h.innerText.toUpperCase().trim() : '';
+        })();
+        const bodyText = (doc.body.innerText || '').toUpperCase();
+
+        // ── Función auxiliar: detecta si alguno de los textos candidatos contiene
+        //    la clave requerida y NO contiene ninguna de las claves excluidas ──
+        const matches = (key, ...excludes) => {
+            const sources = [title, header, bodyText];
+            const found = sources.some(s => s.includes(key));
+            if (!found) return false;
+            // Verificar exclusiones (evitar falsos positivos de otras pantallas)
+            const excluded = excludes.some(ex => sources.some(s => s.includes(ex)));
+            return !excluded;
+        };
+
+        // ── PANTALLAS DE PRÉSTAMOS ──────────────────────────────────────────
+        // "PRÉSTAMOS EN SALA" primero para que no colisione con la regla general
+        if (matches('PRÉSTAMOS EN SALA', 'CONSULTA')) return 'PRESTAMO';
+        // "PRÉSTAMOS" (normal, domicilio) → excluir "EN SALA" y "CONSULTA"
+        if (matches('PRÉSTAMOS', 'EN SALA', 'CONSULTA')) return 'PRESTAMO';
+
+        // ── PANTALLAS DE DEVOLUCIONES ───────────────────────────────────────
+        // "DEVOLUCIONES EN SALA" primero para que no colisione con la regla general
+        if (matches('DEVOLUCIONES EN SALA', 'CONSULTA')) return 'DEVOLUCION';
+        // "DEVOLUCIONES" (normal, domicilio) → excluir "EN SALA" y "CONSULTA"
+        if (matches('DEVOLUCIONES', 'EN SALA', 'CONSULTA')) return 'DEVOLUCION';
+
+        // Ninguna de las 4 pantallas autorizadas
+        return null;
+    }
+
     function findTargetDocument() {
         const allDocs = getAllDocuments();
 
-        // Solo inyectar en el frame que contenga el formulario de Préstamos o Devoluciones
         for (const doc of allDocs) {
             if (!doc.body) continue;
-
-            const txt = (doc.body.innerText || '').toLowerCase();
-            const hasCirculationTerms = txt.includes('detalles del lector') || 
-                                        txt.includes('detalles del ejemplar') || 
-                                        txt.includes('fecha de préstamo') || 
-                                        txt.includes('fecha de devolución') || 
-                                        txt.includes('nº lector') || 
-                                        txt.includes('n° lector');
-
-            const hasInputs = Array.from(doc.querySelectorAll('input')).some(i => {
-                const n = (i.name || '').toLowerCase();
-                const id = (i.id || '').toLowerCase();
-                return n.includes('lector') || n.includes('barras') || id.includes('lector') || id.includes('barras');
-            });
-
-            if (hasCirculationTerms || hasInputs) {
-                return doc;
-            }
+            const modo = clasificarPantalla(doc);
+            if (modo !== null) return doc;
         }
 
-        // Si estamos en el "Escritorio", "Notas", "Enlaces", etc., no mostramos el widget para no saturar la pantalla
+        // No estamos en ninguna de las 4 pantallas autorizadas → ocultar widget
         return null;
     }
 
@@ -462,26 +492,18 @@
     }
 
     // ========================================================
-    // DETECCIÓN DE MODO (PRESTAMO / DEVOLUCION)
+    // DETECCIÓN DE MODO (PRESTAMO / DEVOLUCION) — basada en la lista blanca
     // ========================================================
     function detectarModo(targetDoc) {
         if (!targetDoc || !targetDoc.body) return 'PRESTAMO';
-        const txt = targetDoc.body.innerText || '';
 
-        // 1. Verificación precisa en la cabecera de la ventana activa
-        if (txt.includes('Fecha de préstamo') || txt.includes('PRÉSTAMOS |') || txt.includes('PRÉSTAMO')) {
-            return 'PRESTAMO';
-        }
-        if (txt.includes('Fecha de devolución') || txt.includes('DEVOLUCIONES |') || txt.includes('DEVOLUCIÓN')) {
-            return 'DEVOLUCION';
-        }
+        // Prioridad 1: usar clasificarPantalla() que ya es estricta y correcta
+        const modoClasificado = clasificarPantalla(targetDoc);
+        if (modoClasificado) return modoClasificado;
 
-        // 2. Por minúsculas
-        const lower = txt.toLowerCase();
-        if (lower.includes('fecha de préstamo') || lower.includes('préstamo')) {
-            return 'PRESTAMO';
-        }
-        if (lower.includes('fecha de devolución') || lower.includes('devolución')) {
+        // Prioridad 2: Fallback por texto visible (casos extremos de carga parcial)
+        const upper = (targetDoc.body.innerText || '').toUpperCase();
+        if (upper.includes('DEVOLUCIÓN') || upper.includes('DEVOLUCIONES') || upper.includes('FECHA DE DEVOL')) {
             return 'DEVOLUCION';
         }
 

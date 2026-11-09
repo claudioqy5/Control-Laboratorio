@@ -529,6 +529,199 @@ namespace ControlLaboratorio.API.Controllers
 
             return Ok(new { mensaje = "Libro devuelto con éxito" });
         }
+
+        // GET: api/Prestamos/Estadisticas
+        [HttpGet("Estadisticas")]
+        public async Task<IActionResult> GetEstadisticasPrestamos(
+            [FromQuery] DateTime? date,
+            [FromQuery] int? month,
+            [FromQuery] int? year,
+            [FromQuery] string? mode = null)
+        {
+            var now = DateTime.Now;
+            var targetDate = date?.Date ?? now.Date;
+
+            DateTime rangeStart;
+            DateTime rangeEnd;
+
+            if (mode == "date" && date.HasValue)
+            {
+                rangeStart = date.Value.Date;
+                rangeEnd = rangeStart.AddDays(1);
+            }
+            else if (mode == "year" && year.HasValue)
+            {
+                rangeStart = new DateTime(year.Value, 1, 1);
+                rangeEnd = rangeStart.AddYears(1);
+            }
+            else
+            {
+                // Modo mes por defecto
+                var targetYear = year ?? now.Year;
+                var targetMonth = month ?? now.Month;
+                rangeStart = new DateTime(targetYear, targetMonth, 1);
+                rangeEnd = rangeStart.AddMonths(1);
+            }
+
+            // 1. KPIs Generales (Globales y del período)
+            var totalActivos = await _context.Prestamos.CountAsync(p => p.Estado == "Activo" || p.Estado == "Renovado");
+            var totalVencidos = await _context.Prestamos.CountAsync(p => (p.Estado == "Activo" || p.Estado == "Renovado") && p.FechaDevolucion < now);
+            var porVencerHoy = await _context.Prestamos.CountAsync(p => (p.Estado == "Activo" || p.Estado == "Renovado") && p.FechaDevolucion.Date == now.Date);
+
+            // Préstamos creados dentro del rango filtrado
+            var prestamosEnPeriodo = await _context.Prestamos
+                .Include(p => p.Libro)
+                .Include(p => p.Alumno)
+                .Where(p => p.FechaPrestamo >= rangeStart && p.FechaPrestamo < rangeEnd)
+                .ToListAsync();
+
+            // Devoluciones procesadas dentro del rango filtrado
+            var devolucionesEnPeriodo = await _context.Prestamos
+                .Include(p => p.Libro)
+                .Include(p => p.Alumno)
+                .Where(p => p.FechaEntregado.HasValue && p.FechaEntregado.Value >= rangeStart && p.FechaEntregado.Value < rangeEnd)
+                .ToListAsync();
+
+            var totalPrestamosPeriodo = prestamosEnPeriodo.Count;
+            var totalDevueltosPeriodo = devolucionesEnPeriodo.Count;
+
+            // Tasa de devolución a tiempo en el período
+            var devueltosConFecha = devolucionesEnPeriodo.Where(p => p.FechaEntregado.HasValue).ToList();
+            var devueltosATiempo = devueltosConFecha.Count(p => p.FechaEntregado!.Value <= p.FechaDevolucion);
+            var tasaATiempo = devueltosConFecha.Any() 
+                ? (int)Math.Round((double)devueltosATiempo / devueltosConFecha.Count * 100) 
+                : 100;
+
+            // Catálogo disponible vs en préstamo
+            var totalCatalogo = await _context.Libros.CountAsync();
+            var librosPrestadosActualmente = await _context.Libros.CountAsync(l => l.Estado == "Prestado");
+
+            // 2. Flujo cronológico (Días si es mes, meses si es año, u horas si es día)
+            object tendenciaFlujo;
+            if (mode == "date")
+            {
+                // Agrupado por horas (7 AM a 9 PM)
+                tendenciaFlujo = Enumerable.Range(7, 15).Select(h => new
+                {
+                    Etiqueta = $"{h:00}:00",
+                    Prestamos = prestamosEnPeriodo.Count(p => p.FechaPrestamo.Hour == h),
+                    Devoluciones = devolucionesEnPeriodo.Count(p => p.FechaEntregado!.Value.Hour == h)
+                }).ToList();
+            }
+            else if (mode == "year")
+            {
+                // Agrupado por los 12 meses
+                var mesesNombres = new[] { "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Set", "Oct", "Nov", "Dic" };
+                tendenciaFlujo = Enumerable.Range(1, 12).Select(m => new
+                {
+                    Etiqueta = mesesNombres[m - 1],
+                    Prestamos = prestamosEnPeriodo.Count(p => p.FechaPrestamo.Month == m),
+                    Devoluciones = devolucionesEnPeriodo.Count(p => p.FechaEntregado!.Value.Month == m)
+                }).ToList();
+            }
+            else
+            {
+                // Modo mes: Agrupado por días del mes
+                var diasEnMes = DateTime.DaysInMonth(rangeStart.Year, rangeStart.Month);
+                tendenciaFlujo = Enumerable.Range(1, diasEnMes).Select(d => new
+                {
+                    Etiqueta = $"Día {d}",
+                    Prestamos = prestamosEnPeriodo.Count(p => p.FechaPrestamo.Day == d),
+                    Devoluciones = devolucionesEnPeriodo.Count(p => p.FechaEntregado!.Value.Day == d)
+                }).ToList();
+            }
+
+            // 3. Top 10 Libros Más Solicitados en el período
+            var topLibros = prestamosEnPeriodo
+                .Where(p => p.Libro != null)
+                .GroupBy(p => new { p.LibroID, p.Libro!.Titulo, p.Libro.CodigoBarras })
+                .Select(g => new
+                {
+                    LibroID = g.Key.LibroID,
+                    Titulo = g.Key.Titulo,
+                    CodigoBarras = g.Key.CodigoBarras,
+                    Total = g.Count()
+                })
+                .OrderByDescending(x => x.Total)
+                .Take(10)
+                .ToList();
+
+            // 4. Distribución por Categoría Médica
+            var porCategoria = prestamosEnPeriodo
+                .Where(p => p.Libro != null)
+                .GroupBy(p => string.IsNullOrWhiteSpace(p.Libro!.Categoria) ? "General / Sin Categoría" : p.Libro.Categoria.Trim())
+                .Select(g => new
+                {
+                    Categoria = g.Key,
+                    Cantidad = g.Count()
+                })
+                .OrderByDescending(x => x.Cantidad)
+                .Take(8)
+                .ToList();
+
+            // 5. Horarios de mayor afluencia (Horas punta 08:00 a 20:00)
+            var horasPunta = Enumerable.Range(8, 13).Select(h => new
+            {
+                Hora = $"{h:00}:00",
+                TotalMovimientos = prestamosEnPeriodo.Count(p => p.FechaPrestamo.Hour == h) +
+                                   devolucionesEnPeriodo.Count(p => p.FechaEntregado!.Value.Hour == h)
+            }).ToList();
+
+            // 6. Estado de Cumplimiento / Morosidad en el período
+            var devueltosEnTiempo = devueltosATiempo;
+            var devueltosConRetraso = devueltosConFecha.Count - devueltosATiempo;
+            var aunActivosRegular = prestamosEnPeriodo.Count(p => (p.Estado == "Activo" || p.Estado == "Renovado") && p.FechaDevolucion >= now);
+            var aunActivosVencidos = prestamosEnPeriodo.Count(p => (p.Estado == "Activo" || p.Estado == "Renovado") && p.FechaDevolucion < now);
+
+            // 7. Top 5 Alumnos Lectores (Ranking en el período)
+            var topAlumnos = prestamosEnPeriodo
+                .Where(p => p.Alumno != null)
+                .GroupBy(p => new
+                {
+                    p.AlumnoID,
+                    p.Alumno!.CodigoUniversitario,
+                    NombreCompleto = $"{p.Alumno.Nombres} {p.Alumno.ApellidoPaterno}".Trim(),
+                    p.Alumno.Carrera
+                })
+                .Select(g => new
+                {
+                    AlumnoID = g.Key.AlumnoID,
+                    CodigoUniversitario = g.Key.CodigoUniversitario,
+                    Nombre = g.Key.NombreCompleto,
+                    Carrera = g.Key.Carrera,
+                    TotalPrestamos = g.Count()
+                })
+                .OrderByDescending(x => x.TotalPrestamos)
+                .Take(5)
+                .ToList();
+
+            return Ok(new
+            {
+                Kpis = new
+                {
+                    TotalActivos = totalActivos,
+                    TotalVencidos = totalVencidos,
+                    PorVencerHoy = porVencerHoy,
+                    TasaATiempo = tasaATiempo,
+                    TotalPrestamosPeriodo = totalPrestamosPeriodo,
+                    TotalDevueltosPeriodo = totalDevueltosPeriodo,
+                    TotalCatalogo = totalCatalogo,
+                    LibrosPrestados = librosPrestadosActualmente
+                },
+                TendenciaFlujo = tendenciaFlujo,
+                TopLibros = topLibros,
+                PorCategoria = porCategoria,
+                HorasPunta = horasPunta,
+                Cumplimiento = new
+                {
+                    DevueltosATiempo = devueltosEnTiempo,
+                    DevueltosConRetraso = devueltosConRetraso,
+                    ActivosEnPlazo = aunActivosRegular,
+                    ActivosVencidos = aunActivosVencidos
+                },
+                TopAlumnos = topAlumnos
+            });
+        }
     }
 
     public class SolicitudPrestamoDto

@@ -34,6 +34,7 @@ const bibliotecaViews = [
   'reportes',
   'libros',
   'prestamos',
+  'estadisticas-prestamos',
   'categorias',
   'mapa-biblio'
 ]
@@ -378,6 +379,19 @@ onBeforeUnmount(() => {
                 <path d="M9 14l2 2 4-4" />
               </svg>
               <span class="item-text">Préstamos</span>
+            </a>
+            <a
+              href="#"
+              class="sub-nav-item"
+              :class="{ active: currentView === 'estadisticas-prestamos' }"
+              @click.prevent="navigate('estadisticas-prestamos')"
+              :title="isCollapsed ? 'Estadísticas Préstamos' : ''"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3v18h18" />
+                <path d="m19 9-5 5-4-4-3 3" />
+              </svg>
+              <span class="item-text">Estadísticas Préstamos</span>
             </a>
             <a
               href="#"
