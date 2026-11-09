@@ -31,6 +31,13 @@ ChartJS.register(
   Filler
 )
 
+const props = defineProps({
+  hideMainHeader: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const statsData = ref(null)
 const loading = ref(true)
 
@@ -328,10 +335,10 @@ const cumplimientoChartOptions = {
 </script>
 
 <template>
-  <div class="stats-prestamos-page">
+  <div class="stats-prestamos-page" :class="{ 'is-embedded': hideMainHeader }">
     <!-- CABECERA -->
-    <div class="page-top-bar">
-      <div class="header-titles">
+    <div class="page-top-bar" :class="{ 'compact-bar': hideMainHeader }">
+      <div v-if="!hideMainHeader" class="header-titles">
         <div class="badge-tag">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
@@ -342,6 +349,13 @@ const cumplimientoChartOptions = {
         </div>
         <h1 class="main-title">Estadísticas de Préstamos y Circulación</h1>
         <p class="subtitle">Análisis métrico y analítica de libros sincronizados desde AbsysNet</p>
+      </div>
+
+      <div v-else class="header-titles-compact">
+        <div class="compact-tag">
+          <span class="compact-dot"></span>
+          <span>Analítica de Préstamos y Circulación de Libros</span>
+        </div>
       </div>
 
       <!-- FILTRO DE FECHAS REUTILIZABLE -->
@@ -600,6 +614,12 @@ const cumplimientoChartOptions = {
   color: #0f172a;
 }
 
+.stats-prestamos-page.is-embedded {
+  padding: 0;
+  background: transparent;
+  min-height: auto;
+}
+
 /* TOP BAR */
 .page-top-bar {
   display: flex;
@@ -608,6 +628,39 @@ const cumplimientoChartOptions = {
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.page-top-bar.compact-bar {
+  margin-bottom: 18px;
+  align-items: center;
+}
+
+.header-titles-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.compact-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  background: #ffffff;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.compact-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #be123c;
+  box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.15);
 }
 
 .badge-tag {
