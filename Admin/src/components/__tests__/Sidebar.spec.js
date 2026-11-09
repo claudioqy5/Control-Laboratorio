@@ -11,35 +11,46 @@ describe('Sidebar', () => {
     vi.useRealTimers()
   })
 
-  it('renders all 5 thematic sections and inactive modules with disabled class and title', () => {
+  it('renders workspace tabs and disabled modules with disabled class and title', async () => {
     const wrapper = mount(Sidebar)
 
-    const text = wrapper.text()
-    expect(text).toContain('General')
-    expect(text).toContain('Laboratorio de Cómputo')
-    expect(text).toContain('Biblioteca')
-    expect(text).toContain('Servicios & Atención')
-    expect(text).toContain('Sistema')
+    const tabs = wrapper.findAll('.workspace-tab')
+    expect(tabs.length).toBe(3)
+    const tabTexts = tabs.map(tab => tab.text())
+    expect(tabTexts).toContain('Biblioteca')
+    expect(tabTexts).toContain('Página Web')
+    expect(tabTexts).toContain('Sistema')
 
-    const disabledItems = wrapper.findAll('.disabled')
-    expect(disabledItems.length).toBe(11)
+    const webTab = tabs.find(tab => tab.text().includes('Página Web'))
+    await webTab.trigger('click')
 
-    disabledItems.forEach(item => {
+    const webDisabled = wrapper.findAll('.disabled')
+    expect(webDisabled.length).toBe(7)
+    webDisabled.forEach(item => {
       expect(item.attributes('title')).toBe('Próximamente')
     })
+    const webLabels = webDisabled.map(item => item.text())
+    expect(webLabels).toContain('Gestión de Conferencias')
+    expect(webLabels).toContain('Estadísticas Conferencias')
+    expect(webLabels).toContain('Bases de Datos')
+    expect(webLabels).toContain('Matriz Hexagonal')
+    expect(webLabels).toContain('Objetos Perdidos')
+    expect(webLabels).toContain('Boletín Informativo')
+    expect(webLabels).toContain('Preguntas Frecuentes')
 
-    const disabledLabels = disabledItems.map(item => item.text())
-    expect(disabledLabels).toContain('Pineo de Equipos')
-    expect(disabledLabels).toContain('Directorio de Bases')
-    expect(disabledLabels).toContain('Matriz Hexagonal')
-    expect(disabledLabels).toContain('Gestión de Conferencias')
-    expect(disabledLabels).toContain('Estadísticas Conferencia')
-    expect(disabledLabels).toContain('Tickets de Reportes')
-    expect(disabledLabels).toContain('Objetos Perdidos')
-    expect(disabledLabels).toContain('Boletín Informativo')
-    expect(disabledLabels).toContain('Horario de Atención')
-    expect(disabledLabels).toContain('Preguntas Frecuentes')
-    expect(disabledLabels).toContain('Log de Acciones')
+    const sistemaTab = tabs.find(tab => tab.text().includes('Sistema'))
+    await sistemaTab.trigger('click')
+
+    const sistemaDisabled = wrapper.findAll('.disabled')
+    expect(sistemaDisabled.length).toBe(4)
+    sistemaDisabled.forEach(item => {
+      expect(item.attributes('title')).toBe('Próximamente')
+    })
+    const sistemaLabels = sistemaDisabled.map(item => item.text())
+    expect(sistemaLabels).toContain('Pineo de Equipos')
+    expect(sistemaLabels).toContain('Tickets de Reportes')
+    expect(sistemaLabels).toContain('Log de Acciones')
+    expect(sistemaLabels).toContain('Horario de Atención')
   })
 
   it('emits change-view event when active modules are clicked', async () => {
@@ -49,7 +60,7 @@ describe('Sidebar', () => {
 
     const allLinks = wrapper.findAll('a:not(.disabled)')
 
-    const estadisticasLink = allLinks.find(link => link.text().includes('Estadísticas Generales'))
+    const estadisticasLink = allLinks.find(link => link.text().includes('Estadísticas'))
     await estadisticasLink.trigger('click')
     expect(wrapper.emitted('change-view')).toBeTruthy()
     expect(wrapper.emitted('change-view')[0]).toEqual(['estadisticas'])
@@ -58,9 +69,13 @@ describe('Sidebar', () => {
     await mapLink.trigger('click')
     expect(wrapper.emitted('change-view')[1]).toEqual(['map'])
 
+    const reportesLink = allLinks.find(link => link.text().includes('Reportes'))
+    await reportesLink.trigger('click')
+    expect(wrapper.emitted('change-view')[2]).toEqual(['conexiones'])
+
     const librosLink = allLinks.find(link => link.text().includes('Libros'))
     await librosLink.trigger('click')
-    expect(wrapper.emitted('change-view')[2]).toEqual(['libros'])
+    expect(wrapper.emitted('change-view')[3]).toEqual(['libros'])
   })
 
   it('denies access to Configuración / Accesos for non-SuperAdmin user and displays toast alert', async () => {
@@ -77,8 +92,11 @@ describe('Sidebar', () => {
 
     expect(wrapper.find('.toast-alert').exists()).toBe(false)
 
-    const allLinks = wrapper.findAll('a')
-    const configLink = allLinks.find(link => link.text().includes('Configuración / Accesos'))
+    const tabs = wrapper.findAll('.workspace-tab')
+    const sistemaTab = tabs.find(tab => tab.text().includes('Sistema'))
+    await sistemaTab.trigger('click')
+
+    const configLink = wrapper.findAll('a').find(link => link.text().includes('Configuración / Accesos'))
     await configLink.trigger('click')
 
     expect(wrapper.emitted('change-view')).toBeFalsy()
@@ -110,8 +128,11 @@ describe('Sidebar', () => {
       props: { user: adminUser }
     })
 
-    const allLinks = wrapper.findAll('a')
-    const configLink = allLinks.find(link => link.text().includes('Configuración / Accesos'))
+    const tabs = wrapper.findAll('.workspace-tab')
+    const sistemaTab = tabs.find(tab => tab.text().includes('Sistema'))
+    await sistemaTab.trigger('click')
+
+    const configLink = wrapper.findAll('a').find(link => link.text().includes('Configuración / Accesos'))
     await configLink.trigger('click')
 
     expect(wrapper.emitted('change-view')).toBeTruthy()

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, reactive, onBeforeUnmount } from 'vue'
+import { ref, computed, reactive, watch, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   currentView: {
@@ -16,15 +16,39 @@ const emit = defineEmits(['change-view', 'logout'])
 
 const isCollapsed = ref(true)
 const isPinned = ref(false)
+const activeTab = ref('biblioteca')
 
 const openSubmenus = reactive({
-  infraestructura: true,
-  estadisticasLab: true,
-  basesDatos: true,
-  catalogoFisico: true,
-  conferencias: true,
-  infoUsuario: true
+  catalogoFisico: true
 })
+
+const bibliotecaViews = [
+  'dashboard',
+  'estadisticas',
+  'map',
+  'equipos',
+  'alumnos',
+  'active',
+  'conexiones',
+  'escaneos',
+  'reportes',
+  'libros',
+  'prestamos',
+  'categorias',
+  'mapa-biblio'
+]
+
+watch(
+  () => props.currentView,
+  (view) => {
+    if (view === 'accesos') {
+      activeTab.value = 'sistema'
+    } else if (bibliotecaViews.includes(view)) {
+      activeTab.value = 'biblioteca'
+    }
+  },
+  { immediate: true }
+)
 
 const toastMessage = ref('')
 let toastTimer = null
@@ -165,9 +189,35 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
+    <div v-show="!isCollapsed" class="workspace-tabs">
+      <button
+        type="button"
+        class="workspace-tab"
+        :class="{ active: activeTab === 'biblioteca' }"
+        @click="activeTab = 'biblioteca'"
+      >
+        Biblioteca
+      </button>
+      <button
+        type="button"
+        class="workspace-tab"
+        :class="{ active: activeTab === 'web' }"
+        @click="activeTab = 'web'"
+      >
+        Página Web
+      </button>
+      <button
+        type="button"
+        class="workspace-tab"
+        :class="{ active: activeTab === 'sistema' }"
+        @click="activeTab = 'sistema'"
+      >
+        Sistema
+      </button>
+    </div>
+
     <div class="nav-scroll">
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">General</div>
+      <template v-if="activeTab === 'biblioteca'">
         <a
           href="#"
           class="nav-item"
@@ -183,97 +233,50 @@ onBeforeUnmount(() => {
           </svg>
           <span class="item-text">Resumen</span>
         </a>
+
         <a
           href="#"
           class="nav-item"
           :class="{ active: currentView === 'estadisticas' }"
           @click.prevent="navigate('estadisticas')"
-          :title="isCollapsed ? 'Estadísticas Generales' : ''"
+          :title="isCollapsed ? 'Estadísticas' : ''"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="20" x2="18" y2="10" />
             <line x1="12" y1="20" x2="12" y2="4" />
             <line x1="6" y1="20" x2="6" y2="14" />
           </svg>
-          <span class="item-text">Estadísticas Generales</span>
+          <span class="item-text">Estadísticas</span>
         </a>
-      </div>
 
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">Laboratorio de Cómputo</div>
-        <div class="submenu-container">
-          <button
-            type="button"
-            class="submenu-header"
-            @click="toggleSubmenu('infraestructura')"
-            :title="isCollapsed ? 'Infraestructura & Equipos' : ''"
-          >
-            <div class="submenu-header-left">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
-                <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
-                <line x1="6" y1="6" x2="6.01" y2="6" />
-                <line x1="6" y1="18" x2="6.01" y2="18" />
-              </svg>
-              <span class="item-text">Infraestructura & Equipos</span>
-            </div>
-            <svg
-              class="submenu-chevron"
-              :class="{ open: openSubmenus.infraestructura }"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <div v-show="!isCollapsed && openSubmenus.infraestructura" class="sub-nav-group">
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'map' }"
-              @click.prevent="navigate('map')"
-              :title="isCollapsed ? 'Mapa de Estaciones' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-              <span class="item-text">Mapa de Estaciones</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'equipos' }"
-              @click.prevent="navigate('equipos')"
-              :title="isCollapsed ? 'Computadoras' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
-              <span class="item-text">Computadoras</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item disabled"
-              title="Próximamente"
-              @click.prevent
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                <line x1="12" y1="20" x2="12.01" y2="20" />
-              </svg>
-              <span class="item-text">Pineo de Equipos</span>
-            </a>
-          </div>
-        </div>
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'map' }"
+          @click.prevent="navigate('map')"
+          :title="isCollapsed ? 'Mapa de Estaciones' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          <span class="item-text">Mapa de Estaciones</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'equipos' }"
+          @click.prevent="navigate('equipos')"
+          :title="isCollapsed ? 'Computadoras' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+            <polyline points="22,6 12,13 2,6" />
+          </svg>
+          <span class="item-text">Computadoras</span>
+        </a>
 
         <a
           href="#"
@@ -291,137 +294,35 @@ onBeforeUnmount(() => {
           <span class="item-text">Participantes</span>
         </a>
 
-        <div class="submenu-container">
-          <button
-            type="button"
-            class="submenu-header"
-            @click="toggleSubmenu('estadisticasLab')"
-            :title="isCollapsed ? 'Estadísticas Laboratorio' : ''"
-          >
-            <div class="submenu-header-left">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 3v18h18" />
-                <path d="m19 9-5 5-4-4-3 3" />
-              </svg>
-              <span class="item-text">Estadísticas Laboratorio</span>
-            </div>
-            <svg
-              class="submenu-chevron"
-              :class="{ open: openSubmenus.estadisticasLab }"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <div v-show="!isCollapsed && openSubmenus.estadisticasLab" class="sub-nav-group">
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'active' }"
-              @click.prevent="navigate('active')"
-              :title="isCollapsed ? 'En Línea' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-              </svg>
-              <span class="item-text">En Línea</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'conexiones' }"
-              @click.prevent="navigate('conexiones')"
-              :title="isCollapsed ? 'Conexiones' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
-              </svg>
-              <span class="item-text">Conexiones</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item"
-              :class="{ active: currentView === 'escaneos' }"
-              @click.prevent="navigate('escaneos')"
-              :title="isCollapsed ? 'Escaneos' : ''"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-              <span class="item-text">Escaneos</span>
-            </a>
-          </div>
-        </div>
-      </div>
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'active' }"
+          @click.prevent="navigate('active')"
+          :title="isCollapsed ? 'En Línea' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          <span class="item-text">En Línea</span>
+        </a>
 
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">Biblioteca</div>
-        <div class="submenu-container">
-          <button
-            type="button"
-            class="submenu-header"
-            @click="toggleSubmenu('basesDatos')"
-            :title="isCollapsed ? 'Bases de Datos' : ''"
-          >
-            <div class="submenu-header-left">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <ellipse cx="12" cy="5" rx="9" ry="3" />
-                <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-                <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-              </svg>
-              <span class="item-text">Bases de Datos</span>
-            </div>
-            <svg
-              class="submenu-chevron"
-              :class="{ open: openSubmenus.basesDatos }"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <div v-show="!isCollapsed && openSubmenus.basesDatos" class="sub-nav-group">
-            <a
-              href="#"
-              class="sub-nav-item disabled"
-              title="Próximamente"
-              @click.prevent
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
-                <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
-                <line x1="6" y1="6" x2="6.01" y2="6" />
-                <line x1="6" y1="18" x2="6.01" y2="18" />
-              </svg>
-              <span class="item-text">Directorio de Bases</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item disabled"
-              title="Próximamente"
-              @click.prevent
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              </svg>
-              <span class="item-text">Matriz Hexagonal</span>
-            </a>
-          </div>
-        </div>
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'conexiones' || currentView === 'escaneos' || currentView === 'reportes' }"
+          @click.prevent="navigate('conexiones')"
+          :title="isCollapsed ? 'Reportes' : ''"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+          <span class="item-text">Reportes</span>
+        </a>
 
         <div class="submenu-container">
           <button
@@ -508,68 +409,9 @@ onBeforeUnmount(() => {
             </a>
           </div>
         </div>
-      </div>
+      </template>
 
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">Servicios & Atención</div>
-        <div class="submenu-container">
-          <button
-            type="button"
-            class="submenu-header"
-            @click="toggleSubmenu('conferencias')"
-            :title="isCollapsed ? 'Conferencias' : ''"
-          >
-            <div class="submenu-header-left">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.934a.5.5 0 0 0-.777-.416L16 11" />
-                <rect x="2" y="6" width="14" height="12" rx="2" />
-              </svg>
-              <span class="item-text">Conferencias</span>
-            </div>
-            <svg
-              class="submenu-chevron"
-              :class="{ open: openSubmenus.conferencias }"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <div v-show="!isCollapsed && openSubmenus.conferencias" class="sub-nav-group">
-            <a
-              href="#"
-              class="sub-nav-item disabled"
-              title="Próximamente"
-              @click.prevent
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              <span class="item-text">Gestión de Conferencias</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item disabled"
-              title="Próximamente"
-              @click.prevent
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="20" x2="12" y2="10" />
-                <line x1="18" y1="20" x2="18" y2="4" />
-                <line x1="6" y1="20" x2="6" y2="16" />
-              </svg>
-              <span class="item-text">Estadísticas Conferencia</span>
-            </a>
-          </div>
-        </div>
-
+      <template v-else-if="activeTab === 'web'">
         <a
           href="#"
           class="nav-item disabled"
@@ -577,14 +419,50 @@ onBeforeUnmount(() => {
           @click.prevent
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z" />
-            <path d="M13 5v2" />
-            <path d="M13 17v2" />
-            <path d="M13 11v2" />
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
-          <span class="item-text">Tickets de Reportes</span>
+          <span class="item-text">Gestión de Conferencias</span>
         </a>
-
+        <a
+          href="#"
+          class="nav-item disabled"
+          title="Próximamente"
+          @click.prevent
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="20" x2="12" y2="10" />
+            <line x1="18" y1="20" x2="18" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="16" />
+          </svg>
+          <span class="item-text">Estadísticas Conferencias</span>
+        </a>
+        <a
+          href="#"
+          class="nav-item disabled"
+          title="Próximamente"
+          @click.prevent
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ellipse cx="12" cy="5" rx="9" ry="3" />
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+          </svg>
+          <span class="item-text">Bases de Datos</span>
+        </a>
+        <a
+          href="#"
+          class="nav-item disabled"
+          title="Próximamente"
+          @click.prevent
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+          </svg>
+          <span class="item-text">Matriz Hexagonal</span>
+        </a>
         <a
           href="#"
           class="nav-item disabled"
@@ -598,81 +476,36 @@ onBeforeUnmount(() => {
           </svg>
           <span class="item-text">Objetos Perdidos</span>
         </a>
+        <a
+          href="#"
+          class="nav-item disabled"
+          title="Próximamente"
+          @click.prevent
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+            <path d="M18 14h-8" />
+            <path d="M15 18h-5" />
+            <path d="M10 6h8v4h-8V6Z" />
+          </svg>
+          <span class="item-text">Boletín Informativo</span>
+        </a>
+        <a
+          href="#"
+          class="nav-item disabled"
+          title="Próximamente"
+          @click.prevent
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <span class="item-text">Preguntas Frecuentes</span>
+        </a>
+      </template>
 
-        <div class="submenu-container">
-          <button
-            type="button"
-            class="submenu-header"
-            @click="toggleSubmenu('infoUsuario')"
-            :title="isCollapsed ? 'Información al Usuario' : ''"
-          >
-            <div class="submenu-header-left">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-              <span class="item-text">Información al Usuario</span>
-            </div>
-            <svg
-              class="submenu-chevron"
-              :class="{ open: openSubmenus.infoUsuario }"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <div v-show="!isCollapsed && openSubmenus.infoUsuario" class="sub-nav-group">
-            <a
-              href="#"
-              class="sub-nav-item disabled"
-              title="Próximamente"
-              @click.prevent
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
-                <path d="M18 14h-8" />
-                <path d="M15 18h-5" />
-                <path d="M10 6h8v4h-8V6Z" />
-              </svg>
-              <span class="item-text">Boletín Informativo</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item disabled"
-              title="Próximamente"
-              @click.prevent
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              <span class="item-text">Horario de Atención</span>
-            </a>
-            <a
-              href="#"
-              class="sub-nav-item disabled"
-              title="Próximamente"
-              @click.prevent
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <span class="item-text">Preguntas Frecuentes</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">Sistema</div>
+      <template v-else-if="activeTab === 'sistema'">
         <a
           href="#"
           class="nav-item"
@@ -693,6 +526,34 @@ onBeforeUnmount(() => {
           @click.prevent
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+            <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+            <line x1="12" y1="20" x2="12.01" y2="20" />
+          </svg>
+          <span class="item-text">Pineo de Equipos</span>
+        </a>
+        <a
+          href="#"
+          class="nav-item disabled"
+          title="Próximamente"
+          @click.prevent
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z" />
+            <path d="M13 5v2" />
+            <path d="M13 17v2" />
+            <path d="M13 11v2" />
+          </svg>
+          <span class="item-text">Tickets de Reportes</span>
+        </a>
+        <a
+          href="#"
+          class="nav-item disabled"
+          title="Próximamente"
+          @click.prevent
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
             <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
             <line x1="9" y1="12" x2="15" y2="12" />
@@ -700,7 +561,19 @@ onBeforeUnmount(() => {
           </svg>
           <span class="item-text">Log de Acciones</span>
         </a>
-      </div>
+        <a
+          href="#"
+          class="nav-item disabled"
+          title="Próximamente"
+          @click.prevent
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span class="item-text">Horario de Atención</span>
+        </a>
+      </template>
     </div>
 
     <div class="sidebar-footer">
@@ -812,6 +685,35 @@ onBeforeUnmount(() => {
   border-color: #fecaca;
 }
 
+.workspace-tabs {
+  display: flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  gap: 2px;
+}
+
+.workspace-tab {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  background: transparent;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.workspace-tab.active {
+  background: #ffffff;
+  color: #9f1239;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .nav-scroll {
   flex: 1;
   overflow-y: auto;
@@ -820,21 +722,6 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 0.25rem;
   padding-right: 2px;
-}
-
-.sidebar-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sidebar-section-header {
-  text-transform: uppercase;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: #9ca3af;
-  letter-spacing: 0.05em;
-  padding: 0.75rem 0.5rem 0.25rem 0.5rem;
 }
 
 .submenu-container {
@@ -878,6 +765,11 @@ onBeforeUnmount(() => {
 
 .submenu-chevron.open {
   transform: rotate(180deg);
+}
+
+.nav-item svg,
+.sub-nav-item svg {
+  flex-shrink: 0;
 }
 
 .nav-item.disabled,
@@ -933,6 +825,17 @@ onBeforeUnmount(() => {
   font-size: 0.875rem;
   margin-top: 0.25rem;
   transition: color 0.2s;
+}
+
+.logout-button svg {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  max-width: 16px;
+  max-height: 16px;
+  flex-shrink: 0;
+  stroke: currentColor;
 }
 
 .logout-button:hover {
@@ -997,7 +900,8 @@ onBeforeUnmount(() => {
 .sidebar.collapsed .submenu-chevron,
 .sidebar.collapsed .user-info,
 .sidebar.collapsed .logout-button span,
-.sidebar.collapsed .sub-nav-group {
+.sidebar.collapsed .sub-nav-group,
+.sidebar.collapsed .workspace-tabs {
   display: none;
 }
 
