@@ -6,6 +6,8 @@ import Sidebar from '../Sidebar.vue'
 import Dashboard from '../Dashboard.vue'
 import ReportesConexiones from '../ReportesConexiones.vue'
 import ConfiguracionAccesos from '../ConfiguracionAccesos.vue'
+import ConferenciasCRUD from '../ConferenciasCRUD.vue'
+import ConferenciasReporte from '../ConferenciasReporte.vue'
 
 describe('App Integration', () => {
   beforeEach(() => {
@@ -39,6 +41,15 @@ describe('App Integration', () => {
             name: 'ConfiguracionAccesos',
             props: ['currentUser'],
             template: '<div data-test="configuracion-accesos"></div>'
+          },
+          ConferenciasCRUD: {
+            name: 'ConferenciasCRUD',
+            template: '<div data-test="conferencias-crud"></div>'
+          },
+          ConferenciasReporte: {
+            name: 'ConferenciasReporte',
+            props: ['initialConferenciaId'],
+            template: '<div data-test="conferencias-reporte"></div>'
           },
           ChatBot: true
         }
@@ -123,6 +134,17 @@ describe('App Integration', () => {
     const reportesConexiones = wrapper.findComponent(ReportesConexiones)
     expect(reportesConexiones.exists()).toBe(true)
     expect(reportesConexiones.props('initialTab')).toBe('conexiones')
+
+    await sidebar.vm.$emit('change-view', 'conferencias')
+    await flushPromises()
+    const conferenciasCrud = wrapper.findComponent(ConferenciasCRUD)
+    expect(conferenciasCrud.exists()).toBe(true)
+
+    await conferenciasCrud.vm.$emit('ver-estadisticas', 42)
+    await flushPromises()
+    const conferenciasReporte = wrapper.findComponent(ConferenciasReporte)
+    expect(conferenciasReporte.exists()).toBe(true)
+    expect(conferenciasReporte.props('initialConferenciaId')).toBe(42)
   })
 
   it('purga localStorage y vuelve al login al emitir logout desde Sidebar', async () => {

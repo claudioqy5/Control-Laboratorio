@@ -39,11 +39,15 @@ const bibliotecaViews = [
   'mapa-biblio'
 ]
 
+const webViews = ['conferencias', 'conferencias-reportes']
+
 watch(
   () => props.currentView,
   (view) => {
     if (view === 'accesos') {
       activeTab.value = 'sistema'
+    } else if (webViews.includes(view)) {
+      activeTab.value = 'web'
     } else if (bibliotecaViews.includes(view)) {
       activeTab.value = 'biblioteca'
     }
@@ -219,7 +223,6 @@ onBeforeUnmount(() => {
 
     <div class="nav-scroll">
       <template v-if="activeTab === 'biblioteca'">
-        <!-- SECCIÓN: LABORATORIO DE CÓMPUTO -->
         <div class="sidebar-section-header">
           <span>Laboratorio de Cómputo</span>
         </div>
@@ -331,7 +334,6 @@ onBeforeUnmount(() => {
           <span class="item-text">Reportes</span>
         </a>
 
-        <!-- SECCIÓN: BIBLIOTECA Y PRÉSTAMOS -->
         <div class="sidebar-section-header">
           <span>Biblioteca y Préstamos</span>
         </div>
@@ -430,9 +432,10 @@ onBeforeUnmount(() => {
       <template v-else-if="activeTab === 'web'">
         <a
           href="#"
-          class="nav-item disabled"
-          title="Próximamente"
-          @click.prevent
+          class="nav-item"
+          :class="{ active: currentView === 'conferencias' }"
+          :title="isCollapsed ? 'Gestión de Conferencias' : ''"
+          @click.prevent="navigate('conferencias')"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -444,9 +447,10 @@ onBeforeUnmount(() => {
         </a>
         <a
           href="#"
-          class="nav-item disabled"
-          title="Próximamente"
-          @click.prevent
+          class="nav-item"
+          :class="{ active: currentView === 'conferencias-reportes' }"
+          :title="isCollapsed ? 'Estadísticas Conferencias' : ''"
+          @click.prevent="navigate('conferencias-reportes')"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="20" x2="12" y2="10" />

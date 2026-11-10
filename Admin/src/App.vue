@@ -17,10 +17,18 @@ import Sidebar from './components/Sidebar.vue'
 import ConfiguracionAccesos from './components/ConfiguracionAccesos.vue'
 import EstadisticasPrestamos from './components/EstadisticasPrestamos.vue'
 import ResumenPrestamos from './components/ResumenPrestamos.vue'
+import ConferenciasCRUD from './components/ConferenciasCRUD.vue'
+import ConferenciasReporte from './components/ConferenciasReporte.vue'
 
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
 const currentUser = ref(null)
+const selectedConferenciaId = ref(null)
+
+const handleVerEstadisticas = (conferenciaId) => {
+  selectedConferenciaId.value = conferenciaId
+  currentView.value = 'conferencias-reportes'
+}
 
 const checkAuth = () => {
   const token = localStorage.getItem('adminToken')
@@ -54,6 +62,7 @@ const handleLogout = () => {
   currentUser.value = null
   isAuthenticated.value = false
   currentView.value = 'dashboard'
+  selectedConferenciaId.value = null
 }
 </script>
 
@@ -88,6 +97,14 @@ const handleLogout = () => {
       <ConfiguracionAccesos
         v-if="currentView === 'accesos'"
         :current-user="currentUser"
+      />
+      <ConferenciasCRUD
+        v-if="currentView === 'conferencias'"
+        @ver-estadisticas="handleVerEstadisticas"
+      />
+      <ConferenciasReporte
+        v-if="currentView === 'conferencias-reportes'"
+        :initial-conferencia-id="selectedConferenciaId"
       />
     </main>
 

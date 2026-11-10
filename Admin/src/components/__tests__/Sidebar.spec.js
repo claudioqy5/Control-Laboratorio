@@ -25,13 +25,13 @@ describe('Sidebar', () => {
     await webTab.trigger('click')
 
     const webDisabled = wrapper.findAll('.disabled')
-    expect(webDisabled.length).toBe(7)
+    expect(webDisabled.length).toBe(5)
     webDisabled.forEach(item => {
       expect(item.attributes('title')).toBe('Próximamente')
     })
     const webLabels = webDisabled.map(item => item.text())
-    expect(webLabels).toContain('Gestión de Conferencias')
-    expect(webLabels).toContain('Estadísticas Conferencias')
+    expect(webLabels).not.toContain('Gestión de Conferencias')
+    expect(webLabels).not.toContain('Estadísticas Conferencias')
     expect(webLabels).toContain('Bases de Datos')
     expect(webLabels).toContain('Matriz Hexagonal')
     expect(webLabels).toContain('Objetos Perdidos')
@@ -224,5 +224,24 @@ describe('Sidebar', () => {
 
     const style = wrapper.find('.workspace-tabs').attributes('style')
     expect(!style || !style.includes('display: none')).toBe(true)
+  })
+
+  it('activates web tab and emits view changes for conferencias modules', async () => {
+    const wrapper = mount(Sidebar, {
+      props: { currentView: 'conferencias' }
+    })
+
+    const tabs = wrapper.findAll('.workspace-tab')
+    const webTab = tabs.find(tab => tab.text().includes('Página Web'))
+    expect(webTab.classes()).toContain('active')
+
+    const links = wrapper.findAll('a:not(.disabled)')
+    const confLink = links.find(l => l.text().includes('Gestión de Conferencias'))
+    expect(confLink.classes()).toContain('active')
+
+    const statsLink = links.find(l => l.text().includes('Estadísticas Conferencias'))
+    await statsLink.trigger('click')
+    expect(wrapper.emitted('change-view')).toBeTruthy()
+    expect(wrapper.emitted('change-view')[0]).toEqual(['conferencias-reportes'])
   })
 })
