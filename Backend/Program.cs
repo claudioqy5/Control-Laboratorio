@@ -185,6 +185,75 @@ using (var scope = app.Services.CreateScope())
                 );
             END
 
+            IF OBJECT_ID('t_conferencia_medica', 'U') IS NULL
+            BEGIN
+                CREATE TABLE t_conferencia_medica (
+                    id_conferencia INT IDENTITY(1,1) PRIMARY KEY,
+                    titulo_evento NVARCHAR(250) NOT NULL,
+                    expositor_ponente NVARCHAR(200) NOT NULL,
+                    entidad_editorial NVARCHAR(150) NULL,
+                    fecha_hora_inicio DATETIME2 NOT NULL,
+                    fecha_hora_fin DATETIME2 NOT NULL,
+                    modalidad NVARCHAR(20) NOT NULL,
+                    ubicacion_o_enlace NVARCHAR(500) NOT NULL,
+                    asistencia_abierta BIT NOT NULL,
+                    estado_evento NVARCHAR(20) NOT NULL,
+                    auto_purgar_30_dias BIT NOT NULL,
+                    fecha_caducidad_purge DATETIME2 NULL,
+                    fecha_creacion DATETIME2 NOT NULL
+                );
+            END
+
+            IF OBJECT_ID('PARTICIPACIONES_CONFERENCIA', 'U') IS NULL
+            BEGIN
+                CREATE TABLE PARTICIPACIONES_CONFERENCIA (
+                    IdParticipacion INT IDENTITY(1,1) PRIMARY KEY,
+                    IdConferencia INT NOT NULL,
+                    TipoParticipante NVARCHAR(20) NOT NULL,
+                    TipoDocumento NVARCHAR(20) NOT NULL,
+                    NumeroDocumento NVARCHAR(20) NOT NULL,
+                    CodigoURP NVARCHAR(20) NULL,
+                    Nombres NVARCHAR(100) NOT NULL,
+                    ApellidoPaterno NVARCHAR(100) NOT NULL,
+                    ApellidoMaterno NVARCHAR(100) NULL,
+                    Correo NVARCHAR(100) NOT NULL,
+                    FechaHoraInscripcion DATETIME2 NOT NULL,
+                    FechaHoraAsistencia DATETIME2 NULL,
+                    EstadoParticipacion TINYINT NOT NULL,
+                    AlumnoID INT NULL,
+                    CONSTRAINT FK_PARTICIPACIONES_CONFERENCIA_t_conferencia_medica_IdConferencia FOREIGN KEY (IdConferencia) REFERENCES t_conferencia_medica(id_conferencia) ON DELETE CASCADE,
+                    CONSTRAINT FK_PARTICIPACIONES_CONFERENCIA_Alumnos_AlumnoID FOREIGN KEY (AlumnoID) REFERENCES Alumnos(AlumnoID) ON DELETE SET NULL
+                );
+            END
+
+            IF OBJECT_ID('PARTICIPACIONES_CONFERENCIA', 'U') IS NOT NULL
+            BEGIN
+                IF OBJECT_ID('FK_PARTICIPACIONES_CONFERENCIA_t_conferencia_medica_IdConferencia', 'F') IS NULL
+                BEGIN
+                    ALTER TABLE PARTICIPACIONES_CONFERENCIA ADD CONSTRAINT FK_PARTICIPACIONES_CONFERENCIA_t_conferencia_medica_IdConferencia FOREIGN KEY (IdConferencia) REFERENCES t_conferencia_medica(id_conferencia) ON DELETE CASCADE;
+                END
+
+                IF OBJECT_ID('FK_PARTICIPACIONES_CONFERENCIA_Alumnos_AlumnoID', 'F') IS NULL
+                BEGIN
+                    ALTER TABLE PARTICIPACIONES_CONFERENCIA ADD CONSTRAINT FK_PARTICIPACIONES_CONFERENCIA_Alumnos_AlumnoID FOREIGN KEY (AlumnoID) REFERENCES Alumnos(AlumnoID) ON DELETE SET NULL;
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_PARTICIPACIONES_CONFERENCIA_AlumnoID' AND object_id = OBJECT_ID('PARTICIPACIONES_CONFERENCIA'))
+                BEGIN
+                    CREATE INDEX IX_PARTICIPACIONES_CONFERENCIA_AlumnoID ON PARTICIPACIONES_CONFERENCIA(AlumnoID);
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_PARTICIPACIONES_CONFERENCIA_IdConferencia_NumeroDocumento' AND object_id = OBJECT_ID('PARTICIPACIONES_CONFERENCIA'))
+                BEGIN
+                    CREATE UNIQUE INDEX IX_PARTICIPACIONES_CONFERENCIA_IdConferencia_NumeroDocumento ON PARTICIPACIONES_CONFERENCIA(IdConferencia, NumeroDocumento);
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_PARTICIPACIONES_CONFERENCIA_IdConferencia_NumeroDocumento_CodigoURP' AND object_id = OBJECT_ID('PARTICIPACIONES_CONFERENCIA'))
+                BEGIN
+                    CREATE INDEX IX_PARTICIPACIONES_CONFERENCIA_IdConferencia_NumeroDocumento_CodigoURP ON PARTICIPACIONES_CONFERENCIA(IdConferencia, NumeroDocumento, CodigoURP);
+                END
+            END
+
             IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Libros_NroRegistro' AND object_id = OBJECT_ID('Libros'))
             BEGIN
                 IF INDEXPROPERTY(OBJECT_ID('Libros'), 'IX_Libros_NroRegistro', 'IsUnique') = 1
