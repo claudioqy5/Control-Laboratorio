@@ -64,7 +64,7 @@ namespace ControlLaboratorio.API.Controllers
                     c.Ubicacion_o_Enlace,
                     c.AsistenciaAbierta,
                     c.EstadoEvento,
-                    TotalInscritos = c.Participaciones.Count(p => p.FechaHoraInscripcion != p.FechaHoraAsistencia),
+                    TotalInscritos = c.Participaciones.Count(p => p.FechaHoraAsistencia == null || p.FechaHoraInscripcion != p.FechaHoraAsistencia),
                     TotalAsistentes = c.Participaciones.Count(p => p.EstadoParticipacion == 2)
                 })
                 .ToListAsync();
@@ -105,6 +105,11 @@ namespace ControlLaboratorio.API.Controllers
             if (conferencia == null)
             {
                 return NotFound(new { message = "Conferencia no encontrada." });
+            }
+
+            if (conferencia.EstadoEvento == "Finalizada" || conferencia.FechaHoraFin < DateTime.UtcNow)
+            {
+                return BadRequest(new { message = "Las pre-inscripciones para esta conferencia están cerradas porque el evento ya concluyó." });
             }
 
             var cod = string.IsNullOrWhiteSpace(dto.CodigoURP) ? null : dto.CodigoURP.Trim();

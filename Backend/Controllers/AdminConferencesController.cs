@@ -44,7 +44,7 @@ namespace ControlLaboratorio.API.Controllers
                     c.AsistenciaAbierta,
                     c.EstadoEvento,
                     c.AutoPurgar30Dias,
-                    TotalPreInscritos = c.Participaciones.Count(p => p.FechaHoraInscripcion != p.FechaHoraAsistencia),
+                    TotalPreInscritos = c.Participaciones.Count(p => p.FechaHoraAsistencia == null || p.FechaHoraInscripcion != p.FechaHoraAsistencia),
                     TotalAsistentes = c.Participaciones.Count(p => p.EstadoParticipacion == 2),
                     UrlInscripcion = $"{publicWebUrl}/#conferencias?inscripcion={c.IdConferencia}",
                     UrlAsistencia = $"{publicWebUrl}/#conferencias?asistencia={c.IdConferencia}"
@@ -75,6 +75,12 @@ namespace ControlLaboratorio.API.Controllers
             if (id != conf.IdConferencia)
             {
                 return BadRequest();
+            }
+
+            if (conf.FechaHoraFin < DateTime.UtcNow)
+            {
+                conf.EstadoEvento = "Finalizada";
+                conf.AsistenciaAbierta = false;
             }
 
             if (conf.AutoPurgar30Dias)
@@ -159,9 +165,22 @@ namespace ControlLaboratorio.API.Controllers
                 return NotFound();
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.NumeroDocumento))
+            {
+                part.NumeroDocumento = dto.NumeroDocumento.Trim();
+            }
+            if (!string.IsNullOrWhiteSpace(dto.TipoDocumento))
+            {
+                part.TipoDocumento = dto.TipoDocumento.Trim();
+            }
+            part.CodigoURP = string.IsNullOrWhiteSpace(dto.CodigoURP) ? null : dto.CodigoURP.Trim();
+            if (!string.IsNullOrWhiteSpace(dto.TipoParticipante))
+            {
+                part.TipoParticipante = dto.TipoParticipante.Trim();
+            }
             part.Nombres = dto.Nombres.Trim();
             part.ApellidoPaterno = dto.ApellidoPaterno.Trim();
-            part.ApellidoMaterno = dto.ApellidoMaterno?.Trim();
+            part.ApellidoMaterno = string.IsNullOrWhiteSpace(dto.ApellidoMaterno) ? null : dto.ApellidoMaterno.Trim();
             if (!string.IsNullOrWhiteSpace(dto.Correo))
             {
                 part.Correo = dto.Correo.Trim();

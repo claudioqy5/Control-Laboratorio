@@ -93,6 +93,15 @@ const isConcluded = (conf) => {
   return false
 }
 
+const isEventConcluded = computed(() => {
+  if (!form.value) return false
+  if (form.value.estadoEvento && form.value.estadoEvento.toLowerCase() === 'finalizada') return true
+  if (form.value.fechaHoraFin) {
+    return new Date(form.value.fechaHoraFin).getTime() < Date.now()
+  }
+  return false
+})
+
 const getPillStatus = (conf) => {
   if (isConcluded(conf)) return 'FINALIZADA'
   if (conf.asistenciaAbierta || (conf.estadoEvento && conf.estadoEvento.toLowerCase() === 'en vivo')) return 'EN VIVO'
@@ -542,15 +551,16 @@ const filteredConferencias = computed(() => {
           <div class="form-grid-2">
             <div class="form-group">
               <label class="form-label">Estado del Evento</label>
-              <select v-model="form.estadoEvento" class="form-control">
+              <select v-model="form.estadoEvento" class="form-control" :disabled="isEventConcluded">
                 <option value="Programado">Programado</option>
                 <option value="En Vivo">En Vivo</option>
                 <option value="Finalizada">Finalizada</option>
               </select>
+              <span v-if="isEventConcluded" class="form-field-hint">Conferencia concluida por fecha límite (estado bloqueado)</span>
             </div>
             <div class="form-group-checkbox">
               <label class="inline-checkbox">
-                <input v-model="form.asistenciaAbierta" type="checkbox" />
+                <input v-model="form.asistenciaAbierta" type="checkbox" :disabled="isEventConcluded" />
                 <span>Marcación de Asistencia Abierta</span>
               </label>
             </div>
@@ -1234,6 +1244,19 @@ const filteredConferencias = computed(() => {
 
 .form-control:focus {
   border-color: #008744;
+}
+
+.form-control:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+  border-color: #cbd5e1;
+}
+
+.form-field-hint {
+  font-size: 0.725rem;
+  color: #64748b;
+  margin-top: 4px;
 }
 
 .form-grid-2 {
