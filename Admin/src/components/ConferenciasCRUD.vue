@@ -14,7 +14,6 @@ const filterEstado = ref('todos')
 const showModal = ref(false)
 const isEditing = ref(false)
 const form = ref({
-  idConferencia: null,
   tituloEvento: '',
   expositorPonente: '',
   entidadEditorial: 'FAMURP Conferencias',
@@ -153,7 +152,6 @@ const openCreateModal = () => {
   const endIso = endDate.toISOString().slice(0, 16)
 
   form.value = {
-    idConferencia: null,
     tituloEvento: '',
     expositorPonente: '',
     entidadEditorial: 'FAMURP Conferencias',
@@ -193,8 +191,12 @@ const openEditModal = (conf) => {
 }
 
 const saveConference = async () => {
-  if (!form.value.tituloEvento.trim() || !form.value.expositorPonente.trim()) {
+  if (!form.value.tituloEvento?.trim() || !form.value.expositorPonente?.trim()) {
     showToast('Título y Expositor son obligatorios')
+    return
+  }
+  if (!form.value.ubicacion_o_Enlace?.trim()) {
+    showToast('Lugar o enlace es obligatorio')
     return
   }
   try {
@@ -212,8 +214,15 @@ const saveConference = async () => {
     }
     showModal.value = false
     await loadConferencias()
-  } catch {
-    showToast('Error al guardar conferencia')
+  } catch (err) {
+    const errorData = err.response?.data
+    let errMsg = 'Error al guardar conferencia'
+    if (errorData?.errors) {
+      errMsg = Object.values(errorData.errors).flat().join(', ')
+    } else if (errorData?.title) {
+      errMsg = errorData.title
+    }
+    showToast(errMsg)
   }
 }
 
