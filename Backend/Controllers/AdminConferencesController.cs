@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.DTOs;
 using ControlLaboratorio.API.Models;
@@ -14,15 +15,20 @@ namespace ControlLaboratorio.API.Controllers
     public class AdminConferencesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public AdminConferencesController(ApplicationDbContext context)
+        public AdminConferencesController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            var publicWebUrl = _configuration["FrontendSettings:PublicWebUrl"]?.TrimEnd('/')
+                               ?? "https://medlib-urp.vercel.app";
+
             var conferencias = await _context.ConferenciasMedicas
                 .OrderByDescending(c => c.FechaHoraInicio)
                 .Select(c => new
@@ -30,6 +36,7 @@ namespace ControlLaboratorio.API.Controllers
                     c.IdConferencia,
                     c.TituloEvento,
                     c.ExpositorPonente,
+                    c.EntidadEditorial,
                     c.Modalidad,
                     c.Ubicacion_o_Enlace,
                     c.FechaHoraInicio,
@@ -38,7 +45,9 @@ namespace ControlLaboratorio.API.Controllers
                     c.EstadoEvento,
                     c.AutoPurgar30Dias,
                     TotalPreInscritos = c.Participaciones.Count(p => p.FechaHoraInscripcion != p.FechaHoraAsistencia),
-                    TotalAsistentes = c.Participaciones.Count(p => p.EstadoParticipacion == 2)
+                    TotalAsistentes = c.Participaciones.Count(p => p.EstadoParticipacion == 2),
+                    UrlInscripcion = $"{publicWebUrl}/conferencias/registro/{c.IdConferencia}",
+                    UrlAsistencia = $"{publicWebUrl}/conferencias/asistencia/{c.IdConferencia}"
                 })
                 .ToListAsync();
 
