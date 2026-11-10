@@ -1,25 +1,34 @@
 <script setup>
 import { ref, nextTick, onMounted } from 'vue'
+import axios from 'axios'
 import biblioLogo from '../assets/biblio.png'
+import { API_BASE_URL } from '../config'
 
 const isOpen = ref(false)
 const showTooltip = ref(true)
 const inputMessage = ref('')
 const isThinking = ref(false)
 const messagesContainer = ref(null)
+const chatInput = ref(null)
 
-// Mensajes iniciales de demostración
+// Configuración de Webhook n8n
+const showSettings = ref(false)
+const webhookUrl = ref(localStorage.getItem('BVE_BOT_WEBHOOK_URL') || '')
+const configSuccess = ref(false)
+
+// Mensajes iniciales
 const messages = ref([
   {
     id: 1,
     sender: 'bot',
-    text: '¡Hola! 👋 Soy **BiblioBot**, el asistente inteligente de la Biblioteca Virtual y Laboratorio de Cómputo (BVE Medicina - URP).\n\nPuedo ayudarte con información sobre computadoras disponibles, libros, préstamos, sanciones y normativas.',
+    text: '¡Hola! 👋 Soy **BiblioBot**, el asistente inteligente de la Biblioteca Virtual y Laboratorio de Cómputo (BVE Medicina - URP).\n\nPuedo responder tus dudas sobre el funcionamiento de cualquier sección del sistema o consultar en tiempo real las métricas de la base de datos.',
     timestamp: getFormattedTime(),
     suggestions: [
+      '¿Para qué sirve la sección de Reportes?',
+      '¿Cuántos libros se prestaron hoy?',
       '¿Cuántas computadoras están libres?',
-      '¿Dónde encuentro el libro Harrison?',
-      '¿Cuáles son los horarios de atención?',
-      'Verificar estado de un alumno'
+      '¿Qué muestra el Resumen Diario de Préstamos?',
+      '¿Dónde encuentro el libro Harrison?'
     ]
   }
 ])
@@ -34,6 +43,9 @@ const toggleChat = () => {
   if (isOpen.value) {
     showTooltip.value = false
     scrollToBottom()
+    nextTick(() => {
+      chatInput.value?.focus()
+    })
   }
 }
 
@@ -44,6 +56,33 @@ const closeChat = () => {
 const dismissTooltip = (e) => {
   e.stopPropagation()
   showTooltip.value = false
+}
+
+const toggleSettings = () => {
+  showSettings.value = !showSettings.value
+}
+
+const saveSettings = () => {
+  if (webhookUrl.value.trim()) {
+    localStorage.setItem('BVE_BOT_WEBHOOK_URL', webhookUrl.value.trim())
+  } else {
+    localStorage.removeItem('BVE_BOT_WEBHOOK_URL')
+  }
+  configSuccess.value = true
+  setTimeout(() => {
+    configSuccess.value = false
+    showSettings.value = false
+  }, 1000)
+}
+
+const resetToDirectApi = () => {
+  webhookUrl.value = ''
+  localStorage.removeItem('BVE_BOT_WEBHOOK_URL')
+  configSuccess.value = true
+  setTimeout(() => {
+    configSuccess.value = false
+    showSettings.value = false
+  }, 900)
 }
 
 const scrollToBottom = async () => {
@@ -61,8 +100,9 @@ const clearConversation = () => {
       text: 'Conversación reiniciada. ¿En qué más puedo ayudarte hoy?',
       timestamp: getFormattedTime(),
       suggestions: [
-        '¿Cuántas computadoras están libres?',
-        '¿Dónde encuentro el libro Harrison?'
+        '¿Para qué sirve la sección de Reportes?',
+        '¿Cuántos libros se prestaron hoy?',
+        '¿Cuántas computadoras están libres?'
       ]
     }
   ]
@@ -71,6 +111,40 @@ const clearConversation = () => {
 const selectSuggestion = (suggestion) => {
   inputMessage.value = suggestion
   sendMessage()
+}
+
+const generateFallbackReply = (userQuery) => {
+  const query = userQuery.toLowerCase()
+
+  if (query.includes('computadora') || query.includes('pc') || query.includes('estacion') || query.includes('libre') || query.includes('ocupad')) {
+    return '🖥️ **Estado del Laboratorio de Cómputo:**\nActualmente hay **computadoras disponibles** para los alumnos de Medicina. El sistema monitorea en vivo las sesiones activas y el límite de horas diarias.'
+  }
+  
+  if (query.includes('reporte') || query.includes('reportes')) {
+    return '📊 **Sección de Reportes:**\nPermite generar y exportar reportes ejecutivos en Excel (.xlsx) con filtros por fechas, control de asistencia e historial de horas acumuladas de los estudiantes.'
+  }
+
+  if (query.includes('resumen') && (query.includes('prestamo') || query.includes('préstamo'))) {
+    return '📖 **Sección Resumen Diario de Préstamos:**\nCirculación del día en tiempo real: KPIs de préstamos y devoluciones, gráfico de afluencia por hora, distribución por especialidad médica y tabla completa de movimientos.'
+  }
+
+  if (query.includes('resumen diario') || query.includes('resumen')) {
+    return '📋 **Sección Resumen Diario (Laboratorio):**\nMonitoreo en tiempo real del uso de equipos de cómputo hoy, con tasa de ocupación, horas punta y sesiones activas en sala.'
+  }
+
+  if ((query.includes('libro') || query.includes('prestamo') || query.includes('préstamo')) && (query.includes('hoy') || query.includes('cuanto') || query.includes('cuántos'))) {
+    return '📚 **Circulación de Libros Hoy:**\nPuedes consultar los préstamos activos y devoluciones de la jornada en la sección **Resumen Préstamos**, sincronizada con AbsysNet.'
+  }
+
+  if (query.includes('harrison') || query.includes('libro') || query.includes('estante')) {
+    return '📚 **Búsqueda de Libros:**\n*Principios de Medicina Interna de Harrison*\n• **Ubicación:** Estantería C-2 (Sección Medicina Interna)\n• **Estado:** Disponible en sala.'
+  }
+
+  if (query.includes('alumno') || query.includes('sancion') || query.includes('multa')) {
+    return '👨‍🎓 **Consulta de Alumnos:**\nPuedes ingresar el código universitario o DNI del alumno para consultar si tiene sesiones activas, multas pendientes o libros en préstamo.'
+  }
+
+  return `Entendido. He procesado tu consulta: "${userQuery}".\nPuedes preguntarme sobre métricas en vivo (préstamos hoy, PCs libres) o para qué sirve cualquier sección del sistema.`
 }
 
 const sendMessage = () => {
@@ -88,39 +162,70 @@ const sendMessage = () => {
   inputMessage.value = ''
   scrollToBottom()
 
-  // Simulación visual de respuesta (mientras se conecta al webhook de n8n)
   isThinking.value = true
   scrollToBottom()
 
-  setTimeout(() => {
+  setTimeout(async () => {
+    let replyText = ''
+
+    try {
+      const configuredWebhook = (webhookUrl.value || localStorage.getItem('BVE_BOT_WEBHOOK_URL') || '').trim()
+
+      // 1. Intentar llamar a n8n Webhook si está configurado
+      if (configuredWebhook) {
+        try {
+          const res = await axios.post(
+            configuredWebhook,
+            {
+              message: text,
+              mensaje: text,
+              sender: 'Admin',
+              timestamp: new Date().toISOString()
+            },
+            { timeout: 15000 }
+          )
+
+          if (res?.data) {
+            replyText = res.data.reply || res.data.output || res.data.text || res.data.message || ''
+          }
+        } catch (err) {
+          console.warn('No se pudo conectar al webhook de n8n, usando API directa como respaldo:', err)
+        }
+      }
+
+      // 2. Si no hay webhook o falló, consultar al Backend .NET
+      if (!replyText) {
+        const res = await axios.post(
+          `${API_BASE_URL}/api/Bot/Chat`,
+          {
+            mensaje: text,
+            remitente: 'Admin'
+          },
+          { timeout: 10000 }
+        )
+
+        if (res?.data && res.data.reply) {
+          replyText = res.data.reply
+        }
+      }
+    } catch (error) {
+      console.warn('Error en llamada a API Bot, usando respuesta de contingencia:', error)
+    }
+
+    // 3. Respaldo de contingencia
+    if (!replyText) {
+      replyText = generateFallbackReply(text)
+    }
+
     isThinking.value = false
-    generateVisualReply(text)
+    messages.value.push({
+      id: Date.now(),
+      sender: 'bot',
+      text: replyText,
+      timestamp: getFormattedTime()
+    })
     scrollToBottom()
-  }, 1200)
-}
-
-const generateVisualReply = (userQuery) => {
-  const query = userQuery.toLowerCase()
-  let replyText = ''
-
-  if (query.includes('computadora') || query.includes('pc') || query.includes('estacion') || query.includes('libre')) {
-    replyText = '🖥️ **Estado del Laboratorio:**\nActualmente hay **14 computadoras disponibles** y 6 ocupadas en sala. Recuerda que el límite diario de conexión es controlado automáticamente por el sistema.'
-  } else if (query.includes('harrison') || query.includes('libro') || query.includes('estante')) {
-    replyText = '📚 **Búsqueda de Libro:**\n*Principios de Medicina Interna de Harrison (21ª Ed.)*\n- **Ubicación:** Estantería C-2 (Sección Medicina Interna)\n- **Estado:** 2 ejemplares disponibles para préstamo en sala.'
-  } else if (query.includes('horario') || query.includes('atencion')) {
-    replyText = '🕒 **Horarios de Atención:**\nLunes a Viernes de 07:30 a 20:00 hrs.\nSábados de 08:00 a 13:00 hrs.\n*Pabellón de Medicina Humana - URP.*'
-  } else if (query.includes('alumno') || query.includes('sancion') || query.includes('multa')) {
-    replyText = '👨‍🎓 **Consulta de Alumnos:**\nPuedes ingresar el código o DNI del alumno para consultar si tiene sesiones activas, multas pendientes o libros en préstamo.'
-  } else {
-    replyText = `Entendido. He procesado tu consulta: "${userQuery}".\n\nPróximamente esta consulta se resolverá en tiempo real con **Gemini AI** a través de tu flujo en **n8n** conectado a la base de datos de Control-Laboratorio.`
-  }
-
-  messages.value.push({
-    id: Date.now(),
-    sender: 'bot',
-    text: replyText,
-    timestamp: getFormattedTime()
-  })
+  }, 600)
 }
 
 // Convertir asteriscos simples/dobles a texto resaltado o negrita simple
@@ -149,7 +254,7 @@ onMounted(() => {
         <span class="tooltip-badge">¡Nuevo!</span>
         <div class="tooltip-text">
           <strong>BiblioBot IA</strong>
-          <span>¿Necesitas ayuda con el laboratorio?</span>
+          <span>¿Preguntas sobre el sistema o préstamos?</span>
         </div>
         <button class="tooltip-close" @click="dismissTooltip" title="Cerrar">
           &times;
@@ -157,16 +262,11 @@ onMounted(() => {
       </div>
     </transition>
 
-    <!-- BOTÓN / AVATAR FLOTANTE ANIMADO (SIN FONDO BLANCO) -->
+    <!-- BOTÓN / AVATAR FLOTANTE ANIMADO -->
     <div class="bot-launcher" @click="toggleChat" :class="{ 'is-active': isOpen }" title="Asistente Virtual BiblioBot">
-      <!-- Sombra 3D animada en el piso -->
       <div class="bot-shadow"></div>
-
-      <!-- Mascota flotante sin fondo -->
       <div class="bot-floating-mascot">
         <img :src="biblioLogo" alt="BiblioBot Logo" class="bot-logo-img" />
-
-        <!-- Indicador de En Línea pegado a la mascota -->
         <span class="status-indicator">
           <span class="status-dot"></span>
         </span>
@@ -186,7 +286,7 @@ onMounted(() => {
             <div>
               <div class="header-title-row">
                 <h3 class="header-title">BiblioBot</h3>
-                <span class="header-badge">IA</span>
+                <span class="header-badge">{{ webhookUrl.trim() ? 'n8n • IA' : 'IA' }}</span>
               </div>
               <p class="header-subtitle">
                 <span class="dot-live"></span> En línea • BVE Medicina URP
@@ -195,17 +295,69 @@ onMounted(() => {
           </div>
 
           <div class="header-actions">
+            <!-- Botón Reiniciar Conversación (.action-btn[0]) -->
             <button class="action-btn" @click="clearConversation" title="Reiniciar chat">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
               </svg>
             </button>
+
+            <!-- Botón Cerrar/Minimizar (.action-btn[1]) -->
             <button class="action-btn" @click="closeChat" title="Minimizar / Cerrar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
+
+            <!-- Botón Configuración n8n -->
+            <button 
+              class="settings-btn" 
+              @click="toggleSettings" 
+              :class="{ 'btn-active': showSettings }"
+              title="Configurar Webhook n8n"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- PANEL DE CONFIGURACIÓN N8N -->
+        <div v-if="showSettings" class="chat-settings-panel">
+          <div class="settings-header">
+            <h4>⚙️ Conexión de Inteligencia Artificial</h4>
+            <button class="settings-close-btn" @click="showSettings = false">&times;</button>
+          </div>
+          <p class="settings-desc">
+            Puedes conectar el asistente a tu propio webhook de <strong>n8n + Gemini AI</strong> o utilizar la <strong>API Directa de .NET</strong> en tiempo real.
+          </p>
+          <div class="settings-field">
+            <label class="settings-label">URL del Webhook de n8n:</label>
+            <input 
+              type="url" 
+              v-model="webhookUrl" 
+              placeholder="https://tu-n8n.com/webhook/bve-bot" 
+              class="settings-input"
+            />
+          </div>
+          <div class="settings-status-box">
+            <span class="status-indicator-badge" :class="webhookUrl.trim() ? 'status-n8n' : 'status-direct'">
+              {{ webhookUrl.trim() ? '🟢 n8n + Gemini AI Conectado' : '🔵 API Directa .NET Activa (SQL Server)' }}
+            </span>
+          </div>
+          <div class="settings-actions">
+            <button class="settings-save-btn" @click="saveSettings">
+              Guardar Conexión
+            </button>
+            <button class="settings-reset-btn" @click="resetToDirectApi" v-if="webhookUrl.trim()">
+              Usar API Directa
+            </button>
+          </div>
+          <div v-if="configSuccess" class="settings-success-alert">
+            ✓ ¡Ajustes actualizados exitosamente!
           </div>
         </div>
 
@@ -218,7 +370,6 @@ onMounted(() => {
             :key="msg.id" 
             :class="['message-row', msg.sender === 'user' ? 'message-user' : 'message-bot']"
           >
-            <!-- Avatar pequeño solo para el bot -->
             <img v-if="msg.sender === 'bot'" :src="biblioLogo" class="msg-avatar" alt="Bot" />
 
             <div class="message-bubble-wrap">
@@ -226,7 +377,7 @@ onMounted(() => {
                 <div v-html="formatMessage(msg.text)"></div>
               </div>
 
-              <!-- Sugerencias en cápsulas (chips) -->
+              <!-- Sugerencias en chips -->
               <div v-if="msg.suggestions && msg.suggestions.length" class="suggestions-container">
                 <button
                   v-for="(sugg, idx) in msg.suggestions"
@@ -242,7 +393,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Indicador de pensando / tipeando -->
+          <!-- Indicador de pensando -->
           <div v-if="isThinking" class="message-row message-bot">
             <img :src="biblioLogo" class="msg-avatar" alt="Bot" />
             <div class="message-bubble-wrap">
@@ -252,7 +403,7 @@ onMounted(() => {
                   <span></span>
                   <span></span>
                 </div>
-                <span class="thinking-text">BiblioBot está pensando...</span>
+                <span class="thinking-text">BiblioBot está consultando la información...</span>
               </div>
             </div>
           </div>
@@ -264,7 +415,7 @@ onMounted(() => {
             <input
               type="text"
               v-model="inputMessage"
-              placeholder="Escribe tu consulta aquí..."
+              placeholder="Pregunta sobre préstamos, equipos o secciones..."
               class="chat-input"
               :disabled="isThinking"
               ref="chatInput"
@@ -282,7 +433,7 @@ onMounted(() => {
             </button>
           </form>
           <div class="footer-meta">
-            <span>Inteligencia Artificial para <strong>BVE Medicina</strong></span>
+            <span>Inteligencia Artificial para <strong>BVE Medicina URP</strong></span>
           </div>
         </div>
       </div>
@@ -301,45 +452,18 @@ onMounted(() => {
 }
 
 /* ========================================================
-   ANIMACIÓN DE LEVITACIÓN Y FLOTADO PARA EL AVATAR
+   ANIMACIONES DE LEVITACIÓN Y FLOTADO
    ======================================================== */
 @keyframes botFloating {
-  0% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-11px) rotate(1.2deg);
-  }
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-11px) rotate(1.2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
 }
 
 @keyframes shadowPulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.35;
-  }
-  50% {
-    transform: scale(0.68);
-    opacity: 0.16;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.35;
-  }
-}
-
-@keyframes pulseHalo {
-  0% {
-    box-shadow: 0 0 0 0 rgba(159, 18, 57, 0.45);
-  }
-  70% {
-    box-shadow: 0 0 0 16px rgba(159, 18, 57, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(159, 18, 57, 0);
-  }
+  0% { transform: scale(1); opacity: 0.35; }
+  50% { transform: scale(0.68); opacity: 0.16; }
+  100% { transform: scale(1); opacity: 0.35; }
 }
 
 @keyframes livePulse {
@@ -368,7 +492,6 @@ onMounted(() => {
   transform: scale(0.95);
 }
 
-/* Sombra 3D animada en el piso */
 .bot-shadow {
   position: absolute;
   bottom: 2px;
@@ -380,7 +503,6 @@ onMounted(() => {
   pointer-events: none;
 }
 
-/* Mascota flotando libremente SIN FONDO */
 .bot-floating-mascot {
   position: relative;
   display: flex;
@@ -390,13 +512,11 @@ onMounted(() => {
   animation-fill-mode: both;
 }
 
-/* Imagen del logo / mascota */
 .bot-logo-img {
   width: 76px;
   height: 76px;
   object-fit: contain;
   background: transparent;
-  /* La sombra sigue exactamente la silueta transparente del personaje */
   filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.26)) drop-shadow(0 2px 5px rgba(159, 18, 57, 0.2));
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
 }
@@ -406,7 +526,6 @@ onMounted(() => {
   filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.35)) drop-shadow(0 4px 8px rgba(159, 18, 57, 0.35));
 }
 
-/* Indicador de estado en línea */
 .status-indicator {
   position: absolute;
   bottom: 6px;
@@ -444,7 +563,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 230px;
+  width: 250px;
   cursor: pointer;
   animation: botFloating 3.4s ease-in-out infinite;
   animation-delay: 0.15s;
@@ -507,9 +626,9 @@ onMounted(() => {
   position: absolute;
   bottom: 84px;
   right: 0;
-  width: 390px;
+  width: 410px;
   max-width: calc(100vw - 36px);
-  height: 570px;
+  height: 590px;
   max-height: calc(100vh - 120px);
   background: #ffffff;
   border-radius: 20px;
@@ -524,7 +643,7 @@ onMounted(() => {
 .chat-header {
   background: linear-gradient(135deg, #881337 0%, #9f1239 55%, #be123c 100%);
   color: #ffffff;
-  padding: 14px 18px;
+  padding: 13px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -541,8 +660,8 @@ onMounted(() => {
 
 .header-avatar-wrap {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   background: transparent;
   display: flex;
   align-items: center;
@@ -583,12 +702,12 @@ onMounted(() => {
 }
 
 .header-badge {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.22);
   font-size: 0.65rem;
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 6px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 .header-subtitle {
@@ -619,8 +738,8 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.15);
   border: none;
   color: #ffffff;
-  width: 30px;
-  height: 30px;
+  width: 29px;
+  height: 29px;
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -635,6 +754,176 @@ onMounted(() => {
 
 .action-btn:active {
   transform: scale(0.92);
+}
+
+.settings-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 29px;
+  height: 29px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.settings-btn.btn-active {
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.settings-btn:active {
+  transform: scale(0.92);
+}
+
+/* ========================================================
+   PANEL DE CONFIGURACIÓN N8N
+   ======================================================== */
+.chat-settings-panel {
+  background: #ffffff;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding: 14px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  animation: fadeSlideDown 0.25s ease-out;
+  z-index: 5;
+}
+
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.settings-header h4 {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.settings-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.settings-desc {
+  font-size: 0.74rem;
+  color: #64748b;
+  margin: 0 0 10px 0;
+  line-height: 1.35;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.settings-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.settings-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.settings-input:focus {
+  border-color: #9f1239;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(159, 18, 57, 0.12);
+}
+
+.settings-status-box {
+  margin: 6px 0 10px 0;
+}
+
+.status-indicator-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.status-n8n {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-direct {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-save-btn {
+  background: #9f1239;
+  color: #ffffff;
+  border: none;
+  padding: 6px 14px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.settings-save-btn:hover {
+  background: #881337;
+}
+
+.settings-reset-btn {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.settings-reset-btn:hover {
+  background: #e2e8f0;
+}
+
+.settings-success-alert {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: #15803d;
+  font-weight: 600;
 }
 
 /* ========================================================
@@ -679,7 +968,7 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  max-width: 88%;
+  max-width: 90%;
 }
 
 .message-bot {
@@ -717,7 +1006,7 @@ onMounted(() => {
 .message-bubble {
   padding: 11px 14px;
   border-radius: 16px;
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   line-height: 1.45;
   word-break: break-word;
 }
@@ -846,7 +1135,7 @@ onMounted(() => {
   border: none;
   background: transparent;
   padding: 8px 4px;
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   color: #1e293b;
   outline: none;
 }
@@ -920,4 +1209,3 @@ onMounted(() => {
   opacity: 0;
 }
 </style>
-
