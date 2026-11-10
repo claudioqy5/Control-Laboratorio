@@ -112,6 +112,79 @@ namespace ControlLaboratorio.API.Migrations
                     b.ToTable("Categorias");
                 });
 
+            modelBuilder.Entity("ControlLaboratorio.API.Models.ConferenciaMedica", b =>
+                {
+                    b.Property<int>("IdConferencia")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id_conferencia");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdConferencia"));
+
+                    b.Property<bool>("AsistenciaAbierta")
+                        .HasColumnType("bit")
+                        .HasColumnName("asistencia_abierta");
+
+                    b.Property<bool>("AutoPurgar30Dias")
+                        .HasColumnType("bit")
+                        .HasColumnName("auto_purgar_30_dias");
+
+                    b.Property<string>("EntidadEditorial")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("entidad_editorial");
+
+                    b.Property<string>("EstadoEvento")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("estado_evento");
+
+                    b.Property<string>("ExpositorPonente")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("expositor_ponente");
+
+                    b.Property<DateTime?>("FechaCaducidadPurge")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("fecha_caducidad_purge");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("fecha_creacion");
+
+                    b.Property<DateTime>("FechaHoraFin")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("fecha_hora_fin");
+
+                    b.Property<DateTime>("FechaHoraInicio")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("fecha_hora_inicio");
+
+                    b.Property<string>("Modalidad")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("modalidad");
+
+                    b.Property<string>("TituloEvento")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("titulo_evento");
+
+                    b.Property<string>("Ubicacion_o_Enlace")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("ubicacion_o_enlace");
+
+                    b.HasKey("IdConferencia");
+
+                    b.ToTable("t_conferencia_medica");
+                });
+
             modelBuilder.Entity("ControlLaboratorio.API.Models.Equipo", b =>
                 {
                     b.Property<int>("EquipoID")
@@ -298,18 +371,86 @@ namespace ControlLaboratorio.API.Migrations
                     b.Property<int>("PrestamoID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PrestamoID1")
-                        .HasColumnType("int");
-
                     b.HasKey("MultaID");
 
                     b.HasIndex("AlumnoID");
 
                     b.HasIndex("PrestamoID");
 
-                    b.HasIndex("PrestamoID1");
-
                     b.ToTable("Multas");
+                });
+
+            modelBuilder.Entity("ControlLaboratorio.API.Models.ParticipacionConferencia", b =>
+                {
+                    b.Property<int>("IdParticipacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdParticipacion"));
+
+                    b.Property<int?>("AlumnoID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ApellidoMaterno")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ApellidoPaterno")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CodigoURP")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Correo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte>("EstadoParticipacion")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime?>("FechaHoraAsistencia")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaHoraInscripcion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IdConferencia")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombres")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NumeroDocumento")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TipoDocumento")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TipoParticipante")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("IdParticipacion");
+
+                    b.HasIndex("AlumnoID");
+
+                    b.HasIndex("IdConferencia", "NumeroDocumento")
+                        .IsUnique();
+
+                    b.HasIndex("IdConferencia", "NumeroDocumento", "CodigoURP");
+
+                    b.ToTable("PARTICIPACIONES_CONFERENCIA");
                 });
 
             modelBuilder.Entity("ControlLaboratorio.API.Models.Prestamo", b =>
@@ -340,18 +481,52 @@ namespace ControlLaboratorio.API.Migrations
                     b.Property<int>("LibroID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LibroID1")
-                        .HasColumnType("int");
-
                     b.HasKey("PrestamoID");
 
                     b.HasIndex("AlumnoID");
 
                     b.HasIndex("LibroID");
 
-                    b.HasIndex("LibroID1");
-
                     b.ToTable("Prestamos");
+                });
+
+            modelBuilder.Entity("ControlLaboratorio.API.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IdUsuarioAdmin")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReplacedByToken")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdUsuarioAdmin");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("ControlLaboratorio.API.Models.ScanLog", b =>
@@ -426,6 +601,53 @@ namespace ControlLaboratorio.API.Migrations
                     b.ToTable("Sesiones");
                 });
 
+            modelBuilder.Entity("ControlLaboratorio.API.Models.UsuarioAdmin", b =>
+                {
+                    b.Property<int>("IdUsuarioAdmin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdUsuarioAdmin"));
+
+                    b.Property<string>("Correo")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("EstadoActivo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Nombres")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte>("Rol")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime?>("UltimoAcceso")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("IdUsuarioAdmin");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("UsuariosAdmin");
+                });
+
             modelBuilder.Entity("ControlLaboratorio.API.Models.Favorito", b =>
                 {
                     b.HasOne("ControlLaboratorio.API.Models.Alumno", "Alumno")
@@ -454,18 +676,32 @@ namespace ControlLaboratorio.API.Migrations
                         .IsRequired();
 
                     b.HasOne("ControlLaboratorio.API.Models.Prestamo", "Prestamo")
-                        .WithMany()
+                        .WithMany("Multas")
                         .HasForeignKey("PrestamoID")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("ControlLaboratorio.API.Models.Prestamo", null)
-                        .WithMany("Multas")
-                        .HasForeignKey("PrestamoID1");
-
                     b.Navigation("Alumno");
 
                     b.Navigation("Prestamo");
+                });
+
+            modelBuilder.Entity("ControlLaboratorio.API.Models.ParticipacionConferencia", b =>
+                {
+                    b.HasOne("ControlLaboratorio.API.Models.Alumno", "Alumno")
+                        .WithMany()
+                        .HasForeignKey("AlumnoID")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ControlLaboratorio.API.Models.ConferenciaMedica", "Conferencia")
+                        .WithMany("Participaciones")
+                        .HasForeignKey("IdConferencia")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Alumno");
+
+                    b.Navigation("Conferencia");
                 });
 
             modelBuilder.Entity("ControlLaboratorio.API.Models.Prestamo", b =>
@@ -477,18 +713,25 @@ namespace ControlLaboratorio.API.Migrations
                         .IsRequired();
 
                     b.HasOne("ControlLaboratorio.API.Models.Libro", "Libro")
-                        .WithMany()
+                        .WithMany("Prestamos")
                         .HasForeignKey("LibroID")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("ControlLaboratorio.API.Models.Libro", null)
-                        .WithMany("Prestamos")
-                        .HasForeignKey("LibroID1");
-
                     b.Navigation("Alumno");
 
                     b.Navigation("Libro");
+                });
+
+            modelBuilder.Entity("ControlLaboratorio.API.Models.RefreshToken", b =>
+                {
+                    b.HasOne("ControlLaboratorio.API.Models.UsuarioAdmin", "UsuarioAdmin")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("IdUsuarioAdmin")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UsuarioAdmin");
                 });
 
             modelBuilder.Entity("ControlLaboratorio.API.Models.Sesion", b =>
@@ -515,6 +758,11 @@ namespace ControlLaboratorio.API.Migrations
                     b.Navigation("Sesiones");
                 });
 
+            modelBuilder.Entity("ControlLaboratorio.API.Models.ConferenciaMedica", b =>
+                {
+                    b.Navigation("Participaciones");
+                });
+
             modelBuilder.Entity("ControlLaboratorio.API.Models.Equipo", b =>
                 {
                     b.Navigation("Sesiones");
@@ -530,6 +778,11 @@ namespace ControlLaboratorio.API.Migrations
             modelBuilder.Entity("ControlLaboratorio.API.Models.Prestamo", b =>
                 {
                     b.Navigation("Multas");
+                });
+
+            modelBuilder.Entity("ControlLaboratorio.API.Models.UsuarioAdmin", b =>
+                {
+                    b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
         }
