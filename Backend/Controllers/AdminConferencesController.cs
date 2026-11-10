@@ -46,8 +46,8 @@ namespace ControlLaboratorio.API.Controllers
                     c.AutoPurgar30Dias,
                     TotalPreInscritos = c.Participaciones.Count(p => p.FechaHoraInscripcion != p.FechaHoraAsistencia),
                     TotalAsistentes = c.Participaciones.Count(p => p.EstadoParticipacion == 2),
-                    UrlInscripcion = $"{publicWebUrl}/conferencias/registro/{c.IdConferencia}",
-                    UrlAsistencia = $"{publicWebUrl}/conferencias/asistencia/{c.IdConferencia}"
+                    UrlInscripcion = $"{publicWebUrl}/#conferencias?inscripcion={c.IdConferencia}",
+                    UrlAsistencia = $"{publicWebUrl}/#conferencias?asistencia={c.IdConferencia}"
                 })
                 .ToListAsync();
 

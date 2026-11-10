@@ -100,7 +100,7 @@ const getPillStatus = (conf) => {
 }
 
 const copyInscriptionLink = async (conf) => {
-  const url = conf.urlInscripcion || `${window.location.origin}/conferencias/registro/${conf.idConferencia}`
+  const url = conf.urlInscripcion || `${window.location.origin}/#conferencias?inscripcion=${conf.idConferencia}`
   try {
     await navigator.clipboard.writeText(url)
     showToast('Enlace de inscripción copiado al portapapeles')
@@ -110,7 +110,7 @@ const copyInscriptionLink = async (conf) => {
 }
 
 const copyAttendanceLink = async (conf) => {
-  const url = conf.urlAsistencia || `${window.location.origin}/conferencias/asistencia/${conf.idConferencia}`
+  const url = conf.urlAsistencia || `${window.location.origin}/#conferencias?asistencia=${conf.idConferencia}`
   try {
     await navigator.clipboard.writeText(url)
     showToast('Enlace de asistencia copiado al portapapeles')
