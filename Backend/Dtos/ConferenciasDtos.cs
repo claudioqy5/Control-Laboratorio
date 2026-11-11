@@ -19,6 +19,10 @@ namespace ControlLaboratorio.API.DTOs
 
     public class QuickEditParticipanteDto
     {
+        public string? NumeroDocumento { get; set; }
+        public string? TipoDocumento { get; set; }
+        public string? CodigoURP { get; set; }
+        public string? TipoParticipante { get; set; }
         public string Nombres { get; set; } = string.Empty;
         public string ApellidoPaterno { get; set; } = string.Empty;
         public string? ApellidoMaterno { get; set; }

@@ -40,10 +40,15 @@ let toastTimer = null
 const showEditModal = ref(false)
 const editForm = ref({
   idParticipacion: null,
+  numeroDocumento: '',
+  tipoDocumento: 'DNI',
+  codigoURP: '',
+  tipoParticipante: 'Estudiante',
   nombres: '',
   apellidoPaterno: '',
   apellidoMaterno: '',
-  correo: ''
+  correo: '',
+  alumnoID: null
 })
 const savingEdit = ref(false)
 
@@ -142,8 +147,17 @@ const filteredParticipantes = computed(() => {
     const f = filterEstamento.value.toLowerCase()
     list = list.filter(p => {
       const r = (p.tipoParticipante || '').toLowerCase()
-      if (f === 'pregrado') {
-        return r === 'pregrado' || r === 'estudiante'
+      if (f === 'estudiante') {
+        return r === 'estudiante' || r === 'pregrado' || r === 'posgrado'
+      }
+      if (f === 'docente') {
+        return r === 'docente'
+      }
+      if (f === 'residentado') {
+        return r === 'residentado'
+      }
+      if (f === 'otros') {
+        return r === 'otros' || r === 'externo'
       }
       return r.includes(f)
     })
@@ -295,22 +309,36 @@ const empadronar = async (part) => {
 const openEditModal = (part) => {
   editForm.value = {
     idParticipacion: part.idParticipacion,
+    numeroDocumento: part.numeroDocumento || '',
+    tipoDocumento: part.tipoDocumento || 'DNI',
+    codigoURP: part.codigoURP || '',
+    tipoParticipante: part.tipoParticipante || 'Estudiante',
     nombres: part.nombres || '',
     apellidoPaterno: part.apellidoPaterno || '',
     apellidoMaterno: part.apellidoMaterno || '',
-    correo: part.correo || ''
+    correo: part.correo || '',
+    alumnoID: part.alumnoID ?? null
   }
   showEditModal.value = true
 }
 
-const saveParticipantEdit = async () => {
-  if (!editForm.value.nombres.trim() || !editForm.value.apellidoPaterno.trim()) {
+const saveParticipantEdit = async (andEmpadronar = false) => {
+  const isEmpadronar = andEmpadronar === true
+  if (!editForm.value.nombres?.trim() || !editForm.value.apellidoPaterno?.trim()) {
     showToast('Nombres y Apellido Paterno son obligatorios')
+    return
+  }
+  if (!editForm.value.numeroDocumento?.trim()) {
+    showToast('El Número de Documento es obligatorio')
     return
   }
   savingEdit.value = true
   try {
     const payload = {
+      numeroDocumento: editForm.value.numeroDocumento.trim(),
+      tipoDocumento: editForm.value.tipoDocumento.trim(),
+      codigoURP: editForm.value.codigoURP?.trim() || null,
+      tipoParticipante: editForm.value.tipoParticipante.trim(),
       nombres: editForm.value.nombres.trim(),
       apellidoPaterno: editForm.value.apellidoPaterno.trim(),
       apellidoMaterno: editForm.value.apellidoMaterno ? editForm.value.apellidoMaterno.trim() : null,
@@ -322,15 +350,31 @@ const saveParticipantEdit = async () => {
     )
     const target = reportData.value.participantes.find(p => p.idParticipacion === editForm.value.idParticipacion)
     if (target) {
+      target.numeroDocumento = payload.numeroDocumento
+      target.tipoDocumento = payload.tipoDocumento
+      target.codigoURP = payload.codigoURP
+      target.tipoParticipante = payload.tipoParticipante
       target.nombres = payload.nombres
       target.apellidoPaterno = payload.apellidoPaterno
       target.apellidoMaterno = payload.apellidoMaterno
       target.correo = payload.correo
     }
+
+    if (isEmpadronar) {
+      const resLink = await axios.post(`${API_BASE_URL}/api/v1/admin/conferences/participants/${editForm.value.idParticipacion}/link-to-student`)
+      const nuevoAlumnoId = resLink.data?.alumnoId || 1
+      if (target) {
+        target.alumnoID = nuevoAlumnoId
+      }
+      editForm.value.alumnoID = nuevoAlumnoId
+      showToast('Participante actualizado y empadronado exitosamente en Cómputo')
+    } else {
+      showToast('Datos de participante actualizados correctamente')
+    }
     showEditModal.value = false
-    showToast('Datos de participante actualizados correctamente')
   } catch (err) {
-    showToast('Error al actualizar datos del participante')
+    const msg = err.response?.data?.message || err.response?.data || 'Error al procesar participante'
+    showToast(typeof msg === 'string' ? msg : 'Error al procesar participante')
   } finally {
     savingEdit.value = false
   }
@@ -508,7 +552,12 @@ onMounted(() => {
       <div class="kpi-card kpi-neutral">
         <div class="kpi-header">
           <span class="kpi-title">TOTAL PRE-INSCRITOS</span>
-          <span class="kpi-icon">📋</span>
+          <span class="kpi-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+            </svg>
+          </span>
         </div>
         <div class="kpi-number">{{ reportData.kpis.totalPreInscritos }}</div>
         <div class="kpi-desc">Formulario previo</div>
@@ -517,7 +566,14 @@ onMounted(() => {
       <div class="kpi-card kpi-neutral">
         <div class="kpi-header">
           <span class="kpi-title">TOTAL ASISTENTES</span>
-          <span class="kpi-icon">👥</span>
+          <span class="kpi-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </span>
         </div>
         <div class="kpi-number">{{ reportData.kpis.totalAsistentesReales }}</div>
         <div class="kpi-desc">Marcaciones Registradas</div>
@@ -526,7 +582,12 @@ onMounted(() => {
       <div class="kpi-card kpi-green">
         <div class="kpi-header">
           <span class="kpi-title">ACREDITADOS (OFICIAL)</span>
-          <span class="kpi-icon">✓</span>
+          <span class="kpi-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </span>
         </div>
         <div class="kpi-number">{{ reportData.kpis.acreditados }}</div>
         <div class="kpi-desc">Inscritos + Asistieron</div>
@@ -535,7 +596,11 @@ onMounted(() => {
       <div class="kpi-card kpi-amber">
         <div class="kpi-header">
           <span class="kpi-title">ESPONTÁNEOS</span>
-          <span class="kpi-icon">⚡</span>
+          <span class="kpi-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+          </span>
         </div>
         <div class="kpi-number">{{ reportData.kpis.espontaneos }}</div>
         <div class="kpi-desc">Sin pre-inscripción</div>
@@ -544,7 +609,13 @@ onMounted(() => {
       <div class="kpi-card kpi-red">
         <div class="kpi-header">
           <span class="kpi-title">INASISTENCIAS</span>
-          <span class="kpi-icon">✕</span>
+          <span class="kpi-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+          </span>
         </div>
         <div class="kpi-number">{{ reportData.kpis.inasistencias }}</div>
         <div class="kpi-desc">Inscritos que faltaron</div>
@@ -553,7 +624,12 @@ onMounted(() => {
       <div class="kpi-card kpi-dark">
         <div class="kpi-header">
           <span class="kpi-title">EFECTIVIDAD</span>
-          <span class="kpi-icon">📈</span>
+          <span class="kpi-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+              <polyline points="17 6 23 6 23 12" />
+            </svg>
+          </span>
         </div>
         <div class="kpi-number">{{ reportData.kpis.tasaAsistencia }}%</div>
         <div class="kpi-desc">Tasa de acreditación</div>
@@ -609,10 +685,10 @@ onMounted(() => {
 
           <select v-model="filterEstamento" class="filter-estamento-select">
             <option value="todos">Todos los Roles</option>
-            <option value="Pregrado">Pregrado</option>
-            <option value="Posgrado">Posgrado</option>
+            <option value="Estudiante">Estudiante</option>
             <option value="Docente">Docente</option>
-            <option value="Externo">Externo</option>
+            <option value="Residentado">Residentado</option>
+            <option value="Otros">Otros</option>
           </select>
         </div>
       </div>
@@ -625,7 +701,7 @@ onMounted(() => {
               <th class="th-doc">DOCUMENTO</th>
               <th class="th-part">PARTICIPANTE</th>
               <th class="th-rol">ROL / ESTAMENTO</th>
-              <th class="th-ciclo">CICLO</th>
+              <th class="th-dni">DNI</th>
               <th class="th-time">PRE-REGISTRO</th>
               <th class="th-time">HORA MARCACIÓN</th>
               <th class="th-estado">ESTADO</th>
@@ -666,7 +742,7 @@ onMounted(() => {
               <td class="td-rol">
                 <span class="badge-role">{{ part.tipoParticipante || 'Estudiante' }}</span>
               </td>
-              <td class="td-ciclo">{{ part.ciclo || '-' }}</td>
+              <td class="td-dni">{{ part.numeroDocumento || '-' }}</td>
               <td class="td-time">
                 {{ getParticipanteEstado(part) === 'Espontáneo' ? '-' : formatTime12h(part.fechaHoraInscripcion) }}
               </td>
@@ -687,9 +763,9 @@ onMounted(() => {
                     v-else
                     type="button"
                     class="btn-empadronar"
-                    @click="empadronar(part)"
+                    @click="openEditModal(part)"
                   >
-                    👤+ Empadronar
+                    + Empadronar
                   </button>
                   <button
                     type="button"
@@ -720,7 +796,7 @@ onMounted(() => {
     <div v-if="showEditModal" class="modal-backdrop">
       <div class="modal-box">
         <header class="modal-header">
-          <h3 class="modal-title">Subsanar Datos de Participante</h3>
+          <h3 class="modal-title">Subsanar y Empadronar Participante</h3>
           <button type="button" class="btn-close" @click="showEditModal = false">✕</button>
         </header>
 
@@ -741,6 +817,39 @@ onMounted(() => {
             </div>
           </div>
 
+          <div class="form-row-2">
+            <div class="form-row">
+              <label class="form-label">Tipo de Documento</label>
+              <select v-model="editForm.tipoDocumento" class="form-select">
+                <option value="DNI">DNI</option>
+                <option value="Carné de Extranjería">Carné de Extranjería</option>
+                <option value="Pasaporte">Pasaporte</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label class="form-label">N° Documento</label>
+              <input v-model="editForm.numeroDocumento" type="text" class="form-input" />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-row">
+              <label class="form-label">Código URP</label>
+              <input v-model="editForm.codigoURP" type="text" class="form-input" placeholder="Opcional" />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Rol / Estamento</label>
+              <select v-model="editForm.tipoParticipante" class="form-select">
+                <option value="Estudiante">Estudiante</option>
+                <option value="Docente">Docente</option>
+                <option value="Residentado">Residentado</option>
+                <option value="Posgrado">Posgrado</option>
+                <option value="Externo">Externo</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+          </div>
+
           <div class="form-row">
             <label class="form-label">Correo Electrónico</label>
             <input v-model="editForm.correo" type="email" class="form-input" />
@@ -753,9 +862,18 @@ onMounted(() => {
             type="button"
             class="btn-save"
             :disabled="savingEdit"
-            @click="saveParticipantEdit"
+            @click="saveParticipantEdit(false)"
           >
             {{ savingEdit ? 'Guardando...' : 'Guardar Cambios' }}
+          </button>
+          <button
+            v-if="editForm.alumnoID === null"
+            type="button"
+            class="btn-save-empadronar"
+            :disabled="savingEdit"
+            @click="saveParticipantEdit(true)"
+          >
+            {{ savingEdit ? 'Procesando...' : 'Guardar y Empadronar en Cómputo' }}
           </button>
         </footer>
       </div>
@@ -1346,9 +1464,10 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.td-ciclo {
-  color: #64748b;
-  font-weight: 500;
+.td-dni, .td-ciclo {
+  color: #0f172a;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .td-time {
@@ -1489,7 +1608,7 @@ onMounted(() => {
   background: #ffffff;
   border-radius: 12px;
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
 }
@@ -1548,7 +1667,7 @@ onMounted(() => {
   color: #475569;
 }
 
-.form-input {
+.form-input, .form-select {
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 7px;
@@ -1560,7 +1679,7 @@ onMounted(() => {
   transition: border-color 0.2s ease;
 }
 
-.form-input:focus {
+.form-input:focus, .form-select:focus {
   border-color: #008744;
 }
 
@@ -1608,6 +1727,28 @@ onMounted(() => {
 }
 
 .btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-save-empadronar {
+  background: #007A3D;
+  border: none;
+  color: #ffffff;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-save-empadronar:hover:not(:disabled) {
+  background: #005A2C;
+}
+
+.btn-save-empadronar:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

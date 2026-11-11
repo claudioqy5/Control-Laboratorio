@@ -14,7 +14,6 @@ const filterEstado = ref('todos')
 const showModal = ref(false)
 const isEditing = ref(false)
 const form = ref({
-  idConferencia: null,
   tituloEvento: '',
   expositorPonente: '',
   entidadEditorial: 'FAMURP Conferencias',
@@ -94,6 +93,15 @@ const isConcluded = (conf) => {
   return false
 }
 
+const isEventConcluded = computed(() => {
+  if (!form.value) return false
+  if (form.value.estadoEvento && form.value.estadoEvento.toLowerCase() === 'finalizada') return true
+  if (form.value.fechaHoraFin) {
+    return new Date(form.value.fechaHoraFin).getTime() < Date.now()
+  }
+  return false
+})
+
 const getPillStatus = (conf) => {
   if (isConcluded(conf)) return 'FINALIZADA'
   if (conf.asistenciaAbierta || (conf.estadoEvento && conf.estadoEvento.toLowerCase() === 'en vivo')) return 'EN VIVO'
@@ -101,7 +109,7 @@ const getPillStatus = (conf) => {
 }
 
 const copyInscriptionLink = async (conf) => {
-  const url = conf.urlInscripcion || `${window.location.origin}/conferencias/registro/${conf.idConferencia}`
+  const url = conf.urlInscripcion || `${window.location.origin}/#conferencias?inscripcion=${conf.idConferencia}`
   try {
     await navigator.clipboard.writeText(url)
     showToast('Enlace de inscripción copiado al portapapeles')
@@ -111,7 +119,7 @@ const copyInscriptionLink = async (conf) => {
 }
 
 const copyAttendanceLink = async (conf) => {
-  const url = conf.urlAsistencia || `${window.location.origin}/conferencias/asistencia/${conf.idConferencia}`
+  const url = conf.urlAsistencia || `${window.location.origin}/#conferencias?asistencia=${conf.idConferencia}`
   try {
     await navigator.clipboard.writeText(url)
     showToast('Enlace de asistencia copiado al portapapeles')
@@ -153,7 +161,6 @@ const openCreateModal = () => {
   const endIso = endDate.toISOString().slice(0, 16)
 
   form.value = {
-    idConferencia: null,
     tituloEvento: '',
     expositorPonente: '',
     entidadEditorial: 'FAMURP Conferencias',
@@ -193,8 +200,12 @@ const openEditModal = (conf) => {
 }
 
 const saveConference = async () => {
-  if (!form.value.tituloEvento.trim() || !form.value.expositorPonente.trim()) {
+  if (!form.value.tituloEvento?.trim() || !form.value.expositorPonente?.trim()) {
     showToast('Título y Expositor son obligatorios')
+    return
+  }
+  if (!form.value.ubicacion_o_Enlace?.trim()) {
+    showToast('Lugar o enlace es obligatorio')
     return
   }
   try {
@@ -212,8 +223,15 @@ const saveConference = async () => {
     }
     showModal.value = false
     await loadConferencias()
-  } catch {
-    showToast('Error al guardar conferencia')
+  } catch (err) {
+    const errorData = err.response?.data
+    let errMsg = 'Error al guardar conferencia'
+    if (errorData?.errors) {
+      errMsg = Object.values(errorData.errors).flat().join(', ')
+    } else if (errorData?.title) {
+      errMsg = errorData.title
+    }
+    showToast(errMsg)
   }
 }
 
@@ -533,15 +551,16 @@ const filteredConferencias = computed(() => {
           <div class="form-grid-2">
             <div class="form-group">
               <label class="form-label">Estado del Evento</label>
-              <select v-model="form.estadoEvento" class="form-control">
+              <select v-model="form.estadoEvento" class="form-control" :disabled="isEventConcluded">
                 <option value="Programado">Programado</option>
                 <option value="En Vivo">En Vivo</option>
                 <option value="Finalizada">Finalizada</option>
               </select>
+              <span v-if="isEventConcluded" class="form-field-hint">Conferencia concluida por fecha límite (estado bloqueado)</span>
             </div>
             <div class="form-group-checkbox">
               <label class="inline-checkbox">
-                <input v-model="form.asistenciaAbierta" type="checkbox" />
+                <input v-model="form.asistenciaAbierta" type="checkbox" :disabled="isEventConcluded" />
                 <span>Marcación de Asistencia Abierta</span>
               </label>
             </div>
@@ -1224,6 +1243,19 @@ const filteredConferencias = computed(() => {
 
 .form-control:focus {
   border-color: #008744;
+}
+
+.form-control:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+  border-color: #cbd5e1;
+}
+
+.form-field-hint {
+  font-size: 0.725rem;
+  color: #64748b;
+  margin-top: 4px;
 }
 
 .form-grid-2 {
