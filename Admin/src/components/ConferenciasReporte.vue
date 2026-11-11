@@ -773,8 +773,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 18px;
   width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .header-container {
@@ -1270,8 +1269,8 @@ onMounted(() => {
 }
 
 .audit-table th {
-  background: #f8fafc;
-  color: #475569;
+  background: transparent;
+  color: #64748b;
   font-family: 'Inter', system-ui, sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
