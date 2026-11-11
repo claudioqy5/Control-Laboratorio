@@ -25,16 +25,16 @@ describe('Sidebar', () => {
     await webTab.trigger('click')
 
     const webDisabled = wrapper.findAll('.disabled')
-    expect(webDisabled.length).toBe(5)
+    expect(webDisabled.length).toBe(4)
     webDisabled.forEach(item => {
       expect(item.attributes('title')).toBe('Próximamente')
     })
     const webLabels = webDisabled.map(item => item.text())
     expect(webLabels).not.toContain('Gestión de Conferencias')
     expect(webLabels).not.toContain('Estadísticas Conferencias')
+    expect(webLabels).not.toContain('Objetos Perdidos')
     expect(webLabels).toContain('Bases de Datos')
     expect(webLabels).toContain('Matriz Hexagonal')
-    expect(webLabels).toContain('Objetos Perdidos')
     expect(webLabels).toContain('Boletín Informativo')
     expect(webLabels).toContain('Preguntas Frecuentes')
 
@@ -243,5 +243,9 @@ describe('Sidebar', () => {
     await statsLink.trigger('click')
     expect(wrapper.emitted('change-view')).toBeTruthy()
     expect(wrapper.emitted('change-view')[0]).toEqual(['conferencias-reportes'])
+
+    const objetosLink = links.find(l => l.text().includes('Objetos Perdidos'))
+    await objetosLink.trigger('click')
+    expect(wrapper.emitted('change-view')[1]).toEqual(['objetos-perdidos'])
   })
 })
