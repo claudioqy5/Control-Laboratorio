@@ -46,10 +46,23 @@ axios.interceptors.response.use(
           localStorage.removeItem('adminToken')
           localStorage.removeItem('adminRefreshToken')
           localStorage.removeItem('adminUser')
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:expired'))
+          }
           return Promise.reject(refreshError)
+        }
+      } else {
+        localStorage.removeItem('adminToken')
+        localStorage.removeItem('adminRefreshToken')
+        localStorage.removeItem('adminUser')
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:expired'))
         }
       }
     }
     return Promise.reject(error)
   }
 )
+
+export { axios }
+export default axios

@@ -33,10 +33,13 @@ const modalDevolverOpen = ref(false)
 const modalEmpadronarOpen = ref(false)
 const modalActaOpen = ref(false)
 const modalBajaConfirmOpen = ref(false)
+const modalDeleteConfirmOpen = ref(false)
 
 const selectedItemForActa = ref(null)
 const selectedItemForDevolver = ref(null)
 const selectedItemForBaja = ref(null)
+const selectedItemForDelete = ref(null)
+const eliminandoObjeto = ref(false)
 
 const verificandoPadron = ref(false)
 const alumnoValidado = ref(null)
@@ -89,12 +92,12 @@ const currentUserId = computed(() => {
 })
 
 const currentUserName = computed(() => {
-  return props.currentUser?.nombres || props.currentUser?.username || 'Lic. Claudio Quezada'
+  return props.currentUser?.nombres || props.currentUser?.username || 'Administrador'
 })
 
 const loadUsuarios = async () => {
   try {
-    const res = await axios.get(`${API_BASE_URL}/api/admin/usuarios`)
+    const res = await axios.get(`${API_BASE_URL}/api/admin/usuarios/activos`)
     if (Array.isArray(res.data) && res.data.length > 0) {
       usuarios.value = res.data
       return
@@ -103,12 +106,9 @@ const loadUsuarios = async () => {
   }
 
   const defaultId = currentUserId.value
-  const defaultUser = props.currentUser?.username || 'cquezada'
+  const defaultUser = props.currentUser?.username || 'admin'
   usuarios.value = [
-    { idUsuarioAdmin: defaultId, username: defaultUser, nombres: currentUserName.value },
-    { idUsuarioAdmin: 2, username: 'rquispe', nombres: 'Rosa Quispe (Biblioteca)' },
-    { idUsuarioAdmin: 3, username: 'admin_lab', nombres: 'Soporte Técnico Cómputo' },
-    { idUsuarioAdmin: 4, username: 'jcorrea', nombres: 'Joshue Correa (SuperAdmin)' }
+    { idUsuarioAdmin: defaultId, username: defaultUser, nombres: currentUserName.value }
   ]
 }
 
@@ -429,6 +429,28 @@ const ejecutarBajaDefinitiva = async () => {
     showToast('Error al asentar la baja definitiva del objeto')
   } finally {
     guardandoBaja.value = false
+  }
+}
+
+const openConfirmarEliminar = (item) => {
+  selectedItemForDelete.value = item
+  modalDeleteConfirmOpen.value = true
+}
+
+const ejecutarEliminacionDefinitiva = async () => {
+  if (!selectedItemForDelete.value) return
+  eliminandoObjeto.value = true
+  try {
+    const itemId = selectedItemForDelete.value.idObjeto
+    await axios.delete(`${API_BASE_URL}/api/admin/objetos-perdidos/${itemId}`)
+    modalDeleteConfirmOpen.value = false
+    await loadItems()
+    await loadKpis()
+    showToast(`Objeto #${itemId} eliminado definitivamente del sistema`)
+  } catch {
+    showToast('Error al eliminar el registro de objeto perdido')
+  } finally {
+    eliminandoObjeto.value = false
   }
 }
 
@@ -761,6 +783,19 @@ onMounted(async () => {
                     Devolver
                   </button>
                 </template>
+                <button
+                  type="button"
+                  class="icon-btn-delete"
+                  title="Eliminar registro"
+                  @click="openConfirmarEliminar(item)"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
               </div>
             </td>
           </tr>
@@ -1246,6 +1281,34 @@ onMounted(async () => {
       </div>
     </div>
 
+    <div class="modal-overlay" :class="{ active: modalDeleteConfirmOpen }">
+      <div class="modal-card modal-card-sm">
+        <div class="modal-header">
+          <h2 class="modal-title">Confirmar Eliminación</h2>
+          <button type="button" class="modal-close" @click="modalDeleteConfirmOpen = false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div v-if="selectedItemForDelete" class="modal-body">
+          <p class="text-baja-confirm">
+            ¿Está seguro de que desea eliminar permanentemente el objeto <strong>#{{ selectedItemForDelete.idObjeto }}</strong> ({{ selectedItemForDelete.titulo }})?
+          </p>
+          <p class="text-baja-sub">
+            Esta acción eliminará el registro de la base de datos de forma definitiva e irreversible.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" @click="modalDeleteConfirmOpen = false">Cancelar</button>
+          <button type="button" class="btn btn-danger" :disabled="eliminandoObjeto" @click="ejecutarEliminacionDefinitiva">
+            {{ eliminandoObjeto ? 'Eliminando...' : 'Sí, Eliminar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast" :class="{ show: toast.show }">
       <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -1391,6 +1454,28 @@ onMounted(async () => {
   background: #FEE2E2;
   border-color: #FDA4AF;
   color: #BE123C;
+}
+
+.icon-btn-delete {
+  background: transparent;
+  border: 1px solid #FECDD3;
+  color: #DC2626;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.icon-btn-delete:hover {
+  background: #FEE2E2;
+  border-color: #FDA4AF;
+  color: #B91C1C;
 }
 
 .kpi-grid {
