@@ -277,6 +277,21 @@ namespace ControlLaboratorio.API.Controllers
             });
         }
 
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var objeto = await _context.ObjetosPerdidos.FindAsync(id);
+            if (objeto == null)
+            {
+                return NotFound(new { message = "Objeto perdido no encontrado." });
+            }
+
+            _context.ObjetosPerdidos.Remove(objeto);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Objeto perdido eliminado exitosamente." });
+        }
+
         private static ObjetoPerdidoDto MapToDto(ObjetoPerdido item, DateTime ahora)
         {
             var diasTranscurridos = (ahora - item.FechaHoraHallazgo).TotalDays;

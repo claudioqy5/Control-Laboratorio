@@ -589,4 +589,51 @@ public class ObjetosPerdidosControllerTests : IDisposable
         var json = ToJsonElement(notFoundResult.Value);
         json.GetProperty("message").GetString().Should().Be("Objeto perdido no encontrado.");
     }
+
+    [Fact]
+    public async Task Delete_WhenObjectExists_RemovesFromDatabaseAndReturnsOk()
+    {
+        var admin = new UsuarioAdmin
+        {
+            Username = "admin_del",
+            PasswordHash = "hash",
+            Nombres = "Admin Del",
+            Rol = RolAdmin.SuperAdmin,
+            EstadoActivo = true
+        };
+        _context.UsuariosAdmin.Add(admin);
+
+        var objeto = new ObjetoPerdido
+        {
+            Titulo = "Mochila Negra",
+            Categoria = CategoriaObjeto.Otros,
+            Descripcion = "Mochila deportiva",
+            LugarHallazgo = "Mesa 4",
+            FechaHoraHallazgo = DateTime.UtcNow.AddDays(-1),
+            EstadoObjeto = EstadoObjeto.EnCustodia,
+            IdUsuarioHallazgo = admin.IdUsuarioAdmin,
+            NombrePersonalHallazgo = $"{admin.Username} • {admin.Nombres}"
+        };
+        _context.ObjetosPerdidos.Add(objeto);
+        _context.SaveChanges();
+
+        var result = await _controller.Delete(objeto.IdObjeto);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var json = ToJsonElement(okResult.Value);
+        json.GetProperty("message").GetString().Should().Be("Objeto perdido eliminado exitosamente.");
+
+        var deleted = await _context.ObjetosPerdidos.FindAsync(objeto.IdObjeto);
+        deleted.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Delete_WhenNotFound_ReturnsNotFound()
+    {
+        var result = await _controller.Delete(9999);
+
+        var notFoundResult = result.Should().BeOfType<NotFoundObjectResult>().Subject;
+        var json = ToJsonElement(notFoundResult.Value);
+        json.GetProperty("message").GetString().Should().Be("Objeto perdido no encontrado.");
+    }
 }

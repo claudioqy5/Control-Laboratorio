@@ -2,6 +2,7 @@ using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Dtos;
 using ControlLaboratorio.API.Models;
 using ControlLaboratorio.API.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
@@ -397,6 +398,36 @@ namespace ControlLaboratorio.API.Controllers
             }
 
             return Ok(new { message = "Sesión administrativa cerrada." });
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _context.UsuariosAdmin.FindAsync(userId);
+            if (user == null || !user.EstadoActivo)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(new UsuarioAdminDto
+            {
+                IdUsuarioAdmin = user.IdUsuarioAdmin,
+                Username = user.Username,
+                Nombres = user.Nombres,
+                Correo = user.Correo,
+                Rol = user.Rol,
+                RolNombre = user.Rol.ToString(),
+                EstadoActivo = user.EstadoActivo,
+                FechaCreacion = user.FechaCreacion,
+                UltimoAcceso = user.UltimoAcceso
+            });
         }
 
         private string GenerateJwtToken(string sub, string name, string role)
