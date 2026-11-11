@@ -39,7 +39,7 @@ const bibliotecaViews = [
   'mapa-biblio'
 ]
 
-const webViews = ['conferencias', 'conferencias-reportes']
+const webViews = ['conferencias', 'conferencias-reportes', 'objetos-perdidos']
 
 watch(
   () => props.currentView,
@@ -485,9 +485,10 @@ onBeforeUnmount(() => {
         </a>
         <a
           href="#"
-          class="nav-item disabled"
-          title="Próximamente"
-          @click.prevent
+          class="nav-item"
+          :class="{ active: currentView === 'objetos-perdidos' }"
+          :title="isCollapsed ? 'Objetos Perdidos' : ''"
+          @click.prevent="navigate('objetos-perdidos')"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
