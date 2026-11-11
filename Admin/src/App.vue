@@ -19,6 +19,7 @@ import EstadisticasPrestamos from './components/EstadisticasPrestamos.vue'
 import ResumenPrestamos from './components/ResumenPrestamos.vue'
 import ConferenciasCRUD from './components/ConferenciasCRUD.vue'
 import ConferenciasReporte from './components/ConferenciasReporte.vue'
+import ObjetosPerdidosCRUD from './components/ObjetosPerdidosCRUD.vue'
 
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
@@ -105,6 +106,10 @@ const handleLogout = () => {
       <ConferenciasReporte
         v-if="currentView === 'conferencias-reportes'"
         :initial-conferencia-id="selectedConferenciaId"
+      />
+      <ObjetosPerdidosCRUD
+        v-if="currentView === 'objetos-perdidos'"
+        :current-user="currentUser"
       />
     </main>
 
