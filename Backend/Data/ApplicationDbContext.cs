@@ -22,6 +22,7 @@ namespace ControlLaboratorio.API.Data
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<ConferenciaMedica> ConferenciasMedicas { get; set; }
         public DbSet<ParticipacionConferencia> ParticipacionesConferencia { get; set; }
+        public DbSet<ObjetoPerdido> ObjetosPerdidos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -100,6 +101,33 @@ namespace ControlLaboratorio.API.Data
                 .HasOne(p => p.Alumno)
                 .WithMany()
                 .HasForeignKey(p => p.AlumnoID)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ObjetoPerdido>()
+                .HasIndex(o => new { o.EstadoObjeto, o.FechaHoraHallazgo });
+
+            modelBuilder.Entity<ObjetoPerdido>()
+                .HasIndex(o => o.AlumnoID);
+
+            modelBuilder.Entity<ObjetoPerdido>()
+                .HasIndex(o => o.CodigoURPReceptor);
+
+            modelBuilder.Entity<ObjetoPerdido>()
+                .HasOne(o => o.UsuarioHallazgo)
+                .WithMany()
+                .HasForeignKey(o => o.IdUsuarioHallazgo)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ObjetoPerdido>()
+                .HasOne(o => o.UsuarioEntrega)
+                .WithMany()
+                .HasForeignKey(o => o.IdUsuarioEntrega)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ObjetoPerdido>()
+                .HasOne(o => o.Alumno)
+                .WithMany()
+                .HasForeignKey(o => o.AlumnoID)
                 .OnDelete(DeleteBehavior.SetNull);
         }
     }

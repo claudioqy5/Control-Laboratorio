@@ -109,7 +109,6 @@ using (var scope = app.Services.CreateScope())
                 ALTER TABLE Alumnos ADD CorreoPersonal NVARCHAR(100) NULL
             END
 
-            -- Auto-completar correos institucionales vacíos o no asignados a partir del código universitario
             UPDATE Alumnos 
             SET CorreoInstitucional = CONCAT(RTRIM(LTRIM(CodigoUniversitario)), '@urp.edu.pe')
             WHERE (CorreoInstitucional IS NULL OR LTRIM(RTRIM(CorreoInstitucional)) = '' OR CorreoInstitucional = '-')
@@ -192,6 +191,58 @@ using (var scope = app.Services.CreateScope())
                     DROP INDEX IX_Libros_NroRegistro ON Libros;
                     CREATE INDEX IX_Libros_NroRegistro ON Libros(NroRegistro);
                 END
+            END
+
+            IF OBJECT_ID('OBJETOS_PERDIDOS', 'U') IS NULL
+            BEGIN
+                CREATE TABLE OBJETOS_PERDIDOS (
+                    IdObjeto INT IDENTITY(1,1) PRIMARY KEY,
+                    Titulo NVARCHAR(150) NOT NULL,
+                    Categoria TINYINT NOT NULL,
+                    Descripcion NVARCHAR(MAX) NOT NULL,
+                    LugarHallazgo NVARCHAR(150) NOT NULL,
+                    FechaHoraHallazgo DATETIME2 NOT NULL,
+                    EstadoObjeto TINYINT NOT NULL DEFAULT 1,
+                    IdUsuarioHallazgo INT NOT NULL,
+                    NombrePersonalHallazgo NVARCHAR(150) NOT NULL,
+                    FechaHoraDevolucion DATETIME2 NULL,
+                    AlumnoID INT NULL,
+                    DocumentoReceptor NVARCHAR(20) NULL,
+                    CodigoURPReceptor NVARCHAR(20) NULL,
+                    IdUsuarioEntrega INT NULL,
+                    NombrePersonalEntrega NVARCHAR(150) NULL,
+                    ObservacionesEntrega NVARCHAR(MAX) NULL,
+                    FechaBaja DATETIME2 NULL,
+                    FechaCreacion DATETIME2 NOT NULL DEFAULT GETDATE(),
+                    CONSTRAINT FK_OBJETOS_PERDIDOS_UsuarioHallazgo FOREIGN KEY (IdUsuarioHallazgo) REFERENCES UsuariosAdmin(IdUsuarioAdmin),
+                    CONSTRAINT FK_OBJETOS_PERDIDOS_UsuarioEntrega FOREIGN KEY (IdUsuarioEntrega) REFERENCES UsuariosAdmin(IdUsuarioAdmin),
+                    CONSTRAINT FK_OBJETOS_PERDIDOS_Alumno FOREIGN KEY (AlumnoID) REFERENCES Alumnos(AlumnoID) ON DELETE SET NULL,
+                    CONSTRAINT CK_OBJETOS_PERDIDOS_ConsistenciaDevolucion CHECK (
+                        (EstadoObjeto = 2 AND FechaHoraDevolucion IS NOT NULL AND IdUsuarioEntrega IS NOT NULL AND NombrePersonalEntrega IS NOT NULL AND (AlumnoID IS NOT NULL OR DocumentoReceptor IS NOT NULL))
+                        OR
+                        (EstadoObjeto <> 2 AND FechaHoraDevolucion IS NULL AND IdUsuarioEntrega IS NULL AND NombrePersonalEntrega IS NULL AND DocumentoReceptor IS NULL AND CodigoURPReceptor IS NULL AND AlumnoID IS NULL)
+                    ),
+                    CONSTRAINT CK_OBJETOS_PERDIDOS_ConsistenciaBaja CHECK (
+                        (EstadoObjeto = 4 AND FechaBaja IS NOT NULL)
+                        OR
+                        (EstadoObjeto <> 4 AND FechaBaja IS NULL)
+                    )
+                );
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_OBJETOS_PERDIDOS_Estado_FechaHallazgo' AND object_id = OBJECT_ID('OBJETOS_PERDIDOS'))
+            BEGIN
+                CREATE INDEX IX_OBJETOS_PERDIDOS_Estado_FechaHallazgo ON OBJETOS_PERDIDOS(EstadoObjeto, FechaHoraHallazgo);
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_OBJETOS_PERDIDOS_AlumnoID' AND object_id = OBJECT_ID('OBJETOS_PERDIDOS'))
+            BEGIN
+                CREATE INDEX IX_OBJETOS_PERDIDOS_AlumnoID ON OBJETOS_PERDIDOS(AlumnoID);
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_OBJETOS_PERDIDOS_CodigoURPReceptor' AND object_id = OBJECT_ID('OBJETOS_PERDIDOS'))
+            BEGIN
+                CREATE INDEX IX_OBJETOS_PERDIDOS_CodigoURPReceptor ON OBJETOS_PERDIDOS(CodigoURPReceptor);
             END
         ");
 
@@ -296,23 +347,7 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
-        // Semilla de Administrador Inicial si la tabla está vacía
-        if (!db.UsuariosAdmin.Any())
-        {
-            db.UsuariosAdmin.Add(new UsuarioAdmin
-            {
-                Username = "admin",
-                PasswordHash = "$2a$11$jFkWk74Sn8veMy1Gsc85DOtk/d3tVRb86bLWL06/2kknBCiSOcF3O", // admin123
-                Nombres = "Administrador Principal",
-                Correo = "admin@urp.edu.pe",
-                Rol = RolAdmin.SuperAdmin,
-                EstadoActivo = true,
-                FechaCreacion = DateTime.UtcNow
-            });
-            db.SaveChanges();
-        }
 
-        // Migración automática de portadas Base64 a archivos estáticos para aligerar la base de datos
         try
         {
             var portadasDir = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "portadas");
@@ -400,7 +435,6 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/api/static",
     OnPrepareResponse = ctx =>
     {
-        // Cache estático de 30 días para portadas y recursos de medios
         ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=2592000");
     }
 });
