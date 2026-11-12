@@ -3,6 +3,7 @@ namespace ControlLaboratorio.Tests.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ControlLaboratorio.API.Controllers;
 using ControlLaboratorio.API.Data;
@@ -40,6 +41,12 @@ public class UsuariosAdminControllerTests : IDisposable
 
         };
         return new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
+    }
+
+    private static JsonElement ToJsonElement(object? value)
+    {
+        var json = JsonSerializer.Serialize(value);
+        return JsonDocument.Parse(json).RootElement;
     }
 
     private static void SetUserContext(ControllerBase controller, string userId, string username, string role)
@@ -238,5 +245,85 @@ public class UsuariosAdminControllerTests : IDisposable
 
         var tokenInDb = await _context.RefreshTokens.FindAsync(token.Id);
         tokenInDb!.RevokedAt.Should().NotBeNull();
+    }
+
+    private static JsonElement GetPropertyCaseInsensitive(JsonElement element, string propName)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propName, StringComparison.OrdinalIgnoreCase))
+            {
+                return property.Value;
+            }
+        }
+        throw new KeyNotFoundException($"Property '{propName}' not found in JsonElement.");
+    }
+
+    [Fact]
+    public async Task GetUsuariosActivos_ReturnsOnlyActiveUsers_OrderedByName()
+    {
+        var u1 = new UsuarioAdmin
+        {
+            Username = "cperez",
+            PasswordHash = "hash1",
+            Nombres = "Carlos Perez",
+            Rol = RolAdmin.Biblioteca,
+            EstadoActivo = true,
+            FechaCreacion = DateTime.UtcNow
+        };
+        var u2 = new UsuarioAdmin
+        {
+            Username = "agomez",
+            PasswordHash = "hash2",
+            Nombres = "Ana Gomez",
+            Rol = RolAdmin.Laboratorio,
+            EstadoActivo = true,
+            FechaCreacion = DateTime.UtcNow
+        };
+        var u3 = new UsuarioAdmin
+        {
+            Username = "bsanchez",
+            PasswordHash = "hash3",
+            Nombres = "Beto Sanchez",
+            Rol = RolAdmin.SuperAdmin,
+            EstadoActivo = false,
+            FechaCreacion = DateTime.UtcNow
+        };
+        _context.UsuariosAdmin.AddRange(u1, u2, u3);
+        await _context.SaveChangesAsync();
+
+        var controller = new UsuariosAdminController(_context);
+        SetUserContext(controller, "1", "admin", "Biblioteca");
+
+        var result = await controller.GetUsuariosActivos();
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var json = ToJsonElement(okResult.Value);
+        json.ValueKind.Should().Be(JsonValueKind.Array);
+        json.GetArrayLength().Should().Be(2);
+
+        var first = json[0];
+        GetPropertyCaseInsensitive(first, "nombres").GetString().Should().Be("Ana Gomez");
+        GetPropertyCaseInsensitive(first, "username").GetString().Should().Be("agomez");
+        GetPropertyCaseInsensitive(first, "idUsuarioAdmin").GetInt32().Should().Be(u2.IdUsuarioAdmin);
+
+        var second = json[1];
+        GetPropertyCaseInsensitive(second, "nombres").GetString().Should().Be("Carlos Perez");
+        GetPropertyCaseInsensitive(second, "username").GetString().Should().Be("cperez");
+        GetPropertyCaseInsensitive(second, "idUsuarioAdmin").GetInt32().Should().Be(u1.IdUsuarioAdmin);
+    }
+
+    [Fact]
+    public async Task GetUsuariosActivos_WhenNoActiveUsers_ReturnsEmptyList()
+    {
+        var controller = new UsuariosAdminController(_context);
+        SetUserContext(controller, "1", "admin", "Biblioteca");
+
+        var result = await controller.GetUsuariosActivos();
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        var json = ToJsonElement(okResult.Value);
+        json.ValueKind.Should().Be(JsonValueKind.Array);
+        json.GetArrayLength().Should().Be(0);
     }
 }

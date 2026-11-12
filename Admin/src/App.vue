@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import axios, { API_BASE_URL } from './config'
 import Dashboard from './components/Dashboard.vue'
 import AlumnosCRUD from './components/AlumnosCRUD.vue'
 import ActiveSessions from './components/ActiveSessions.vue'
@@ -31,31 +32,6 @@ const handleVerEstadisticas = (conferenciaId) => {
   currentView.value = 'conferencias-reportes'
 }
 
-const checkAuth = () => {
-  const token = localStorage.getItem('adminToken')
-  const user = localStorage.getItem('adminUser')
-  if (token) {
-    isAuthenticated.value = true
-    if (user) {
-      try {
-        currentUser.value = JSON.parse(user)
-      } catch {
-        currentUser.value = null
-      }
-    } else {
-      currentUser.value = null
-    }
-  }
-}
-
-checkAuth()
-onMounted(checkAuth)
-
-const handleLoginSuccess = (user) => {
-  isAuthenticated.value = true
-  currentUser.value = user || null
-}
-
 const handleLogout = () => {
   localStorage.removeItem('adminToken')
   localStorage.removeItem('adminRefreshToken')
@@ -64,6 +40,55 @@ const handleLogout = () => {
   isAuthenticated.value = false
   currentView.value = 'dashboard'
   selectedConferenciaId.value = null
+}
+
+const checkAuth = async () => {
+  const token = localStorage.getItem('adminToken')
+  const refreshToken = localStorage.getItem('adminRefreshToken')
+  if (!token || !refreshToken) {
+    handleLogout()
+    return
+  }
+
+  const user = localStorage.getItem('adminUser')
+  if (user) {
+    try {
+      currentUser.value = JSON.parse(user)
+    } catch {
+      currentUser.value = null
+    }
+  }
+
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/auth/me`)
+    if (res?.data) {
+      currentUser.value = res.data
+      localStorage.setItem('adminUser', JSON.stringify(res.data))
+      isAuthenticated.value = true
+    } else {
+      handleLogout()
+    }
+  } catch {
+    handleLogout()
+  }
+}
+
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('auth:expired', handleLogout)
+  }
+  checkAuth()
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('auth:expired', handleLogout)
+  }
+})
+
+const handleLoginSuccess = (user) => {
+  isAuthenticated.value = true
+  currentUser.value = user || null
 }
 </script>
 

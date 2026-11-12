@@ -10,7 +10,7 @@ namespace ControlLaboratorio.API.Controllers
 {
     [Route("api/admin/usuarios")]
     [ApiController]
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize]
     public class UsuariosAdminController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -20,7 +20,20 @@ namespace ControlLaboratorio.API.Controllers
             _context = context;
         }
 
+        [HttpGet("activos")]
+        public async Task<IActionResult> GetUsuariosActivos()
+        {
+            var usuarios = await _context.UsuariosAdmin
+                .Where(u => u.EstadoActivo)
+                .OrderBy(u => u.Nombres)
+                .Select(u => new { u.IdUsuarioAdmin, u.Username, u.Nombres })
+                .ToListAsync();
+
+            return Ok(usuarios);
+        }
+
         [HttpGet]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<ActionResult<IEnumerable<UsuarioAdminDto>>> GetUsuarios()
         {
             var usuarios = await _context.UsuariosAdmin
@@ -43,6 +56,7 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<ActionResult<UsuarioAdminDto>> GetUsuarioById(int id)
         {
             var u = await _context.UsuariosAdmin.FindAsync(id);
@@ -66,6 +80,7 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<ActionResult<UsuarioAdminDto>> CreateUsuario([FromBody] CreateUsuarioAdminRequest request)
         {
 
@@ -127,6 +142,7 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> UpdateUsuario(int id, [FromBody] UpdateUsuarioAdminRequest request)
         {
             var usuario = await _context.UsuariosAdmin.FindAsync(id);
@@ -161,6 +177,7 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpPatch("{id}/estado")]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> ToggleEstado(int id)
         {
             var usuario = await _context.UsuariosAdmin.FindAsync(id);
@@ -195,6 +212,7 @@ namespace ControlLaboratorio.API.Controllers
         }
 
         [HttpPut("{id}/password")]
+        [Authorize(Roles = "SuperAdmin")]
         public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.NuevaPassword) || request.NuevaPassword.Length < 6)
