@@ -676,56 +676,24 @@ const handleCloseZoom = () => {
       </div>
     </div>
 
-    <div :class="['modal-overlay', { active: showZoomModal }]" @click.self="handleCloseZoom">
+    <div :class="['modal-overlay modal-overlay-lightbox', { active: showZoomModal }]" @click.self="handleCloseZoom">
       <div v-if="zoomSlide" class="modal-card modal-card-zoom">
-        <div class="modal-header">
-          <div class="zoom-title-box">
-            <h3 class="modal-title">{{ zoomSlide.titulo }}</h3>
-            <span v-if="zoomSlide.formato === 1" class="badge badge-vertical">Formato Vertical</span>
-            <span v-else class="badge badge-bipartito">Formato Bipartito</span>
-          </div>
-          <button
-            type="button"
-            class="modal-close-btn"
-            @click="handleCloseZoom"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="zoom-body">
-          <div class="zoom-image-container">
-            <img
-              :src="getImageUrl(zoomSlide.imagenUrl)"
-              :alt="zoomSlide.titulo"
-              class="zoom-full-image"
-            />
-          </div>
-
-          <div v-if="zoomSlide.descripcion" class="zoom-meta-block">
-            <span class="zoom-meta-label">Descripción:</span>
-            <p class="zoom-meta-desc">{{ zoomSlide.descripcion }}</p>
-          </div>
-
-          <div v-if="zoomSlide.enlaceUrl" class="zoom-link-block">
-            <a
-              :href="zoomSlide.enlaceUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="external-anchor zoom-anchor"
-            >
-              <span>Abrir Enlace Oficial</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-            </a>
-          </div>
-        </div>
+        <button
+          type="button"
+          class="lightbox-close-btn"
+          @click="handleCloseZoom"
+          title="Cerrar vista previa"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        <img
+          :src="getImageUrl(zoomSlide.imagenUrl)"
+          :alt="zoomSlide.titulo"
+          class="lightbox-image"
+        />
       </div>
     </div>
 
@@ -1162,7 +1130,53 @@ const handleCloseZoom = () => {
 }
 
 .modal-card-zoom {
-  max-width: 720px;
+  background: transparent;
+  box-shadow: none;
+  max-width: 90vw;
+  max-height: 90vh;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: visible;
+}
+
+.modal-overlay-lightbox {
+  background: rgba(15, 23, 42, 0.95);
+  padding: 1.5rem;
+}
+
+.lightbox-image {
+  max-width: 85vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+.lightbox-close-btn {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #0F172A;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.15s;
+  z-index: 20;
+}
+
+.lightbox-close-btn:hover {
+  background: #020617;
+  transform: scale(1.08);
 }
 
 .modal-header {
@@ -1639,71 +1653,6 @@ const handleCloseZoom = () => {
   font-size: 0.78rem;
   color: #64748B;
   margin: 0;
-}
-
-.zoom-title-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.zoom-body {
-  padding: 1.4rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.zoom-image-container {
-  width: 100%;
-  max-height: 65vh;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #0F172A;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.zoom-full-image {
-  max-width: 100%;
-  max-height: 65vh;
-  object-fit: contain;
-  display: block;
-}
-
-.zoom-meta-block {
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 0.85rem;
-}
-
-.zoom-meta-label {
-  font-size: 0.76rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #475569;
-  letter-spacing: 0.03em;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.zoom-meta-desc {
-  font-size: 0.86rem;
-  color: #1E293B;
-  margin: 0;
-  line-height: 1.45;
-}
-
-.zoom-link-block {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.zoom-anchor {
-  font-size: 0.88rem;
 }
 
 .toast-notification {

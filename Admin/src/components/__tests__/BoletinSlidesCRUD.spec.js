@@ -108,9 +108,9 @@ describe('BoletinSlidesCRUD.vue', () => {
     await zoomButton.trigger('click')
 
     expect(wrapper.findAll('.modal-overlay')[2].classes()).toContain('active')
-    expect(wrapper.find('.modal-card-zoom').text()).toContain('Campaña de Vacunación 2026')
+    expect(wrapper.find('.modal-card-zoom img').attributes('alt')).toBe('Campaña de Vacunación 2026')
 
-    await wrapper.find('.modal-card-zoom .modal-close-btn').trigger('click')
+    await wrapper.find('.modal-card-zoom .lightbox-close-btn').trigger('click')
     expect(wrapper.findAll('.modal-overlay')[2].classes()).not.toContain('active')
   })
 
