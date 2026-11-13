@@ -23,6 +23,7 @@ namespace ControlLaboratorio.API.Data
         public DbSet<ConferenciaMedica> ConferenciasMedicas { get; set; }
         public DbSet<ParticipacionConferencia> ParticipacionesConferencia { get; set; }
         public DbSet<ObjetoPerdido> ObjetosPerdidos { get; set; }
+        public DbSet<BoletinSlide> BoletinSlides { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

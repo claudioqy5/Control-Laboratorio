@@ -313,6 +313,23 @@ using (var scope = app.Services.CreateScope())
             BEGIN
                 CREATE INDEX IX_OBJETOS_PERDIDOS_CodigoURPReceptor ON OBJETOS_PERDIDOS(CodigoURPReceptor);
             END
+
+            IF OBJECT_ID('BOLETIN_SLIDES', 'U') IS NULL
+            BEGIN
+                CREATE TABLE BOLETIN_SLIDES (
+                    IdSlide INT IDENTITY(1,1) PRIMARY KEY,
+                    Titulo NVARCHAR(200) NOT NULL,
+                    Descripcion NVARCHAR(1000) NULL,
+                    ImagenUrl NVARCHAR(500) NOT NULL,
+                    Formato TINYINT NOT NULL,
+                    EnlaceUrl NVARCHAR(500) NULL,
+                    CONSTRAINT CK_BOLETIN_SLIDES_Formato CHECK (Formato IN (1, 2)),
+                    CONSTRAINT CK_BOLETIN_SLIDES_Descripcion CHECK (
+                        (Formato = 2 AND Descripcion IS NOT NULL AND LTRIM(RTRIM(Descripcion)) <> '')
+                        OR (Formato = 1)
+                    )
+                );
+            END
         ");
 
         if (app.Environment.IsDevelopment() && db.Sesiones.Count() < 15)
@@ -496,6 +513,11 @@ var portadasStaticPath = Path.Combine(wwwrootPath, "portadas");
 if (!Directory.Exists(portadasStaticPath))
 {
     Directory.CreateDirectory(portadasStaticPath);
+}
+var boletinesStaticPath = Path.Combine(wwwrootPath, "boletines");
+if (!Directory.Exists(boletinesStaticPath))
+{
+    Directory.CreateDirectory(boletinesStaticPath);
 }
 
 app.UseStaticFiles(new StaticFileOptions
