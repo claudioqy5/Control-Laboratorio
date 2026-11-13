@@ -20,7 +20,7 @@ namespace ControlLaboratorio.API.Controllers
     public class AdminResourcesController : ControllerBase
     {
         private const long MaxImageSizeBytes = 5 * 1024 * 1024;
-        private const int MaxDestacadosCount = 6;
+        private const int MaxHexagonos = 15;
         private static readonly string[] AllowedExtensions = [".webp", ".jpg", ".jpeg", ".png"];
 
         private readonly ApplicationDbContext _context;
@@ -126,9 +126,9 @@ namespace ControlLaboratorio.API.Controllers
             if (request.MostrarEnHexagonos)
             {
                 var featuredCount = await _context.BasesDatosMedicas.CountAsync(r => r.MostrarEnHexagonos && r.EstadoActivo);
-                if (featuredCount >= MaxDestacadosCount)
+                if (featuredCount >= MaxHexagonos)
                 {
-                    return BadRequest(new { message = $"Límite alcanzado: Ya existen {MaxDestacadosCount} bases de datos destacadas en la cuadrícula de inicio. Desactive otra antes de destacar esta." });
+                    return BadRequest(new { message = "La matriz hexagonal ya cuenta con 15 bases de datos. Para incorporar esta base, debes reemplazar una de las 15 actuales." });
                 }
             }
 
@@ -218,9 +218,9 @@ namespace ControlLaboratorio.API.Controllers
                 var featuredCount = await _context.BasesDatosMedicas
                     .CountAsync(r => r.MostrarEnHexagonos && r.EstadoActivo && r.IdBaseDatos != id);
 
-                if (featuredCount >= MaxDestacadosCount)
+                if (featuredCount >= MaxHexagonos)
                 {
-                    return BadRequest(new { message = $"Límite alcanzado: Ya existen {MaxDestacadosCount} bases de datos destacadas en la cuadrícula de inicio. Desactive otra antes de destacar esta." });
+                    return BadRequest(new { message = "La matriz hexagonal ya cuenta con 15 bases de datos. Para incorporar esta base, debes reemplazar una de las 15 actuales." });
                 }
             }
 
@@ -373,9 +373,9 @@ namespace ControlLaboratorio.API.Controllers
                 }
 
                 var count = await _context.BasesDatosMedicas.CountAsync(r => r.MostrarEnHexagonos && r.EstadoActivo && r.IdBaseDatos != id);
-                if (count >= MaxDestacadosCount)
+                if (count >= MaxHexagonos)
                 {
-                    return BadRequest(new { message = $"Límite alcanzado: Ya existen {MaxDestacadosCount} bases de datos destacadas en la cuadrícula de inicio. Desactive otra antes de destacar esta." });
+                    return BadRequest(new { message = "La matriz hexagonal ya cuenta con 15 bases de datos. Para incorporar esta base, debes reemplazar una de las 15 actuales." });
                 }
             }
 
@@ -386,6 +386,59 @@ namespace ControlLaboratorio.API.Controllers
             {
                 id = resource.IdBaseDatos,
                 mostrarEnHexagonos = resource.MostrarEnHexagonos
+            });
+        }
+
+        [HttpPatch("{id:int}/swap-destacado")]
+        public async Task<IActionResult> SwapDestacado(int id, [FromBody] SwapDestacadoDto dto)
+        {
+            if (dto == null || dto.IdReemplazo <= 0)
+            {
+                return BadRequest(new { message = "Debe especificar un recurso válido a reemplazar." });
+            }
+
+            if (id == dto.IdReemplazo)
+            {
+                return BadRequest(new { message = "El recurso a incorporar no puede ser el mismo que se va a reemplazar." });
+            }
+
+            var entrante = await _context.BasesDatosMedicas.FindAsync(id);
+            if (entrante == null)
+            {
+                return NotFound(new { message = "Recurso entrante no encontrado." });
+            }
+
+            if (!entrante.EstadoActivo)
+            {
+                return BadRequest(new { message = "El recurso a incorporar debe estar activo." });
+            }
+
+            if (entrante.MostrarEnHexagonos)
+            {
+                return BadRequest(new { message = "El recurso a incorporar ya se encuentra en la matriz hexagonal." });
+            }
+
+            var saliente = await _context.BasesDatosMedicas.FindAsync(dto.IdReemplazo);
+            if (saliente == null)
+            {
+                return NotFound(new { message = "Recurso a reemplazar no encontrado." });
+            }
+
+            if (!saliente.MostrarEnHexagonos)
+            {
+                return BadRequest(new { message = "El recurso seleccionado a reemplazar no forma parte de la matriz hexagonal." });
+            }
+
+            saliente.MostrarEnHexagonos = false;
+            entrante.MostrarEnHexagonos = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                idEntrante = id,
+                idSaliente = dto.IdReemplazo,
+                mensaje = "Intercambio realizado exitosamente."
             });
         }
 

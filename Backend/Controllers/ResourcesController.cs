@@ -105,6 +105,22 @@ namespace ControlLaboratorio.API.Controllers
             return Ok(destacados);
         }
 
+        [HttpGet("matriz-hexagonal")]
+        public async Task<IActionResult> GetMatrizHexagonal()
+        {
+            var matriz = await _context.BasesDatosMedicas
+                .Include(r => r.RecursosCursos)
+                .ThenInclude(rc => rc.Curso)
+                .Where(r => r.EstadoActivo && r.MostrarEnHexagonos)
+                .OrderBy(r => r.NombreRecurso)
+                .Take(15)
+                .Select(r => MapToPublicDto(r))
+                .AsNoTracking()
+                .ToListAsync();
+
+            return Ok(matriz);
+        }
+
         [HttpGet("cursos")]
         public async Task<IActionResult> GetCursos()
         {

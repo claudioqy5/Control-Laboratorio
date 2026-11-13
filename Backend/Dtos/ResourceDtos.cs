@@ -85,4 +85,9 @@ namespace ControlLaboratorio.API.DTOs
         public string? CursoIdsRaw { get; set; }
         public IFormFile? Image { get; set; }
     }
+
+    public class SwapDestacadoDto
+    {
+        public int IdReemplazo { get; set; }
+    }
 }
