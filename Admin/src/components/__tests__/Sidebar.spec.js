@@ -25,7 +25,7 @@ describe('Sidebar', () => {
     await webTab.trigger('click')
 
     const webDisabled = wrapper.findAll('.disabled')
-    expect(webDisabled.length).toBe(4)
+    expect(webDisabled.length).toBe(3)
     webDisabled.forEach(item => {
       expect(item.attributes('title')).toBe('Próximamente')
     })
@@ -33,9 +33,9 @@ describe('Sidebar', () => {
     expect(webLabels).not.toContain('Gestión de Conferencias')
     expect(webLabels).not.toContain('Estadísticas Conferencias')
     expect(webLabels).not.toContain('Objetos Perdidos')
+    expect(webLabels).not.toContain('Boletín Informativo')
     expect(webLabels).toContain('Bases de Datos')
     expect(webLabels).toContain('Matriz Hexagonal')
-    expect(webLabels).toContain('Boletín Informativo')
     expect(webLabels).toContain('Preguntas Frecuentes')
 
     const sistemaTab = tabs.find(tab => tab.text().includes('Sistema'))
@@ -247,5 +247,9 @@ describe('Sidebar', () => {
     const objetosLink = links.find(l => l.text().includes('Objetos Perdidos'))
     await objetosLink.trigger('click')
     expect(wrapper.emitted('change-view')[1]).toEqual(['objetos-perdidos'])
+
+    const boletinLink = links.find(l => l.text().includes('Boletín Informativo'))
+    await boletinLink.trigger('click')
+    expect(wrapper.emitted('change-view')[2]).toEqual(['boletin'])
   })
 })
