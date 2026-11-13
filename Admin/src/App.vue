@@ -21,6 +21,7 @@ import ResumenPrestamos from './components/ResumenPrestamos.vue'
 import ConferenciasCRUD from './components/ConferenciasCRUD.vue'
 import ConferenciasReporte from './components/ConferenciasReporte.vue'
 import ObjetosPerdidosCRUD from './components/ObjetosPerdidosCRUD.vue'
+import BoletinSlidesCRUD from './components/BoletinSlidesCRUD.vue'
 
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
@@ -136,6 +137,7 @@ const handleLoginSuccess = (user) => {
         v-if="currentView === 'objetos-perdidos'"
         :current-user="currentUser"
       />
+      <BoletinSlidesCRUD v-if="currentView === 'boletin'" />
     </main>
 
     <ChatBot />
