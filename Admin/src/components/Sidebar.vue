@@ -36,11 +36,10 @@ const bibliotecaViews = [
   'prestamos',
   'estadisticas-prestamos',
   'categorias',
-  'cursos',
   'mapa-biblio'
 ]
 
-const webViews = ['conferencias', 'conferencias-reportes', 'recursos', 'objetos-perdidos', 'boletin']
+const webViews = ['conferencias', 'conferencias-reportes', 'recursos', 'cursos', 'objetos-perdidos', 'boletin']
 
 watch(
   () => props.currentView,
@@ -417,20 +416,6 @@ onBeforeUnmount(() => {
         <a
           href="#"
           class="nav-item"
-          :class="{ active: currentView === 'cursos' }"
-          @click.prevent="navigate('cursos')"
-          :title="isCollapsed ? 'Malla Curricular' : ''"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-            <path d="M6 12v5c3 3 9 3 12 0v-5" />
-          </svg>
-          <span class="item-text">Malla Curricular</span>
-        </a>
-
-        <a
-          href="#"
-          class="nav-item"
           :class="{ active: currentView === 'mapa-biblio' }"
           @click.prevent="navigate('mapa-biblio')"
           :title="isCollapsed ? 'Mapa Biblioteca' : ''"
@@ -487,6 +472,19 @@ onBeforeUnmount(() => {
             <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
           </svg>
           <span class="item-text">Bases de Datos</span>
+        </a>
+        <a
+          href="#"
+          class="nav-item"
+          :class="{ active: currentView === 'cursos' }"
+          :title="isCollapsed ? 'Malla Curricular' : ''"
+          @click.prevent="navigate('cursos')"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+            <path d="M6 12v5c3 3 9 3 12 0v-5" />
+          </svg>
+          <span class="item-text">Malla Curricular</span>
         </a>
         <a
           href="#"

@@ -35,6 +35,7 @@ describe('Sidebar', () => {
     expect(webLabels).not.toContain('Objetos Perdidos')
     expect(webLabels).not.toContain('Boletín Informativo')
     expect(webLabels).not.toContain('Bases de Datos')
+    expect(webLabels).not.toContain('Malla Curricular')
     expect(webLabels).toContain('Preguntas Frecuentes')
 
     const sistemaTab = tabs.find(tab => tab.text().includes('Sistema'))
@@ -76,9 +77,9 @@ describe('Sidebar', () => {
     await librosLink.trigger('click')
     expect(wrapper.emitted('change-view')[3]).toEqual(['libros'])
 
-    const cursosLink = allLinks.find(link => link.text().includes('Malla Curricular'))
-    await cursosLink.trigger('click')
-    expect(wrapper.emitted('change-view')[4]).toEqual(['cursos'])
+    const categoriasLink = allLinks.find(link => link.text().includes('Categorías'))
+    await categoriasLink.trigger('click')
+    expect(wrapper.emitted('change-view')[4]).toEqual(['categorias'])
   })
 
   it('denies access to Configuración / Accesos for non-SuperAdmin user and displays toast alert', async () => {
@@ -258,5 +259,9 @@ describe('Sidebar', () => {
     const recursosLink = links.find(l => l.text().includes('Bases de Datos'))
     await recursosLink.trigger('click')
     expect(wrapper.emitted('change-view')[3]).toEqual(['recursos'])
+
+    const cursosLink = links.find(l => l.text().includes('Malla Curricular'))
+    await cursosLink.trigger('click')
+    expect(wrapper.emitted('change-view')[4]).toEqual(['cursos'])
   })
 })
