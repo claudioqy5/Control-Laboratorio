@@ -330,6 +330,81 @@ using (var scope = app.Services.CreateScope())
                     )
                 );
             END
+
+            IF OBJECT_ID('t_base_datos_medica', 'U') IS NULL
+            BEGIN
+                CREATE TABLE t_base_datos_medica (
+                    id_base_datos INT IDENTITY(1,1) PRIMARY KEY,
+                    nombre_recurso NVARCHAR(150) NOT NULL,
+                    logotipo_url NVARCHAR(500) NOT NULL,
+                    descripcion_clinica NVARCHAR(1000) NOT NULL,
+                    es_suscripcion BIT NOT NULL DEFAULT 1,
+                    tiene_app_movil BIT NOT NULL DEFAULT 0,
+                    url_externo NVARCHAR(500) NULL,
+                    estado_activo BIT NOT NULL DEFAULT 1,
+                    mostrar_en_hexagonos BIT NOT NULL DEFAULT 0,
+                    youtube_video_id NVARCHAR(50) NULL
+                );
+            END
+
+            IF OBJECT_ID('t_base_datos_medica', 'U') IS NOT NULL
+            BEGIN
+                IF COL_LENGTH('t_base_datos_medica', 'youtube_video_id') IS NULL
+                BEGIN
+                    ALTER TABLE t_base_datos_medica ADD youtube_video_id NVARCHAR(50) NULL;
+                END
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_t_base_datos_medica_estado_activo' AND object_id = OBJECT_ID('t_base_datos_medica'))
+            BEGIN
+                CREATE INDEX IX_t_base_datos_medica_estado_activo ON t_base_datos_medica(estado_activo);
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_t_base_datos_medica_mostrar_en_hexagonos' AND object_id = OBJECT_ID('t_base_datos_medica'))
+            BEGIN
+                CREATE INDEX IX_t_base_datos_medica_mostrar_en_hexagonos ON t_base_datos_medica(mostrar_en_hexagonos);
+            END
+
+            IF OBJECT_ID('t_curso_medicina', 'U') IS NULL
+            BEGIN
+                CREATE TABLE t_curso_medicina (
+                    id_curso INT IDENTITY(1,1) PRIMARY KEY,
+                    nombre_curso NVARCHAR(150) NOT NULL,
+                    ciclo INT NOT NULL,
+                    codigo_curso NVARCHAR(20) NULL
+                );
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_t_curso_medicina_ciclo' AND object_id = OBJECT_ID('t_curso_medicina'))
+            BEGIN
+                CREATE INDEX IX_t_curso_medicina_ciclo ON t_curso_medicina(ciclo);
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_t_curso_medicina_nombre_curso' AND object_id = OBJECT_ID('t_curso_medicina'))
+            BEGIN
+                CREATE INDEX IX_t_curso_medicina_nombre_curso ON t_curso_medicina(nombre_curso);
+            END
+
+            IF OBJECT_ID('t_recurso_curso', 'U') IS NULL
+            BEGIN
+                CREATE TABLE t_recurso_curso (
+                    id_base_datos INT NOT NULL,
+                    id_curso INT NOT NULL,
+                    CONSTRAINT PK_t_recurso_curso PRIMARY KEY (id_base_datos, id_curso),
+                    CONSTRAINT FK_t_recurso_curso_base_datos FOREIGN KEY (id_base_datos) REFERENCES t_base_datos_medica(id_base_datos) ON DELETE CASCADE,
+                    CONSTRAINT FK_t_recurso_curso_curso FOREIGN KEY (id_curso) REFERENCES t_curso_medicina(id_curso) ON DELETE CASCADE
+                );
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_t_recurso_curso_id_curso' AND object_id = OBJECT_ID('t_recurso_curso'))
+            BEGIN
+                CREATE INDEX IX_t_recurso_curso_id_curso ON t_recurso_curso(id_curso);
+            END
+
+            IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_t_recurso_curso_id_base_datos' AND object_id = OBJECT_ID('t_recurso_curso'))
+            BEGIN
+                CREATE INDEX IX_t_recurso_curso_id_base_datos ON t_recurso_curso(id_base_datos);
+            END
         ");
 
         if (app.Environment.IsDevelopment() && db.Sesiones.Count() < 15)
@@ -479,6 +554,84 @@ using (var scope = app.Services.CreateScope())
         catch
         {
         }
+
+        if (!db.CursosMedicina.Any())
+        {
+            var cursosOficiales = new List<CursoMedicina>
+            {
+                new CursoMedicina { Ciclo = 1, NombreCurso = "Biología Celular y Molecular", CodigoCurso = "MH-0110" },
+                new CursoMedicina { Ciclo = 1, NombreCurso = "Química General", CodigoCurso = "MH-0103" },
+                new CursoMedicina { Ciclo = 1, NombreCurso = "Biofísica Médica", CodigoCurso = "MH-0104" },
+                new CursoMedicina { Ciclo = 1, NombreCurso = "Matemática Aplicada a la Medicina", CodigoCurso = "MH-0102" },
+                new CursoMedicina { Ciclo = 1, NombreCurso = "Comunicación y Redacción Científica", CodigoCurso = "MH-0101" },
+                new CursoMedicina { Ciclo = 1, NombreCurso = "Métodos de Estudio Universitario", CodigoCurso = "MH-0105" },
+
+                new CursoMedicina { Ciclo = 2, NombreCurso = "Bioestadística y Demografía Médica", CodigoCurso = "MH-0201" },
+                new CursoMedicina { Ciclo = 2, NombreCurso = "Telemática Médica e Informática Biomédica", CodigoCurso = "MH-0202" },
+                new CursoMedicina { Ciclo = 2, NombreCurso = "Historia de la Medicina", CodigoCurso = "MH-0203" },
+                new CursoMedicina { Ciclo = 2, NombreCurso = "Psicología Médica", CodigoCurso = "MH-0204" },
+                new CursoMedicina { Ciclo = 2, NombreCurso = "Bioética y Deontología Médica", CodigoCurso = "MH-0205" },
+                new CursoMedicina { Ciclo = 2, NombreCurso = "Metodología de la Investigación Científica", CodigoCurso = "MH-0206" },
+
+                new CursoMedicina { Ciclo = 3, NombreCurso = "Anatomía Humana I", CodigoCurso = "MH-0301" },
+                new CursoMedicina { Ciclo = 3, NombreCurso = "Histología Médica", CodigoCurso = "MH-0302" },
+                new CursoMedicina { Ciclo = 3, NombreCurso = "Embriología y Genética Humana", CodigoCurso = "MH-0303" },
+                new CursoMedicina { Ciclo = 3, NombreCurso = "Inglés Médico I", CodigoCurso = "MH-0304" },
+
+                new CursoMedicina { Ciclo = 4, NombreCurso = "Anatomía Humana II y Neuroanatomía", CodigoCurso = "MH-0401" },
+                new CursoMedicina { Ciclo = 4, NombreCurso = "Fisiología Humana", CodigoCurso = "MH-0402" },
+                new CursoMedicina { Ciclo = 4, NombreCurso = "Bioquímica y Nutrición Médica", CodigoCurso = "MH-0403" },
+                new CursoMedicina { Ciclo = 4, NombreCurso = "Microbiología y Parasitología Médica", CodigoCurso = "MH-0404" },
+                new CursoMedicina { Ciclo = 4, NombreCurso = "Inglés Médico II", CodigoCurso = "MH-0405" },
+
+                new CursoMedicina { Ciclo = 5, NombreCurso = "Farmacología Médica", CodigoCurso = "MH-0501" },
+                new CursoMedicina { Ciclo = 5, NombreCurso = "Patología General e Inmunología", CodigoCurso = "MH-0502" },
+                new CursoMedicina { Ciclo = 5, NombreCurso = "Fisiopatología", CodigoCurso = "MH-0503" },
+                new CursoMedicina { Ciclo = 5, NombreCurso = "Epidemiología y Salud Pública", CodigoCurso = "MH-0504" },
+
+                new CursoMedicina { Ciclo = 6, NombreCurso = "Semiología Médica y Propedéutica Clínica", CodigoCurso = "MH-0601" },
+                new CursoMedicina { Ciclo = 6, NombreCurso = "Patología Especial", CodigoCurso = "MH-0602" },
+                new CursoMedicina { Ciclo = 6, NombreCurso = "Diagnóstico por Imágenes y Radiología", CodigoCurso = "MH-0603" },
+                new CursoMedicina { Ciclo = 6, NombreCurso = "Patología Clínica y Medicina de Laboratorio", CodigoCurso = "MH-0604" },
+
+                new CursoMedicina { Ciclo = 7, NombreCurso = "Medicina Interna I", CodigoCurso = "MH-0701" },
+                new CursoMedicina { Ciclo = 7, NombreCurso = "Infectología y Enfermedades Tropicales", CodigoCurso = "MH-0702" },
+                new CursoMedicina { Ciclo = 7, NombreCurso = "Dermatología Clínica", CodigoCurso = "MH-0703" },
+                new CursoMedicina { Ciclo = 7, NombreCurso = "Terapéutica Médica", CodigoCurso = "MH-0704" },
+
+                new CursoMedicina { Ciclo = 8, NombreCurso = "Medicina Interna II", CodigoCurso = "MH-0801" },
+                new CursoMedicina { Ciclo = 8, NombreCurso = "Neurología Clínica", CodigoCurso = "MH-0802" },
+                new CursoMedicina { Ciclo = 8, NombreCurso = "Toxicología Clínica", CodigoCurso = "MH-0803" },
+
+                new CursoMedicina { Ciclo = 9, NombreCurso = "Cirugía General y del Aparato Digestivo", CodigoCurso = "MH-0901" },
+                new CursoMedicina { Ciclo = 9, NombreCurso = "Anestesiología y Reanimación", CodigoCurso = "MH-0902" },
+                new CursoMedicina { Ciclo = 9, NombreCurso = "Traumatología y Ortopedia", CodigoCurso = "MH-0903" },
+                new CursoMedicina { Ciclo = 9, NombreCurso = "Urología", CodigoCurso = "MH-0904" },
+
+                new CursoMedicina { Ciclo = 10, NombreCurso = "Cirugía de Especialidades", CodigoCurso = "MH-1001" },
+                new CursoMedicina { Ciclo = 10, NombreCurso = "Oftalmología", CodigoCurso = "MH-1002" },
+                new CursoMedicina { Ciclo = 10, NombreCurso = "Otorrinolaringología", CodigoCurso = "MH-1003" },
+                new CursoMedicina { Ciclo = 10, NombreCurso = "Medicina Física y Rehabilitación", CodigoCurso = "MH-1004" },
+                new CursoMedicina { Ciclo = 10, NombreCurso = "Psiquiatría y Salud Mental", CodigoCurso = "MH-1005" },
+
+                new CursoMedicina { Ciclo = 11, NombreCurso = "Ginecología y Obstetricia", CodigoCurso = "MH-1101" },
+                new CursoMedicina { Ciclo = 11, NombreCurso = "Medicina Legal y Forense", CodigoCurso = "MH-1102" },
+                new CursoMedicina { Ciclo = 11, NombreCurso = "Gerencia y Gestión en Servicios de Salud", CodigoCurso = "MH-1103" },
+
+                new CursoMedicina { Ciclo = 12, NombreCurso = "Pediatría y Neonatología", CodigoCurso = "MH-1201" },
+                new CursoMedicina { Ciclo = 12, NombreCurso = "Salud Comunitaria y Atención Primaria", CodigoCurso = "MH-1202" },
+                new CursoMedicina { Ciclo = 12, NombreCurso = "Taller de Tesis y Proyectos de Investigación", CodigoCurso = "MH-1203" },
+
+                new CursoMedicina { Ciclo = 13, NombreCurso = "Internado Médico I - Medicina Interna", CodigoCurso = "MH-1301" },
+                new CursoMedicina { Ciclo = 13, NombreCurso = "Internado Médico I - Pediatría", CodigoCurso = "MH-1302" },
+
+                new CursoMedicina { Ciclo = 14, NombreCurso = "Internado Médico II - Cirugía General", CodigoCurso = "MH-1401" },
+                new CursoMedicina { Ciclo = 14, NombreCurso = "Internado Médico II - Ginecología y Obstetricia", CodigoCurso = "MH-1402" }
+            };
+
+            db.CursosMedicina.AddRange(cursosOficiales);
+            db.SaveChanges();
+        }
     }
     catch
     {
@@ -518,6 +671,11 @@ var boletinesStaticPath = Path.Combine(wwwrootPath, "boletines");
 if (!Directory.Exists(boletinesStaticPath))
 {
     Directory.CreateDirectory(boletinesStaticPath);
+}
+var recursosStaticPath = Path.Combine(wwwrootPath, "recursos");
+if (!Directory.Exists(recursosStaticPath))
+{
+    Directory.CreateDirectory(recursosStaticPath);
 }
 
 app.UseStaticFiles(new StaticFileOptions

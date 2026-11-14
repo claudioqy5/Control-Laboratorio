@@ -24,6 +24,9 @@ namespace ControlLaboratorio.API.Data
         public DbSet<ParticipacionConferencia> ParticipacionesConferencia { get; set; }
         public DbSet<ObjetoPerdido> ObjetosPerdidos { get; set; }
         public DbSet<BoletinSlide> BoletinSlides { get; set; }
+        public DbSet<BaseDatosMedica> BasesDatosMedicas { get; set; }
+        public DbSet<CursoMedicina> CursosMedicina { get; set; }
+        public DbSet<RecursoCurso> RecursosCursos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -130,6 +133,39 @@ namespace ControlLaboratorio.API.Data
                 .WithMany()
                 .HasForeignKey(o => o.AlumnoID)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<BaseDatosMedica>()
+                .HasIndex(b => b.EstadoActivo);
+
+            modelBuilder.Entity<BaseDatosMedica>()
+                .HasIndex(b => b.MostrarEnHexagonos);
+
+            modelBuilder.Entity<CursoMedicina>()
+                .HasIndex(c => c.Ciclo);
+
+            modelBuilder.Entity<CursoMedicina>()
+                .HasIndex(c => c.NombreCurso);
+
+            modelBuilder.Entity<RecursoCurso>()
+                .HasKey(rc => new { rc.IdBaseDatos, rc.IdCurso });
+
+            modelBuilder.Entity<RecursoCurso>()
+                .HasOne(rc => rc.BaseDatos)
+                .WithMany(b => b.RecursosCursos)
+                .HasForeignKey(rc => rc.IdBaseDatos)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RecursoCurso>()
+                .HasOne(rc => rc.Curso)
+                .WithMany(c => c.RecursosCursos)
+                .HasForeignKey(rc => rc.IdCurso)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RecursoCurso>()
+                .HasIndex(rc => rc.IdCurso);
+
+            modelBuilder.Entity<RecursoCurso>()
+                .HasIndex(rc => rc.IdBaseDatos);
         }
     }
 }
