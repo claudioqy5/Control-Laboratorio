@@ -1,12 +1,13 @@
-using ControlLaboratorio.API.Data;
-using ControlLaboratorio.API.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ControlLaboratorio.API.Data;
+using ControlLaboratorio.API.Models;
+using ControlLaboratorio.API.Services;
 
 namespace ControlLaboratorio.API.Controllers
 {
@@ -16,14 +17,15 @@ namespace ControlLaboratorio.API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IImageProcessingService _imageService;
 
-        public LibrosController(ApplicationDbContext context, IWebHostEnvironment env)
+        public LibrosController(ApplicationDbContext context, IWebHostEnvironment env, IImageProcessingService imageService)
         {
             _context = context;
             _env = env;
+            _imageService = imageService;
         }
 
-        // GET: api/Libros
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Libro>>> GetLibros()
         {
@@ -32,7 +34,6 @@ namespace ControlLaboratorio.API.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/Libros/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Libro>> GetLibro(int id)
         {
@@ -46,7 +47,6 @@ namespace ControlLaboratorio.API.Controllers
             return libro;
         }
 
-        // POST: api/Libros
         [HttpPost]
         public async Task<ActionResult<Libro>> PostLibro(Libro libro)
         {
@@ -61,7 +61,6 @@ namespace ControlLaboratorio.API.Controllers
             return CreatedAtAction(nameof(GetLibro), new { id = libro.LibroID }, libro);
         }
 
-        // PUT: api/Libros/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLibro(int id, Libro libro)
         {
@@ -96,7 +95,6 @@ namespace ControlLaboratorio.API.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Libros/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLibro(int id)
         {
@@ -106,13 +104,17 @@ namespace ControlLaboratorio.API.Controllers
                 return NotFound(new { mensaje = "Libro no encontrado" });
             }
 
+            if (!string.IsNullOrEmpty(libro.Portada))
+            {
+                _imageService.DeleteImage(libro.Portada, "portadas");
+            }
+
             _context.Libros.Remove(libro);
             await _context.SaveChangesAsync();
 
             return Ok(new { mensaje = "Libro eliminado con éxito" });
         }
 
-        // POST: api/Libros/bulk
         [HttpPost("bulk")]
         public async Task<IActionResult> BulkImport(List<Libro> libros)
         {
@@ -153,54 +155,31 @@ namespace ControlLaboratorio.API.Controllers
             });
         }
 
-        // POST: api/Libros/5/Portada
         [HttpPost("{id}/Portada")]
         public async Task<IActionResult> UploadPortada(int id, IFormFile file)
         {
             if (file == null || file.Length == 0)
+            {
                 return BadRequest(new { mensaje = "No se proporcionó ningún archivo." });
+            }
 
             if (file.Length > 5 * 1024 * 1024)
+            {
                 return BadRequest(new { mensaje = "El archivo supera el límite de 5MB." });
+            }
 
             var libro = await _context.Libros.FindAsync(id);
             if (libro == null)
+            {
                 return NotFound(new { mensaje = "Libro no encontrado" });
-
-            var portadasDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "portadas");
-            if (!Directory.Exists(portadasDir))
-            {
-                Directory.CreateDirectory(portadasDir);
             }
 
-            var rawExt = Path.GetExtension(file.FileName)?.ToLowerInvariant();
-            var ext = rawExt switch
+            if (!string.IsNullOrEmpty(libro.Portada))
             {
-                ".png" => ".png",
-                ".jpg" or ".jpeg" => ".jpg",
-                _ => ".webp"
-            };
-
-            var fileName = $"portada_{id}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{ext}";
-            var filePath = Path.Combine(portadasDir, fileName);
-
-            // Eliminar archivo físico anterior si existía
-            if (!string.IsNullOrEmpty(libro.Portada) && libro.Portada.StartsWith("/api/static/portadas/"))
-            {
-                var oldFileName = Path.GetFileName(libro.Portada);
-                var oldFilePath = Path.Combine(portadasDir, oldFileName);
-                if (System.IO.File.Exists(oldFilePath))
-                {
-                    try { System.IO.File.Delete(oldFilePath); } catch { }
-                }
+                _imageService.DeleteImage(libro.Portada, "portadas");
             }
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            libro.Portada = $"/api/static/portadas/{fileName}";
+            libro.Portada = await _imageService.SaveAsWebpAsync(file, "portadas", maxWidth: 800, quality: 80);
             await _context.SaveChangesAsync();
 
             return Ok(new { 

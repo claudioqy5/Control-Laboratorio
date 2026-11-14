@@ -23,6 +23,9 @@ namespace ControlLaboratorio.API.Models
         [StringLength(20)]
         public string? CodigoCurso { get; set; }
 
+        [Column("estado_activo")]
+        public bool EstadoActivo { get; set; } = true;
+
         public ICollection<RecursoCurso> RecursosCursos { get; set; } = new List<RecursoCurso>();
     }
 }
