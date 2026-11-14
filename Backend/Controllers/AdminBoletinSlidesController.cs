@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.Models;
+using ControlLaboratorio.API.Services;
 
 namespace ControlLaboratorio.API.Controllers
 {
@@ -22,11 +23,13 @@ namespace ControlLaboratorio.API.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IImageProcessingService _imageService;
 
-        public AdminBoletinSlidesController(ApplicationDbContext context, IWebHostEnvironment env)
+        public AdminBoletinSlidesController(ApplicationDbContext context, IWebHostEnvironment env, IImageProcessingService imageService)
         {
             _context = context;
             _env = env;
+            _imageService = imageService;
         }
 
         [HttpGet]
@@ -79,26 +82,13 @@ namespace ControlLaboratorio.API.Controllers
                 return BadRequest(new { message = "La descripción es obligatoria cuando el formato es Bipartito." });
             }
 
-            var fileName = $"{Guid.NewGuid()}{extension}";
-            var rootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-            var targetFolder = Path.Combine(rootPath, "boletines");
-
-            if (!Directory.Exists(targetFolder))
-            {
-                Directory.CreateDirectory(targetFolder);
-            }
-
-            var filePath = Path.Combine(targetFolder, fileName);
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await image.CopyToAsync(stream);
-            }
+            var imagenUrl = await _imageService.SaveAsWebpAsync(image, "boletines", maxWidth: 1920, quality: 80);
 
             var slide = new BoletinSlide
             {
                 Titulo = titulo.Trim(),
                 Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim(),
-                ImagenUrl = $"/api/static/boletines/{fileName}",
+                ImagenUrl = imagenUrl,
                 Formato = (FormatoSlide)formato,
                 EnlaceUrl = string.IsNullOrWhiteSpace(enlaceUrl) ? null : enlaceUrl.Trim()
             };
@@ -118,16 +108,7 @@ namespace ControlLaboratorio.API.Controllers
                 return NotFound();
             }
 
-            var fileName = Path.GetFileName(slide.ImagenUrl);
-            if (!string.IsNullOrEmpty(fileName))
-            {
-                var rootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-                var filePath = Path.Combine(rootPath, "boletines", fileName);
-                if (System.IO.File.Exists(filePath))
-                {
-                    System.IO.File.Delete(filePath);
-                }
-            }
+            _imageService.DeleteImage(slide.ImagenUrl, "boletines");
 
             _context.BoletinSlides.Remove(slide);
             await _context.SaveChangesAsync();

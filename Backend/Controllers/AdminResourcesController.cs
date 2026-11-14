@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using ControlLaboratorio.API.Data;
 using ControlLaboratorio.API.DTOs;
 using ControlLaboratorio.API.Models;
+using ControlLaboratorio.API.Services;
 
 namespace ControlLaboratorio.API.Controllers
 {
@@ -25,11 +26,13 @@ namespace ControlLaboratorio.API.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly IImageProcessingService _imageService;
 
-        public AdminResourcesController(ApplicationDbContext context, IWebHostEnvironment env)
+        public AdminResourcesController(ApplicationDbContext context, IWebHostEnvironment env, IImageProcessingService imageService)
         {
             _context = context;
             _env = env;
+            _imageService = imageService;
         }
 
         [HttpGet]
@@ -132,25 +135,12 @@ namespace ControlLaboratorio.API.Controllers
                 }
             }
 
-            var fileName = $"{Guid.NewGuid()}{extension}";
-            var rootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-            var targetFolder = Path.Combine(rootPath, "recursos");
-
-            if (!Directory.Exists(targetFolder))
-            {
-                Directory.CreateDirectory(targetFolder);
-            }
-
-            var filePath = Path.Combine(targetFolder, fileName);
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await request.Image.CopyToAsync(stream);
-            }
+            var logotipoUrl = await _imageService.SaveAsWebpAsync(request.Image, "recursos", maxWidth: 800, quality: 85);
 
             var entity = new BaseDatosMedica
             {
                 NombreRecurso = request.NombreRecurso.Trim(),
-                LogotipoUrl = $"/api/static/recursos/{fileName}",
+                LogotipoUrl = logotipoUrl,
                 DescripcionClinica = request.DescripcionClinica.Trim(),
                 EsSuscripcion = request.EsSuscripcion,
                 TieneAppMovil = request.TieneAppMovil,
@@ -237,32 +227,8 @@ namespace ControlLaboratorio.API.Controllers
                     return BadRequest(new { message = "Formato no permitido. Solo se aceptan extensiones .webp, .jpg, .jpeg y .png." });
                 }
 
-                var rootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-                var targetFolder = Path.Combine(rootPath, "recursos");
-
-                if (!Directory.Exists(targetFolder))
-                {
-                    Directory.CreateDirectory(targetFolder);
-                }
-
-                var oldFileName = Path.GetFileName(entity.LogotipoUrl);
-                if (!string.IsNullOrEmpty(oldFileName))
-                {
-                    var oldFilePath = Path.Combine(targetFolder, oldFileName);
-                    if (System.IO.File.Exists(oldFilePath))
-                    {
-                        System.IO.File.Delete(oldFilePath);
-                    }
-                }
-
-                var newFileName = $"{Guid.NewGuid()}{extension}";
-                var newFilePath = Path.Combine(targetFolder, newFileName);
-                using (var stream = new FileStream(newFilePath, FileMode.Create))
-                {
-                    await request.Image.CopyToAsync(stream);
-                }
-
-                entity.LogotipoUrl = $"/api/static/recursos/{newFileName}";
+                _imageService.DeleteImage(entity.LogotipoUrl, "recursos");
+                entity.LogotipoUrl = await _imageService.SaveAsWebpAsync(request.Image, "recursos", maxWidth: 800, quality: 85);
             }
 
             entity.NombreRecurso = request.NombreRecurso.Trim();
@@ -314,16 +280,7 @@ namespace ControlLaboratorio.API.Controllers
                 return NotFound(new { message = "Recurso no encontrado." });
             }
 
-            var fileName = Path.GetFileName(resource.LogotipoUrl);
-            if (!string.IsNullOrEmpty(fileName))
-            {
-                var rootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-                var filePath = Path.Combine(rootPath, "recursos", fileName);
-                if (System.IO.File.Exists(filePath))
-                {
-                    System.IO.File.Delete(filePath);
-                }
-            }
+            _imageService.DeleteImage(resource.LogotipoUrl, "recursos");
 
             _context.BasesDatosMedicas.Remove(resource);
             await _context.SaveChangesAsync();
