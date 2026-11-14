@@ -97,7 +97,7 @@ namespace ControlLaboratorio.API.Controllers
                 .ThenInclude(rc => rc.Curso)
                 .Where(r => r.EstadoActivo && r.MostrarEnHexagonos)
                 .OrderBy(r => r.NombreRecurso)
-                .Take(6)
+                .Take(15)
                 .Select(r => MapToPublicDto(r))
                 .AsNoTracking()
                 .ToListAsync();

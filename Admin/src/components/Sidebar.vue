@@ -39,7 +39,7 @@ const bibliotecaViews = [
   'mapa-biblio'
 ]
 
-const webViews = ['conferencias', 'conferencias-reportes', 'objetos-perdidos', 'boletin']
+const webViews = ['conferencias', 'conferencias-reportes', 'recursos', 'objetos-perdidos', 'boletin']
 
 watch(
   () => props.currentView,
@@ -461,9 +461,10 @@ onBeforeUnmount(() => {
         </a>
         <a
           href="#"
-          class="nav-item disabled"
-          title="Próximamente"
-          @click.prevent
+          class="nav-item"
+          :class="{ active: currentView === 'recursos' }"
+          :title="isCollapsed ? 'Bases de Datos' : ''"
+          @click.prevent="navigate('recursos')"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <ellipse cx="12" cy="5" rx="9" ry="3" />
@@ -471,17 +472,6 @@ onBeforeUnmount(() => {
             <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
           </svg>
           <span class="item-text">Bases de Datos</span>
-        </a>
-        <a
-          href="#"
-          class="nav-item disabled"
-          title="Próximamente"
-          @click.prevent
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-          </svg>
-          <span class="item-text">Matriz Hexagonal</span>
         </a>
         <a
           href="#"
