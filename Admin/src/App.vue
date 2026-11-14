@@ -23,6 +23,7 @@ import ConferenciasReporte from './components/ConferenciasReporte.vue'
 import ObjetosPerdidosCRUD from './components/ObjetosPerdidosCRUD.vue'
 import BoletinSlidesCRUD from './components/BoletinSlidesCRUD.vue'
 import RecursosMedicosCRUD from './components/RecursosMedicosCRUD.vue'
+import CursosCRUD from './components/CursosCRUD.vue'
 
 const currentView = ref('dashboard')
 const isAuthenticated = ref(false)
@@ -140,6 +141,7 @@ const handleLoginSuccess = (user) => {
       />
       <BoletinSlidesCRUD v-if="currentView === 'boletin'" />
       <RecursosMedicosCRUD v-if="currentView === 'recursos'" />
+      <CursosCRUD v-if="currentView === 'cursos'" />
     </main>
 
     <ChatBot />

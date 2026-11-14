@@ -75,6 +75,10 @@ describe('Sidebar', () => {
     const librosLink = allLinks.find(link => link.text().includes('Libros'))
     await librosLink.trigger('click')
     expect(wrapper.emitted('change-view')[3]).toEqual(['libros'])
+
+    const cursosLink = allLinks.find(link => link.text().includes('Malla Curricular'))
+    await cursosLink.trigger('click')
+    expect(wrapper.emitted('change-view')[4]).toEqual(['cursos'])
   })
 
   it('denies access to Configuración / Accesos for non-SuperAdmin user and displays toast alert', async () => {
