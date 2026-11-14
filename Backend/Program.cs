@@ -67,6 +67,7 @@ builder.Services.AddHostedService<ReactivacionAlumnosService>();
 builder.Services.AddHostedService<SessionMonitorService>();
 
 builder.Services.AddScoped<GoogleVisionService>();
+builder.Services.AddScoped<IImageProcessingService, ImageProcessingService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ControlLaboratorioConnection")));
