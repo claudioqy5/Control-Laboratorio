@@ -146,6 +146,11 @@ namespace ControlLaboratorio.API.Data
             modelBuilder.Entity<CursoMedicina>()
                 .HasIndex(c => c.NombreCurso);
 
+            modelBuilder.Entity<CursoMedicina>()
+                .HasIndex(c => c.CodigoCurso)
+                .IsUnique()
+                .HasFilter("[codigo_curso] IS NOT NULL AND [codigo_curso] <> ''");
+
             modelBuilder.Entity<RecursoCurso>()
                 .HasKey(rc => new { rc.IdBaseDatos, rc.IdCurso });
 
